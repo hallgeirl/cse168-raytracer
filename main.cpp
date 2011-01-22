@@ -26,7 +26,8 @@ makeSpiralScene()
     
     // set up the camera
     g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
-    g_camera->setEye(Vector3(-5, 2, 3));
+    //g_camera->setEye(Vector3(-5, 2, 3));
+    g_camera->setEye(Vector3(0, 0, -5));
     g_camera->setLookAt(Vector3(0, 0, 0));
     g_camera->setUp(Vector3(0, 1, 0));
     g_camera->setFOV(45);
@@ -61,10 +62,21 @@ makeSpiralScene()
     
     Plane * plane = new Plane();
     plane->setNormal(Vector3(0, 1, 0));
-    plane->setOrigin(Vector3(1, 1, 0));
+    plane->setOrigin(Vector3(0, -2, 0));
     plane->setMaterial(new Lambert(Vector3(1.0, 0, 0)));
     g_scene->addObject(plane);
     
+    TriangleMesh *mesh = new TriangleMesh();
+    mesh->createSingleTriangle();
+    
+    mesh->setV1(Vector3(0,0,0));
+    mesh->setV3(Vector3(5,5,0));
+    mesh->setV2(Vector3(0,5,0));
+    
+    Triangle * triangle = new Triangle();
+    triangle->setMesh(mesh);
+    triangle->setIndex(0);
+    triangle->setMaterial(new Lambert(Vector3(0,1,0)));
     
     // let objects do pre-calculations if needed
     g_scene->preCalc();
