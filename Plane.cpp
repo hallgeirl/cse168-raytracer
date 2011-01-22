@@ -1,6 +1,8 @@
+#include <iostream>
 #include "Plane.h"
 #include "Ray.h"
 
+using namespace std;
 
 Plane::Plane()
 {
@@ -28,8 +30,11 @@ Plane::renderGL()
 bool
 Plane::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
 {
-    float t = dot(normal, (origin-r.o)) / (dot(normal, r.d));
-    if (t < 0)
+    float ndotd = dot(normal, r.d);
+    if (fabs(ndotd) < 1e-6) return false;
+    
+    float t = dot(normal, (origin-r.o)) / ndotd;
+    if (t < tMin || t > tMax)
         return false;
 
     result.P = r.o + t*r.d;

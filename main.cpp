@@ -35,7 +35,7 @@ makeSpiralScene()
 
     // create and place a point light source
     PointLight * light = new PointLight;
-    light->setPosition(Vector3(-3, 15, 3));
+    light->setPosition(Vector3(-3, 15, -15));
     light->setColor(Vector3(1, 1, 1));
     light->setWattage(1000);
     g_scene->addLight(light);
@@ -52,8 +52,7 @@ makeSpiralScene()
         float x = r*cos(theta);
         float y = r*sin(theta);
         float z = 2*(2*PI*a - r);
-        //Material* mat = new Lambert(Vector3(1.0f, t, (float)(i%5)/4.0f));
-        Material* mat = new Lambert(Vector3(1.0f, t, i%2));
+        Material* mat = new Phong(Vector3(1.0f, t, i%2));
         Sphere * sphere = new Sphere;
         sphere->setCenter(Vector3(x,y,z));
         sphere->setRadius(r/10);
@@ -71,13 +70,18 @@ makeSpiralScene()
     mesh->createSingleTriangle();
     
     mesh->setV1(Vector3(0,0,0));
+    mesh->setV2(Vector3(0,3,0));
     mesh->setV3(Vector3(5,5,0));
-    mesh->setV2(Vector3(0,5,0));
+    mesh->setN1(Vector3(0,0,-1));
+    mesh->setN2(Vector3(0.1,0.1,-1).normalize());
+    mesh->setN3(Vector3(-0.1,-0.2,-1).normalize());
+    
     
     Triangle * triangle = new Triangle();
     triangle->setMesh(mesh);
     triangle->setIndex(0);
     triangle->setMaterial(new Lambert(Vector3(0,1,0)));
+    g_scene->addObject(triangle);
     
     // let objects do pre-calculations if needed
     g_scene->preCalc();
@@ -121,8 +125,8 @@ int
 main(int argc, char*argv[])
 {
     // create a scene
-//    makeSpiralScene();
-	makeSphereScene();
+    makeSpiralScene();
+	//makeSphereScene();
 
     MiroWindow miro(&argc, argv);
     miro.mainLoop();
