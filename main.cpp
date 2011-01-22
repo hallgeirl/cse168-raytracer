@@ -62,13 +62,46 @@ makeSpiralScene()
     g_scene->preCalc();
 }
 
+void 
+makeSphereScene()
+{
+    g_camera = new Camera;
+    g_scene = new Scene;
+    g_image = new Image;
 
+    g_image->resize(512, 512);
+    
+    // set up the camera
+    g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
+    g_camera->setEye(Vector3(-5, 2, 3));
+    g_camera->setLookAt(Vector3(0, 0, 0));
+    g_camera->setUp(Vector3(0, 1, 0));
+    g_camera->setFOV(45);
+
+    // create and place a point light source
+    PointLight * light = new PointLight;
+    light->setPosition(Vector3(-3, 15, 3));
+    light->setColor(Vector3(1, 1, 1));
+    light->setWattage(1000);
+    g_scene->addLight(light);
+
+    Material* mat = new Lambert(Vector3(1.0f, 0.5f, 0.5f));
+    Sphere * sphere = new Sphere;
+    sphere->setCenter(Vector3(0,0,0));
+    sphere->setRadius(2);
+    sphere->setMaterial(mat);
+    g_scene->addObject(sphere);
+
+    // let objects do pre-calculations if needed
+    g_scene->preCalc();
+}
 
 int
 main(int argc, char*argv[])
 {
     // create a scene
-    makeSpiralScene();
+//    makeSpiralScene();
+	makeSphereScene();
 
     MiroWindow miro(&argc, argv);
     miro.mainLoop();
