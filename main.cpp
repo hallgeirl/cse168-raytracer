@@ -60,7 +60,7 @@ makeSpiralScene()
     }
     
     Plane * plane = new Plane();
-    plane->setNormal(Vector3(0.5, 0.5, 0));
+    plane->setNormal(Vector3(0, 1, 0));
     plane->setOrigin(Vector3(1, 1, 0));
     plane->setMaterial(new Lambert(Vector3(1.0, 0, 0)));
     g_scene->addObject(plane);
