@@ -10,6 +10,7 @@
 #include "TriangleMesh.h"
 #include "Triangle.h"
 #include "Lambert.h"
+#include "Phong.h"
 #include "MiroWindow.h"
 
 using namespace std;
@@ -80,12 +81,12 @@ makeSphereScene()
 
     // create and place a point light source
     PointLight * light = new PointLight;
-    light->setPosition(Vector3(-3, 15, 3));
+    light->setPosition(Vector3(-3, 15, 10));
     light->setColor(Vector3(1, 1, 1));
     light->setWattage(1000);
     g_scene->addLight(light);
 
-    Material* mat = new Lambert(Vector3(1.0f, 0.5f, 0.5f));
+    Material* mat = new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10);
     Sphere * sphere = new Sphere;
     sphere->setCenter(Vector3(0,0,0));
     sphere->setRadius(2);

@@ -3,7 +3,7 @@
 #include "Scene.h"
 
 Phong::Phong(const Vector3 &kd, const Vector3 &ka, const Vector3 &ks, const float a)
-	:m_kd(kd), m_ka(ka), m_ks(ks), m_a(0.f)
+	:m_kd(kd), m_ka(ka), m_ks(ks), m_a(a)
 {
 
 }
@@ -16,9 +16,9 @@ Phong::~Phong()
 Vector3 
 Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 {
-	/*Vector3 L = Vector3(0.0f, 0.0f, 0.0f);
+	Vector3 L = Vector3(0.0f, 0.0f, 0.0f);
 
-	Vector3 viewDir = -ray.d;
+	Vector3 e = -ray.d;
 
 	const Lights *lightlist = scene.lights();
 
@@ -27,19 +27,32 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
     for (lightIter = lightlist->begin(); lightIter != lightlist->end(); lightIter++)
     {
         PointLight* pLight = *lightIter;
-    
-        Vector3 surfaceToLight = pLight->position() - hit.P;
-        
+
+        Vector3 l = pLight->position() - hit.P;
+
+		Vector3 r = - l + 2 * dot(l, hit.N) * hit.N;
+		r.normalize();
+
         // the inverse-squared falloff
-        float falloff = surfaceToLight.length2();
+        float falloff = l.length2();
         
         // normalize the light direction
-        surfaceToLight /= sqrt(falloff);
+        l /= sqrt(falloff);
 
-		Vector3 lightToSurface = -surfaceToLight;
+        // get the diffuse component
+        float nDotL = dot(hit.N, l);
 
-		Vector3 reflectRay = lightToSurface - 2 * cross(lightToSurface, hit.N) * hit.N;
-	}*/
+		// get the specular component
+        float eDotr = dot(e, r);
 
-	return Vector3();
+		Vector3 result = pLight->color();
+        result *= m_kd;
+        
+		L += std::max(0.0f, nDotL/falloff * pLight->wattage() / PI) * result + (pow(std::max(0.0f, eDotr), m_a)) * result;
+    }
+    
+    // add the ambient component
+    L += m_ka; //*cr
+    
+    return L;
 }
