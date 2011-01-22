@@ -7,6 +7,7 @@
 
 #include "PointLight.h"
 #include "Sphere.h"
+#include "Plane.h"
 #include "TriangleMesh.h"
 #include "Triangle.h"
 #include "Lambert.h"
@@ -58,6 +59,13 @@ makeSpiralScene()
         sphere->setMaterial(mat);
         g_scene->addObject(sphere);
     }
+    
+    Plane * plane = new Plane();
+    plane->setNormal(Vector3(0, 1, 0));
+    plane->setOrigin(Vector3(1, 1, 0));
+    plane->setMaterial(new Lambert(Vector3(1.0, 0, 0)));
+    g_scene->addObject(plane);
+    
     
     // let objects do pre-calculations if needed
     g_scene->preCalc();
