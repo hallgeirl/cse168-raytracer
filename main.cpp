@@ -7,9 +7,11 @@
 
 #include "PointLight.h"
 #include "Sphere.h"
+#include "Plane.h"
 #include "TriangleMesh.h"
 #include "Triangle.h"
 #include "Lambert.h"
+#include "Phong.h"
 #include "MiroWindow.h"
 
 using namespace std;
@@ -25,14 +27,15 @@ makeSpiralScene()
     
     // set up the camera
     g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
-    g_camera->setEye(Vector3(-5, 2, 3));
+    //g_camera->setEye(Vector3(-5, 2, 3));
+    g_camera->setEye(Vector3(0, 0, -5));
     g_camera->setLookAt(Vector3(0, 0, 0));
     g_camera->setUp(Vector3(0, 1, 0));
     g_camera->setFOV(45);
 
     // create and place a point light source
     PointLight * light = new PointLight;
-    light->setPosition(Vector3(-3, 15, 3));
+    light->setPosition(Vector3(-3, 15, -15));
     light->setColor(Vector3(1, 1, 1));
     light->setWattage(1000);
     g_scene->addLight(light);
@@ -49,8 +52,7 @@ makeSpiralScene()
         float x = r*cos(theta);
         float y = r*sin(theta);
         float z = 2*(2*PI*a - r);
-        //Material* mat = new Lambert(Vector3(1.0f, t, (float)(i%5)/4.0f));
-        Material* mat = new Lambert(Vector3(1.0f, t, i%2));
+        Material* mat = new Phong(Vector3(1.0f, t, i%2));
         Sphere * sphere = new Sphere;
         sphere->setCenter(Vector3(x,y,z));
         sphere->setRadius(r/10);
@@ -58,17 +60,73 @@ makeSpiralScene()
         g_scene->addObject(sphere);
     }
     
+    Plane * plane = new Plane();
+    plane->setNormal(Vector3(0, 1, 0));
+    plane->setOrigin(Vector3(0, -2, 0));
+    plane->setMaterial(new Lambert(Vector3(1.0, 0, 0)));
+    g_scene->addObject(plane);
+    
+    TriangleMesh *mesh = new TriangleMesh();
+    mesh->createSingleTriangle();
+    
+    mesh->setV1(Vector3(0,0,0));
+    mesh->setV2(Vector3(0,3,0));
+    mesh->setV3(Vector3(5,5,0));
+    mesh->setN1(Vector3(0,0,-1));
+    mesh->setN2(Vector3(0.1,0.1,-1).normalize());
+    mesh->setN3(Vector3(-0.1,-0.2,-1).normalize());
+    
+    
+    Triangle * triangle = new Triangle();
+    triangle->setMesh(mesh);
+    triangle->setIndex(0);
+    triangle->setMaterial(new Lambert(Vector3(0,1,0)));
+    g_scene->addObject(triangle);
+    
     // let objects do pre-calculations if needed
     g_scene->preCalc();
 }
 
+void 
+makeSphereScene()
+{
+    g_camera = new Camera;
+    g_scene = new Scene;
+    g_image = new Image;
 
+    g_image->resize(512, 512);
+    
+    // set up the camera
+    g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
+    g_camera->setEye(Vector3(-5, 2, 3));
+    g_camera->setLookAt(Vector3(0, 0, 0));
+    g_camera->setUp(Vector3(0, 1, 0));
+    g_camera->setFOV(45);
+
+    // create and place a point light source
+    PointLight * light = new PointLight;
+    light->setPosition(Vector3(-3, 15, 10));
+    light->setColor(Vector3(1, 1, 1));
+    light->setWattage(1000);
+    g_scene->addLight(light);
+
+    Material* mat = new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10);
+    Sphere * sphere = new Sphere;
+    sphere->setCenter(Vector3(0,0,0));
+    sphere->setRadius(2);
+    sphere->setMaterial(mat);
+    g_scene->addObject(sphere);
+
+    // let objects do pre-calculations if needed
+    g_scene->preCalc();
+}
 
 int
 main(int argc, char*argv[])
 {
     // create a scene
     makeSpiralScene();
+	//makeSphereScene();
 
     MiroWindow miro(&argc, argv);
     miro.mainLoop();

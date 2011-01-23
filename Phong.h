@@ -8,14 +8,14 @@ class Phong : public Material
 public:
 	Phong(const Vector3 & kd = Vector3(1), 
 			const Vector3 & ka = Vector3(0),
-			const Vector3 & ks = Vector(1),
+			const Vector3 & ks = Vector3(1),
 			const float a = 0.f);
 	virtual ~Phong();
 
 	const Vector3 & kd() const {return m_kd;}
 	const Vector3 & ka() const {return m_ka;}
 	const Vector3 & ks() const {return m_ks;}
-	const float a() const {return a;}
+	const float a() const {return m_a;}
 
 	void setKd(const Vector3 & kd) {m_kd = kd;}
 	void setKa(const Vector3 & ka) {m_ka = ka;}
