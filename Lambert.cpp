@@ -2,8 +2,8 @@
 #include "Ray.h"
 #include "Scene.h"
 
-Lambert::Lambert(const Vector3 & kd, const Vector3 & ka) :
-    m_kd(kd), m_ka(ka)
+Lambert::Lambert(const Vector3 & kd, const Vector3 & ka, const float reflect, const float refract, const float refractIndex) :
+    m_kd(kd), m_ka(ka), m_reflect(reflect), m_refract(refract), m_refractIndex(refractIndex)
 {
 
 }

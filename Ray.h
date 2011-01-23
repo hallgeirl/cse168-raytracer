@@ -18,6 +18,16 @@ public:
     {
         // empty
     }
+
+	Ray Reflect(const Vector3& P, const Vector3& N) const
+	{
+		Ray Reflect;
+
+		Reflect.o = P;
+		Reflect.d = d - 2 * dot(N, d) * N;
+
+		return Reflect;
+	}
 };
 
 

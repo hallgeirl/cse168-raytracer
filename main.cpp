@@ -111,11 +111,27 @@ makeSphereScene()
     g_scene->addLight(light);
 
     Material* mat = new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10);
+	mat->SetReflection(0.75f);
     Sphere * sphere = new Sphere;
     sphere->setCenter(Vector3(0,0,0));
-    sphere->setRadius(2);
+    sphere->setRadius(1.5);
     sphere->setMaterial(mat);
     g_scene->addObject(sphere);
+
+    Material* mat2 = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20);
+	mat2->SetReflection(1.0f);
+	Sphere * sphere2 = new Sphere;
+    sphere2->setCenter(Vector3(5,1,0));
+    sphere2->setRadius(2);
+    sphere2->setMaterial(mat2);
+    g_scene->addObject(sphere2);
+
+	Plane * plane = new Plane();
+    plane->setNormal(Vector3(0, 1, 0));
+    plane->setOrigin(Vector3(0, -3, 0));
+    plane->setMaterial(new Lambert(Vector3(0.8, 0.8, 0.8), Vector3(0.1, 0.1, 0.1), 0.1f));
+	mat->SetReflection(0.25f);
+    g_scene->addObject(plane);
 
     // let objects do pre-calculations if needed
     g_scene->preCalc();
@@ -125,8 +141,8 @@ int
 main(int argc, char*argv[])
 {
     // create a scene
-    makeSpiralScene();
-	//makeSphereScene();
+//    makeSpiralScene();
+	makeSphereScene();
 
     MiroWindow miro(&argc, argv);
     miro.mainLoop();

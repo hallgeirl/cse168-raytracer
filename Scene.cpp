@@ -43,8 +43,8 @@ void
 Scene::raytraceImage(Camera *cam, Image *img)
 {
     Ray ray;
-    HitInfo hitInfo;
     Vector3 shadeResult;
+	int depth = 0;
     
     // loop over all pixels in the image
     #ifdef OPENMP
@@ -55,10 +55,9 @@ Scene::raytraceImage(Camera *cam, Image *img)
         for (int j = 0; j < img->width(); ++j)
         {
             ray = cam->eyeRay(j, i, img->width(), img->height());
-            if (trace(hitInfo, ray))
+            if (traceScene(ray, shadeResult, depth))
             {
-                shadeResult = hitInfo.material->shade(ray, hitInfo, *this);
-                img->setPixel(j, i, shadeResult);
+				img->setPixel(j, i, shadeResult);
             }
         }
         img->drawScanline(i);
@@ -74,4 +73,44 @@ bool
 Scene::trace(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
 {
     return m_bvh.intersect(minHit, ray, tMin, tMax);
+}
+
+bool 
+Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
+{
+    HitInfo hitInfo;
+	Vector3 reflectResult;
+	Vector3 refractResult;
+
+    if (depth < TRACE_DEPTH && trace(hitInfo, ray))
+    {
+        shadeResult = hitInfo.material->shade(ray, hitInfo, *this);
+		++depth;
+
+		//if reflective material, send trace with ReflectRay
+		float reflection = hitInfo.material->GetReflection(); 
+		if (reflection > 0.0f)
+		{
+			Ray reflectRay = ray.Reflect(hitInfo.P, hitInfo.N);
+			//fudge factor for now
+			reflectRay.o += reflectRay.d * 0.0005;
+			if (traceScene(reflectRay, reflectResult, depth))
+			{
+				shadeResult = reflection * reflectResult + (1 - reflection) * shadeResult;
+			}
+		}
+
+		//if refractive material, send trace with RefractRay
+		if (hitInfo.material->GetRefraction() > 0.0f)
+		{
+			Ray	refractRay;
+			if (traceScene(refractRay, refractResult, depth))
+			{
+
+			}
+		}
+
+		return true;
+	}
+	return false;
 }

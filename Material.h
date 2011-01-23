@@ -10,6 +10,13 @@ public:
     Material();
     virtual ~Material();
 
+	virtual float GetReflection() const {return 0;}
+	virtual float GetRefraction() const {return 0;}
+	virtual float GetRefractionIndex() const {return 1.0f;}
+
+	virtual void SetReflection(const float reflect){};
+	virtual void SetRefraction(const float refract, const float refractIndex){};
+
     virtual void preCalc() {}
     
     virtual Vector3 shade(const Ray& ray, const HitInfo& hit,

@@ -164,6 +164,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="$(OutDir)\$(ProjectName).exe"
 			/>
 		</Configuration>
 	</Configurations>
@@ -220,6 +221,10 @@
 				</File>
 				<File
 					RelativePath=".\BVH.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Plane.cpp"
 					>
 				</File>
 				<File
@@ -322,6 +327,10 @@
 				</File>
 				<File
 					RelativePath=".\Object.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Plane.h"
 					>
 				</File>
 				<File
