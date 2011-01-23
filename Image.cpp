@@ -4,7 +4,7 @@
 #include <string.h>
 #include <math.h>
 
-#ifdef WIN32
+#ifndef __GNUC__
 // disable useless warnings
 #pragma warning(disable:4996)
 #endif

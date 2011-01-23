@@ -3,7 +3,7 @@
 #include "TriangleMesh.h"
 #include "Console.h"
 
-#ifdef WIN32
+#ifndef __GNUC__
 // disable useless warnings
 #pragma warning(disable:4996)
 #endif
@@ -68,7 +68,7 @@ TriangleMesh::load(char* file, const Matrix4x4& ctm)
 void
 getIndices(char *word, int *vindex, int *tindex, int *nindex)
 {
-    char *null = " ";
+    char *null = (char*)" ";
     char *ptr;
     char *tp;
     char *np;
