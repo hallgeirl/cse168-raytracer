@@ -7,10 +7,12 @@
 
 #ifdef WIN32
 #include <windows.h>
-//#include <wincon.h>
+#include <wincon.h>
 
 // disable useless warnings
+#ifndef __GNUC__
 #pragma warning(disable:4996)
+#endif
 #endif
 
 static char __internal_console_buffer__[8192] = {'\0'};
@@ -43,8 +45,8 @@ static void cprintf(const char *s) {
 				switch (code) {
 				  case 0: attr = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; break;
 				  case 1: attr |= FOREGROUND_INTENSITY; break;
-				  case 3: attr |= COMMON_LVB_UNDERSCORE; break;
-				  case 7: attr |= COMMON_LVB_REVERSE_VIDEO; break;
+				  //case 3: attr |= COMMON_LVB_UNDERSCORE; break;
+				  //case 7: attr |= COMMON_LVB_REVERSE_VIDEO; break;
 				  case 31: attr |= FOREGROUND_RED; break;
 				  case 32: attr |= FOREGROUND_GREEN; break;
 				  case 33: attr |= FOREGROUND_RED | FOREGROUND_GREEN; break;
@@ -161,5 +163,5 @@ cprintf("          Misc Options\n"
          "\033[1;37m\033[47m         Gray  = \\033[47m       \033[0m\n"
          "\033[1;30m\033[5;47m        White  = \\033[5;47m     \033[0m\n");
   cprintf("\033[1;37m\033[0mBack To Normal = \\033[0m        \033[0m\n\n");
-  
+
 */

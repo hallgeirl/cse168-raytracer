@@ -11,7 +11,7 @@
 #define MIDDLE      2
 #define RIGHT       1
 
-#ifdef WIN32
+#ifndef __GNUC__
 // disable useless warnings
 #pragma warning(disable:4996)
 #endif
@@ -65,7 +65,7 @@ MiroWindow::mainLoop()
     glutMouseFunc(::mouse);
     glutMotionFunc(::motion);
     glutReshapeFunc(::resize);
-    
+
     // Start the glut main loop, never returns
     glutMainLoop();
 }
@@ -118,15 +118,15 @@ MiroWindow::mouse(int button, int state, int x, int y)
         case GLUT_LEFT_BUTTON:
             b = LEFT;
         break;
-        
+
         case GLUT_MIDDLE_BUTTON:
             b = MIDDLE;
         break;
-        
+
         case GLUT_RIGHT_BUTTON:
             b = RIGHT;
         break;
-        
+
         default:
             b = 0;
     }

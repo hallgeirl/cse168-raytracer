@@ -5,7 +5,7 @@
 #include <float.h>
 #include <iostream>
 
-#ifdef WIN32
+#ifndef __GNUC__
 #pragma warning(disable:4305) // disable useless warnings
 #pragma warning(disable:4244)
 #endif
