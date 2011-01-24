@@ -98,7 +98,7 @@ makeSphereScene()
     
     // set up the camera
     g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
-    g_camera->setEye(Vector3(-5, 2, 3));
+    g_camera->setEye(Vector3(-5, 1, 3));
     g_camera->setLookAt(Vector3(0, 0, 0));
     g_camera->setUp(Vector3(0, 1, 0));
     g_camera->setFOV(45);
@@ -111,7 +111,7 @@ makeSphereScene()
     g_scene->addLight(light);
 
     Material* mat = new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10);
-	mat->SetReflection(0.75f);
+	mat->SetRefraction(1.0f, 1.5);
     Sphere * sphere = new Sphere;
     sphere->setCenter(Vector3(0,0,0));
     sphere->setRadius(1.5);
@@ -119,9 +119,9 @@ makeSphereScene()
     g_scene->addObject(sphere);
 
     Material* mat2 = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20);
-	mat2->SetReflection(1.0f);
+	mat2->SetReflection(0.25f);
 	Sphere * sphere2 = new Sphere;
-    sphere2->setCenter(Vector3(5,1,0));
+    sphere2->setCenter(Vector3(5,0,-1));
     sphere2->setRadius(2);
     sphere2->setMaterial(mat2);
     g_scene->addObject(sphere2);

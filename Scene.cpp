@@ -91,7 +91,7 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 		float reflection = hitInfo.material->GetReflection(); 
 		if (reflection > 0.0f)
 		{
-			Ray reflectRay = ray.Reflect(hitInfo.P, hitInfo.N);
+			Ray reflectRay = ray.Reflect(hitInfo);
 			//fudge factor for now
 			reflectRay.o += reflectRay.d * 0.0005;
 			if (traceScene(reflectRay, reflectResult, depth))
@@ -100,13 +100,15 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 			}
 		}
 
+		float refraction = hitInfo.material->GetRefraction(); 
 		//if refractive material, send trace with RefractRay
-		if (hitInfo.material->GetRefraction() > 0.0f)
+		if (refraction > 0.0f)
 		{
-			Ray	refractRay;
+			Ray	refractRay = ray.Refract(hitInfo);
+			refractRay.o += refractRay.d * 0.0005;
 			if (traceScene(refractRay, refractResult, depth))
 			{
-
+				shadeResult = refraction * refractResult + (1 - refraction) * shadeResult;
 			}
 		}
 

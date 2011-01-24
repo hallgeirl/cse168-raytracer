@@ -2,34 +2,7 @@
 #define CSE168_RAY_H_INCLUDED
 
 #include "Vector3.h"
-
-class Ray
-{
-public:
-    Vector3 o,      //!< Origin of ray
-            d;      //!< Direction of ray
-
-    Ray() : o(), d(Vector3(0.0f,0.0f,1.0f))
-    {
-        // empty
-    }
-
-    Ray(const Vector3& o, const Vector3& d) : o(o), d(d)
-    {
-        // empty
-    }
-
-	Ray Reflect(const Vector3& P, const Vector3& N) const
-	{
-		Ray Reflect;
-
-		Reflect.o = P;
-		Reflect.d = d - 2 * dot(N, d) * N;
-
-		return Reflect;
-	}
-};
-
+#include "Material.h"
 
 //! Contains information about a ray hit with a surface.
 /*!
@@ -53,5 +26,67 @@ public:
         // empty
     }
 };
+
+class Ray
+{
+public:
+    Vector3 o,      //!< Origin of ray
+            d;      //!< Direction of ray
+
+    Ray() : o(), d(Vector3(0.0f,0.0f,1.0f))
+    {
+        // empty
+    }
+
+    Ray(const Vector3& o, const Vector3& d) : o(o), d(d)
+    {
+        // empty
+    }
+
+	Ray Reflect(const HitInfo & hitInfo) const
+	{
+		Ray Reflect;
+
+		Reflect.o = hitInfo.P;
+		Reflect.d = d - 2 * dot(hitInfo.N, d) * hitInfo.N;
+
+		return Reflect;
+	}
+
+	Ray Refract(const HitInfo & hitInfo) const
+	{
+		Ray Refract;
+		float n1, n2;
+		Vector3 n;
+		
+		Refract.o = hitInfo.P;
+
+		// if ray enters object, else ray exits object
+		if ( dot(d, hitInfo.N) < 0)
+		{
+			n1 = 1.0f;
+			n2 = hitInfo.material->GetRefractionIndex();
+			n = hitInfo.N;
+		}
+		else 
+		{
+			n1 = hitInfo.material->GetRefractionIndex();
+			n2 = 1.0f;
+			n = -hitInfo.N;
+		}
+
+		float energy = 1 - (pow(n1, 2) * (1 - pow(dot(d, n), 2)) / pow(n2, 2));
+
+		// Total internal reflection: all of the energy is reflected
+		if (energy < 0)
+			return Reflect(hitInfo);
+
+		Refract.d = n1 * (d - n * dot(d, n)) / n2 - n * sqrt(energy);
+
+		return Refract;
+	}
+
+};
+
 
 #endif // CSE168_RAY_H_INCLUDED
