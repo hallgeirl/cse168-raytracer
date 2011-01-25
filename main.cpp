@@ -24,7 +24,7 @@ makeSpiralScene()
     g_image = new Image;
 
     g_image->resize(512, 512);
-    
+
     // set up the camera
     g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
     //g_camera->setEye(Vector3(-5, 2, 3));
@@ -41,7 +41,7 @@ makeSpiralScene()
     g_scene->addLight(light);
 
     // create a spiral of spheres
-    
+
     const int maxI = 150;
     const float a = 0.15f;
     for (int i = 1; i < maxI; i+=1)
@@ -59,35 +59,35 @@ makeSpiralScene()
         sphere->setMaterial(mat);
         g_scene->addObject(sphere);
     }
-    
+
     Plane * plane = new Plane();
     plane->setNormal(Vector3(0, 1, 0));
     plane->setOrigin(Vector3(0, -2, 0));
     plane->setMaterial(new Lambert(Vector3(1.0, 0, 0)));
     g_scene->addObject(plane);
-    
+
     TriangleMesh *mesh = new TriangleMesh();
     mesh->createSingleTriangle();
-    
+
     mesh->setV1(Vector3(0,0,0));
     mesh->setV2(Vector3(0,3,0));
     mesh->setV3(Vector3(5,5,0));
     mesh->setN1(Vector3(0,0,-1));
     mesh->setN2(Vector3(0.1,0.1,-1).normalize());
     mesh->setN3(Vector3(-0.1,-0.2,-1).normalize());
-    
-    
+
+
     Triangle * triangle = new Triangle();
     triangle->setMesh(mesh);
     triangle->setIndex(0);
     triangle->setMaterial(new Lambert(Vector3(0,1,0)));
     g_scene->addObject(triangle);
-    
+
     // let objects do pre-calculations if needed
     g_scene->preCalc();
 }
 
-void 
+void
 makeSphereScene()
 {
     g_camera = new Camera;
@@ -95,7 +95,7 @@ makeSphereScene()
     g_image = new Image;
 
     g_image->resize(512, 512);
-    
+
     // set up the camera
     g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
     g_camera->setEye(Vector3(-5, 1, 3));
@@ -137,13 +137,71 @@ makeSphereScene()
     g_scene->preCalc();
 }
 
+void addModel(char* filename, Material *mat, Scene* scene)
+{
+	TriangleMesh * mesh = new TriangleMesh();
+	mesh->load(filename);
+
+    for (int i = 0; i < mesh->numTris(); i++)
+    {
+		Triangle *tri = new Triangle();
+		tri->setMesh(mesh);
+		tri->setIndex(i);
+		tri->setMaterial(mat);
+		g_scene->addObject(tri);
+    }
+}
+
+void makeModelsScene()
+{
+    g_camera = new Camera;
+    g_scene = new Scene;
+    g_image = new Image;
+
+    g_image->resize(512, 512);
+
+    // set up the camera
+    g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
+    g_camera->setEye(Vector3(-5, 1, 3));
+    g_camera->setLookAt(Vector3(0, 0, 0));
+    g_camera->setUp(Vector3(0, 1, 0));
+    g_camera->setFOV(45);
+
+    // create and place a point light source
+    PointLight * light = new PointLight;
+    light->setPosition(Vector3(-3, 15, 10));
+    light->setColor(Vector3(1, 1, 1));
+    light->setWattage(1000);
+    g_scene->addLight(light);
+
+    /*Material* bunnyMat = new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10);
+	bunnyMat->SetReflection(0.25f);
+	bunnyMat->SetRefraction(1.0f, 1.5);
+	addModel("models/bunny.obj");*/
+
+
+    Material* teapotMat = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20);
+	teapotMat->SetReflection(0.25f);
+	addModel("models/teapot.obj", teapotMat, g_scene);
+
+
+	Plane * plane = new Plane();
+    plane->setNormal(Vector3(0, 1, 0));
+    plane->setOrigin(Vector3(0, -3, 0));
+    plane->setMaterial(new Lambert(Vector3(0.8, 0.8, 0.8), Vector3(0.1, 0.1, 0.1), 0.1f));
+    g_scene->addObject(plane);
+
+    // let objects do pre-calculations if needed
+    g_scene->preCalc();
+}
+
 int
 main(int argc, char*argv[])
 {
     // create a scene
-//    makeSpiralScene();
-	makeSphereScene();
-
+    //makeSpiralScene();
+	//makeSphereScene();
+	makeModelsScene();
     MiroWindow miro(&argc, argv);
     miro.mainLoop();
 

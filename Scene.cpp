@@ -45,10 +45,10 @@ Scene::raytraceImage(Camera *cam, Image *img)
     Ray ray;
     Vector3 shadeResult;
 	int depth = 0;
-    
+
     // loop over all pixels in the image
     #ifdef OPENMP
-    #pragma omp parallel for private(ray, hitInfo, shadeResult)
+    #pragma omp parallel for private(ray, shadeResult)
     #endif
     for (int i = 0; i < img->height(); ++i)
     {
@@ -64,7 +64,7 @@ Scene::raytraceImage(Camera *cam, Image *img)
         printf("Rendering Progress: %.3f%%\r", i/float(img->height())*100.0f);
         fflush(stdout);
     }
-    
+
     printf("Rendering Progress: 100.000%%\n");
     debug("done Raytracing!\n");
 }
@@ -75,7 +75,7 @@ Scene::trace(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
     return m_bvh.intersect(minHit, ray, tMin, tMax);
 }
 
-bool 
+bool
 Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 {
     HitInfo hitInfo;
@@ -88,7 +88,7 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 		++depth;
 
 		//if reflective material, send trace with ReflectRay
-		float reflection = hitInfo.material->GetReflection(); 
+		float reflection = hitInfo.material->GetReflection();
 		if (reflection > 0.0f)
 		{
 			Ray reflectRay = ray.Reflect(hitInfo);
@@ -100,7 +100,7 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 			}
 		}
 
-		float refraction = hitInfo.material->GetRefraction(); 
+		float refraction = hitInfo.material->GetRefraction();
 		//if refractive material, send trace with RefractRay
 		if (refraction > 0.0f)
 		{

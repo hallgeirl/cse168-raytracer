@@ -46,21 +46,21 @@ Triangle::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
     const Vector3 & nA = m_mesh->normals()[ni3.x];
     const Vector3 & nB = m_mesh->normals()[ni3.y];
     const Vector3 & nC = m_mesh->normals()[ni3.z];
-    
+
     Vector3 BmA = B-A, CmA = C-A;
     Vector3 normal = cross(BmA, CmA);
     float ddotn = (dot(-r.d, normal));
-    
+
     float t = dot(r.o-A, normal) / ddotn;
     float beta = dot(-r.d, cross(r.o-A, CmA)) / ddotn;
     float gamma = dot(-r.d, cross(BmA, r.o-A)) / ddotn;
-    
-    if (beta < 0 || beta > 1 || gamma < 0 || gamma > 1 || t < tMin || t > tMax) return false;
-    
+
+    if (beta < 0 || gamma < 0 || beta+gamma > 1 || t < tMin || t > tMax) return false;
+
     result.P = A + beta*BmA + gamma*CmA;
     result.t = t;
     result.N = (1-beta-gamma)*nA + beta*nB + gamma*nC;
     result.material = m_material;
-    
+
     return true;
 }
