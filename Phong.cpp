@@ -49,7 +49,7 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 		Vector3 result = pLight->color();
         
 		//should specular component use material specular color?
-		L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / PI) * m_kd + (pow(std::max(0.0f, eDotr), m_a)) * m_ks);
+		L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / (4 * PI)) * m_kd + (pow(std::max(0.0f, eDotr/falloff * pLight->wattage() / (4 * PI)), m_a)) * m_ks);
     }
     
     // add the ambient component
