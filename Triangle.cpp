@@ -62,5 +62,7 @@ Triangle::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
     result.N = (1-beta-gamma)*nA + beta*nB + gamma*nC;
     result.material = m_material;
 
+
+
     return true;
 }

@@ -1,9 +1,9 @@
 #include "Miro.h"
 #include "Image.h"
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+#include <ctime>
 #ifndef __GNUC__
 // disable useless warnings
 #pragma warning(disable:4996)
