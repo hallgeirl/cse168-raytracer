@@ -24,6 +24,7 @@ public:
     void draw();
     void drawScanline(int y);
     void clear(const Vector3& c);
+    void writePPM(); // write data to a ppm image file
     void writePPM(char* pcFile); // write data to a ppm image file
     void writePPM(char *pcName, unsigned char *data, int width, int height);
 

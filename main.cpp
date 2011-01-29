@@ -174,16 +174,16 @@ void makeModelsScene()
     light->setWattage(1000);
     g_scene->addLight(light);
 
-    /*Material* bunnyMat = new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10);
+    Material* bunnyMat = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20);
 	bunnyMat->SetReflection(0.25f);
-	bunnyMat->SetRefraction(1.0f, 1.5);
-	addModel("models/bunny.obj");*/
+	//bunnyMat->SetRefraction(1.0f, 1.5);
+	addModel("models/bunny.obj", bunnyMat, g_scene);
 
-
+/*
     Material* teapotMat = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20);
 	teapotMat->SetReflection(0.25f);
 	addModel("models/teapot.obj", teapotMat, g_scene);
-
+*/
 
 	Plane * plane = new Plane();
     plane->setNormal(Vector3(0, 1, 0));
@@ -203,8 +203,14 @@ main(int argc, char*argv[])
 	//makeSphereScene();
 	makeModelsScene();
     MiroWindow miro(&argc, argv);
+    #ifndef NO_GFX
     miro.mainLoop();
+    #else
+    g_camera->setRenderer(Camera::RENDER_RAYTRACE);
+    g_camera->click(g_scene, g_image);
+    g_image->writePPM();
+    #endif
 
-    return 0; // never executed
+    return 0; 
 }
 

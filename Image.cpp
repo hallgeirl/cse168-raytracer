@@ -83,6 +83,13 @@ void Image::draw()
         drawScanline(i);
 }
 
+void Image::writePPM()
+{
+        char str[1024];
+        sprintf(str, "miro_%ld.ppm", time(0));
+        writePPM(str);
+}
+
 void Image::writePPM(char* pcFile)
 {
     writePPM(pcFile, (unsigned char*)m_pixels, m_width, m_height);
