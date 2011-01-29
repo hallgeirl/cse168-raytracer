@@ -48,7 +48,7 @@ Scene::raytraceImage(Camera *cam, Image *img)
 
     // loop over all pixels in the image
     #ifdef OPENMP
-    #pragma omp parallel for private(ray, shadeResult)
+    #pragma omp parallel for private(ray, shadeResult, depth)
     #endif
     for (int i = 0; i < img->height(); ++i)
     {
@@ -60,9 +60,14 @@ Scene::raytraceImage(Camera *cam, Image *img)
 				img->setPixel(j, i, shadeResult);
             }
         }
+        #ifndef NO_GFX //If not rendering graphics to screen, don't draw scan lines (it will segfault in multithreading mode)
         img->drawScanline(i);
-        printf("Rendering Progress: %.3f%%\r", i/float(img->height())*100.0f);
-        fflush(stdout);
+        #endif
+        if (i % 10 == 0)
+        {
+            printf("Rendering Progress: %.3f%%\r", i/float(img->height())*100.0f);
+            fflush(stdout);
+        }
     }
 
     printf("Rendering Progress: 100.000%%\n");

@@ -38,6 +38,7 @@ MiroWindow::MiroWindow(int * argc, char* argv[]) :
     m_mouseY(0)
 {
     // Initialize GLUT
+    #ifndef NO_GFX
     glutInit(argc, argv);
 
     // Create the window
@@ -52,12 +53,14 @@ MiroWindow::MiroWindow(int * argc, char* argv[]) :
     glDisable(GL_TEXTURE_2D);
     glShadeModel(GL_SMOOTH);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // draw outlines only
+    #endif
 }
 
 
 void
 MiroWindow::mainLoop()
 {
+    #ifndef NO_GFX
     // Setup callback functions
     g_miroWindow = this;
     glutDisplayFunc(::display);
@@ -68,6 +71,7 @@ MiroWindow::mainLoop()
 
     // Start the glut main loop, never returns
     glutMainLoop();
+    #endif
 }
 
 

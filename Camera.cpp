@@ -52,12 +52,16 @@ Camera::click(Scene* pScene, Image* pImage)
         glLoadIdentity();
 
         glDrawBuffer(GL_FRONT);
+        #ifndef NO_GFX
         if (firstRayTrace)
         {
+        #endif
             pImage->clear(bgColor());
             pScene->raytraceImage(this, g_image);
             firstRayTrace = false;
+        #ifndef NO_GFX
         }
+        #endif
 
         g_image->draw();
     }

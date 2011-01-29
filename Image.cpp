@@ -1,9 +1,9 @@
 #include "Miro.h"
 #include "Image.h"
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+#include <ctime>
 #ifndef __GNUC__
 // disable useless warnings
 #pragma warning(disable:4996)
@@ -81,6 +81,13 @@ void Image::draw()
 {
     for (int i = 0; i < m_height; i++)
         drawScanline(i);
+}
+
+void Image::writePPM()
+{
+        char str[1024];
+        sprintf(str, "miro_%ld.ppm", time(0));
+        writePPM(str);
 }
 
 void Image::writePPM(char* pcFile)
