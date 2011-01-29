@@ -6,11 +6,10 @@ RM		= @rm -rf
 MKDIR		= @mkdir
 MKDEP		= @mkdep
 ECHO		= @echo
-#INCDIRS		= -I/usr/X11R6/include 
+INCDIRS		= -I/usr/X11R6/include -Ilib/devil/include
 #use the following LIBS line for GNU/Linux
-#LIBS	 	= -lm -lX11 -lXmu -lXi -lXext -lGL -lGLU -lglut
-LIBS	 	= -lm -lGL -lGLU -lglut
-LIBDIRS 	= -L. -L/usr/X11R6/lib -L/usr/lib
+LIBS	 	= -lm -lX11 -lXmu -lXi -lXext -lGL -lGLU -lglut -lIL
+LIBDIRS 	= -L. -L/usr/X11R6/lib -L/usr/lib -Llib/devil/lib/.libs
 LDFLAGS		= -O3 $(LIBDIRS) $(LIBS) -fopenmp
 CXXFLAGS          += $(INCDIRS) -O3 -DOPENMP -fomit-frame-pointer -fopenmp -lopenmp \
 -Wno-deprecated -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE

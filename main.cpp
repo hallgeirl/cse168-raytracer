@@ -1,4 +1,6 @@
 #include <math.h>
+#include <string>
+#include <IL/il.h>
 #include "Miro.h"
 #include "Scene.h"
 #include "Camera.h"
@@ -13,6 +15,7 @@
 #include "Lambert.h"
 #include "Phong.h"
 #include "MiroWindow.h"
+#include "Texture.h"
 
 using namespace std;
 
@@ -174,9 +177,9 @@ void makeModelsScene()
     light->setWattage(1000);
     g_scene->addLight(light);
 
-    Material* bunnyMat = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20, 0.3);
+/*    Material* bunnyMat = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20, 0.3);
 	//bunnyMat->SetReflection(0.25f);
-	addModel("models/bunny.obj", bunnyMat, g_scene);
+	addModel("models/bunny.obj", bunnyMat, g_scene);*/
 
     Material* mat = new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10, 1);
 	//mat->SetRefraction(1.0f, 1.5);
@@ -187,16 +190,18 @@ void makeModelsScene()
     g_scene->addObject(sphere);
     
 
-/*
+
     Material* teapotMat = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20);
 	teapotMat->SetReflection(0.25f);
 	addModel("models/teapot.obj", teapotMat, g_scene);
-*/
+
 
 	Plane * plane = new Plane();
     plane->setNormal(Vector3(0, 1, 0));
     plane->setOrigin(Vector3(0, -3, 0));
-    plane->setMaterial(new Lambert(Vector3(0.8, 0.8, 0.8), Vector3(0.1, 0.1, 0.1), 0.1f));
+    //plane->setMaterial(new Lambert(Vector3(0.8, 0.8, 0.8), Vector3(0.1, 0.1, 0.1), 0.1f));
+    plane->setMaterial(new TexturedPhong(new LoadedTexture(string("gfx/autumnforrest.hdr")), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20, 1));
+
 /*
 	Plane * plane2 = new Plane();
     plane2->setNormal(Vector3(0, -1, 0));
@@ -212,6 +217,9 @@ void makeModelsScene()
 int
 main(int argc, char*argv[])
 {
+    //Initialize libdevIL
+    ilInit();
+
     // create a scene
     //makeSpiralScene();
 	//makeSphereScene();

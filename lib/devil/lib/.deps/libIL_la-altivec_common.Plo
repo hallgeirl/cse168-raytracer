@@ -1,0 +1,4 @@
+libIL_la-altivec_common.lo: ../src-IL/src/altivec_common.c \
+ ../include/IL/config.h
+
+../include/IL/config.h:

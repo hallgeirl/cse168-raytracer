@@ -1,6 +1,9 @@
+#include <iostream>
 #include "Phong.h"
 #include "Ray.h"
 #include "Scene.h"
+
+using namespace std;
 
 Phong::Phong(const Vector3 &kd, const Vector3 &ka, const Vector3 &ks, 
 				const float shinyness, const float reflect, const float refract, const float refractIndex)
@@ -48,12 +51,14 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 
 		Vector3 result = pLight->color();
         
+        cout << kd(hit.P) << endl;
+        
 		//should specular component use material specular color?
-		L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / (4 * PI)) * m_kd + (pow(std::max(0.0f, eDotr/falloff * pLight->wattage() / (4 * PI)), m_a)) * m_ks);
+		L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / (4 * PI)) * kd(hit.P) + (pow(std::max(0.0f, eDotr/falloff * pLight->wattage() / (4 * PI)), m_a)) * m_ks);
     }
     
     // add the ambient component
-    L += m_ka; //*cr
+    L += ka(hit.P); //*cr
     
     return L;
 }

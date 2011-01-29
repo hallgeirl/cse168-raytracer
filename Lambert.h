@@ -13,8 +13,8 @@ public:
 			const float m_refractIndex = 1);
     virtual ~Lambert();
 
-    const Vector3 & kd() const {return m_kd;}
-    const Vector3 & ka() const {return m_ka;}
+    virtual const Vector3 & kd(const Vector3 & position) const {return m_kd;} //For lambert we just return the color we have set in the constructor (or with setKd).
+    virtual const Vector3 & ka(const Vector3 & position) const {return m_ka;}
 	virtual float GetReflection() const {return m_reflect;}
 	virtual float GetRefraction() const {return m_refract;}
 	virtual float GetRefractionIndex() const {return m_refractIndex;}
@@ -29,10 +29,11 @@ public:
     
     virtual Vector3 shade(const Ray& ray, const HitInfo& hit,
                           const Scene& scene) const;
-protected:
+private:
     Vector3 m_kd;
     Vector3 m_ka;
 
+protected:
 	float m_reflect;
 	float m_refract;
 	float m_refractIndex;
