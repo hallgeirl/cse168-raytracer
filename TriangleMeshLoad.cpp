@@ -1,3 +1,4 @@
+#include <iostream>
 #include <cstdio>
 #include <cstdlib>
 #include "TriangleMesh.h"
@@ -8,6 +9,7 @@
 #pragma warning(disable:4996)
 #endif
 
+using namespace std;
 
 void
 TriangleMesh::createSingleTriangle()
@@ -205,6 +207,7 @@ TriangleMesh::loadObj(FILE* fp, const Matrix4x4& ctm)
                              m_vertices[m_vertexIndices[m_numTris].x];
 
                 m_normals[nn] = cross(e1, e2);
+                m_normals[nn].normalize();
                 m_normalIndices[nn].x = nn;
                 m_normalIndices[nn].y = nn;
                 m_normalIndices[nn].z = nn;

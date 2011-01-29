@@ -98,7 +98,7 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 		{
 			Ray reflectRay = ray.Reflect(hitInfo);
 			//fudge factor for now
-			reflectRay.o += reflectRay.d * 0.0005;
+			reflectRay.o += reflectRay.d * 0.001;
 			if (traceScene(reflectRay, reflectResult, depth))
 			{
 				shadeResult = reflection * reflectResult + (1 - reflection) * shadeResult;

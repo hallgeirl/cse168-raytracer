@@ -55,7 +55,7 @@ Triangle::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
     float beta = dot(-r.d, cross(r.o-A, CmA)) / ddotn;
     float gamma = dot(-r.d, cross(BmA, r.o-A)) / ddotn;
 
-    if (beta < 0 || gamma < 0 || beta+gamma > 1 || t < tMin || t > tMax) return false;
+    if (beta < -epsilon || gamma < -epsilon || beta+gamma > 1+epsilon || t < tMin || t > tMax) return false;
 
     result.P = A + beta*BmA + gamma*CmA;
     result.t = t;
