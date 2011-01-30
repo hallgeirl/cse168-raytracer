@@ -10,7 +10,7 @@ public:
     ~TriangleMesh();
 
     // load from an OBJ file
-    bool load(char* file, const Matrix4x4& ctm = Matrix4x4());
+    bool load(const char* file, const Matrix4x4& ctm = Matrix4x4());
 
     // for single triangles
     void createSingleTriangle();

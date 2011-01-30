@@ -1,6 +1,6 @@
 #include <math.h>
 #include <string>
-#include <IL/il.h>
+
 #include "Miro.h"
 #include "Scene.h"
 #include "Camera.h"
@@ -16,7 +16,7 @@
 #include "Phong.h"
 #include "MiroWindow.h"
 #include "Texture.h"
-
+#include <FreeImage.h>
 using namespace std;
 
 void
@@ -140,7 +140,7 @@ makeSphereScene()
     g_scene->preCalc();
 }
 
-void addModel(char* filename, Material *mat, Scene* scene)
+void addModel(const char* filename, Material *mat, Scene* scene)
 {
 	TriangleMesh * mesh = new TriangleMesh();
 	mesh->load(filename);
@@ -181,26 +181,27 @@ void makeModelsScene()
 	//bunnyMat->SetReflection(0.25f);
 	addModel("models/bunny.obj", bunnyMat, g_scene);*/
 
-    Material* mat = new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10, 1);
-	//mat->SetRefraction(1.0f, 1.5);
+    Material* mat = new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10, 0);
+	mat->SetRefraction(1.0f, 1.5);
     Sphere * sphere = new Sphere;
     sphere->setCenter(Vector3(-2,1,-3));
     sphere->setRadius(1.5);
     sphere->setMaterial(mat);
     g_scene->addObject(sphere);
-    
+
 
 
     Material* teapotMat = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20);
 	teapotMat->SetReflection(0.25f);
+	teapotMat->SetRefraction(1, 1.5f);
 	addModel("models/teapot.obj", teapotMat, g_scene);
 
 
 	Plane * plane = new Plane();
     plane->setNormal(Vector3(0, 1, 0));
-    plane->setOrigin(Vector3(0, -3, 0));
+    plane->setOrigin(Vector3(0, -1, 0));
     //plane->setMaterial(new Lambert(Vector3(0.8, 0.8, 0.8), Vector3(0.1, 0.1, 0.1), 0.1f));
-    plane->setMaterial(new TexturedPhong(new LoadedTexture(string("gfx/autumnforrest.hdr")), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20, 1));
+    plane->setMaterial(new TexturedPhong(new LoadedTexture(string("gfx/autumnforrest.hdr")), Vector3(0.0, 0.0, 0.0), Vector3(1, 1, 1), 20, 0));
 
 /*
 	Plane * plane2 = new Plane();
@@ -217,8 +218,8 @@ void makeModelsScene()
 int
 main(int argc, char*argv[])
 {
-    //Initialize libdevIL
-    ilInit();
+    //Initialize FreeImage
+    FreeImage_Initialise();
 
     // create a scene
     //makeSpiralScene();
@@ -232,6 +233,9 @@ main(int argc, char*argv[])
     g_camera->click(g_scene, g_image);
     g_image->writePPM();
     #endif
+
+
+	FreeImage_DeInitialise();
 
     return 0;
 }

@@ -50,7 +50,7 @@ TriangleMesh::createSingleTriangle()
 //************************************************************************
 
 bool
-TriangleMesh::load(char* file, const Matrix4x4& ctm)
+TriangleMesh::load(const char* file, const Matrix4x4& ctm)
 {
     FILE *fp = fopen(file, "rb");
     if (!fp)

@@ -1,9 +1,9 @@
 #ifndef _TEXTURE_H_
 #define _TEXTURE_H_
 
-#include <string>
 #include "Phong.h"
-
+#include <string>
+#include <FreeImage.h>
 class Texture
 {
 public:
@@ -12,7 +12,7 @@ public:
 
 class ProceduralTexture3D : public Texture
 {
-    
+
 };
 
 //Texture loaded from a file
@@ -20,15 +20,17 @@ class LoadedTexture : public Texture
 {
 public:
     LoadedTexture(std::string filename);
-    
+	~LoadedTexture();
     virtual Vector3 lookup(const Vector3 & position);
+protected:
+	FIBITMAP* m_bitmap;
 };
 
-//Shading model that also 
+//Shading model that also
 class TexturedPhong : public Phong
 {
 public:
-    TexturedPhong(Texture * texture, 
+    TexturedPhong(Texture * texture,
 			            const Vector3 & ka = Vector3(0),
 			            const Vector3 & ks = Vector3(1),
 			            const float shinyness = 0.f,
@@ -36,7 +38,7 @@ public:
 			            const float refract = 0,
 			            const float refractIndex = 1);
 
-    virtual const Vector3 & kd(const Vector3 & texture_coords) const;
+    virtual Vector3 kd(const Vector3 & texture_coords) const;
 protected:
     Texture * m_texture;
 };

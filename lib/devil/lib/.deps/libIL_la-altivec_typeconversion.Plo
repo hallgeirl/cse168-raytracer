@@ -1,4 +1,0 @@
-libIL_la-altivec_typeconversion.lo: \
- ../src-IL/src/altivec_typeconversion.c ../include/IL/config.h
-
-../include/IL/config.h:

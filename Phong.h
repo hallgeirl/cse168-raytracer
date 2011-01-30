@@ -6,7 +6,7 @@
 class Phong : public Lambert
 {
 public:
-	Phong(const Vector3 & kd = Vector3(1), 
+	Phong(const Vector3 & kd = Vector3(1),
 			const Vector3 & ka = Vector3(0),
 			const Vector3 & ks = Vector3(1),
 			const float a = 0.f,
@@ -15,14 +15,14 @@ public:
 			const float m_refractIndex = 1);
 	virtual ~Phong();
 
-	const Vector3 & ks() const {return m_ks;}
-	const float a() const {return m_a;}	
+	virtual Vector3 ks() const {return m_ks;}
+	const float a() const {return m_a;}
 
 	void setKs(const Vector3 & ks) {m_ks = ks;}
 	void setA(const float a) {m_a = a;}
 
     virtual void preCalc() {}
-    
+
     virtual Vector3 shade(const Ray& ray, const HitInfo& hit,
                           const Scene& scene) const;
 
