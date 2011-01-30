@@ -5,7 +5,7 @@
 
 using namespace std;
 
-Phong::Phong(const Vector3 &kd, const Vector3 &ka, const Vector3 &ks, 
+Phong::Phong(const Vector3 &kd, const Vector3 &ka, const Vector3 &ks,
 				const float shinyness, const float reflect, const float refract, const float refractIndex)
 	:Lambert(kd, ka, reflect, refract, refractIndex), m_ks(ks), m_a(shinyness)
 {
@@ -17,7 +17,7 @@ Phong::~Phong()
 
 }
 
-Vector3 
+Vector3
 Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 {
 	Vector3 L = Vector3(0.0f, 0.0f, 0.0f);
@@ -39,7 +39,7 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 
         // the inverse-squared falloff
         float falloff = l.length2();
-        
+
         // normalize the light direction
         l /= sqrt(falloff);
 
@@ -50,15 +50,14 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
         float eDotr = dot(e, r);
 
 		Vector3 result = pLight->color();
-        
-        cout << kd(hit.P) << endl;
-        
+
+
 		//should specular component use material specular color?
 		L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / (4 * PI)) * kd(hit.P) + (pow(std::max(0.0f, eDotr/falloff * pLight->wattage() / (4 * PI)), m_a)) * m_ks);
     }
-    
+
     // add the ambient component
     L += ka(hit.P); //*cr
-    
+
     return L;
 }
