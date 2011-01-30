@@ -1,6 +1,9 @@
+#include <iostream>
 #include "Sphere.h"
 #include "Ray.h"
 #include "Console.h"
+
+using namespace std;
 
 Sphere::Sphere()
 {
@@ -24,21 +27,21 @@ bool
 Sphere::intersect(HitInfo& result, const Ray& ray,
                   float tMin, float tMax)
 {
-    const Vector3 toO = ray.o - m_center; 
+    const Vector3 toO = ray.o - m_center;
 
-    const float a = ray.d.length2(); 
+    const float a = ray.d.length2();
     const float b = dot(2*ray.d, toO);
     const float c = toO.length2() - m_radius*m_radius;
 
-    const float discrim = b*b-4.0f*a*c; 
+    const float discrim = b*b-4.0f*a*c;
 
-    if (discrim < 0) 
+    if (discrim < 0)
         return false;   // quadratic equation would yield imaginary numbers
 
-    const float sqrt_discrim = sqrt(discrim); 
+    const float sqrt_discrim = sqrt(discrim);
 
     // solve the quadratic equation
-    const float t[2] = {(-b-sqrt_discrim)/(2.0f*a), (-b+sqrt_discrim)/(2.0f*a)}; 
+    const float t[2] = {(-b-sqrt_discrim)/(2.0f*a), (-b+sqrt_discrim)/(2.0f*a)};
 
     // since we know that discrim >= 0, t[0] < t{1]
     // return the t closest to us that is within range
@@ -53,13 +56,27 @@ Sphere::intersect(HitInfo& result, const Ray& ray,
     else
     {
         // neither of the solutions are in the required range
-        return false; 
+        return false;
     }
 
-    result.P = ray.o + result.t*ray.d; 
-    result.N = (result.P-m_center); 
-    result.N.normalize(); 
-    result.material = this->m_material; 
+    result.P = ray.o + result.t*ray.d;
+    result.N = (result.P-m_center);
+    result.N.normalize();
+    result.material = this->m_material;
 
     return true;
+}
+
+// Sphere mapping
+tex_coord_t Sphere::toTextureCoordinates(const Vector3 & xyz) const
+{
+	//Get vector from xyz to center
+	Vector3 dir = xyz - m_center;
+	dir.normalize();
+
+	tex_coord_t coords;
+ 	coords.u = (atan2(dir.x, dir.z)) / (2.0f * PI) + 0.5;
+	coords.v = (asin(dir.y)) / PI + 0.5;
+
+	return coords;
 }

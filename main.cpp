@@ -79,7 +79,6 @@ makeSpiralScene()
     mesh->setN2(Vector3(0.1,0.1,-1).normalize());
     mesh->setN3(Vector3(-0.1,-0.2,-1).normalize());
 
-
     Triangle * triangle = new Triangle();
     triangle->setMesh(mesh);
     triangle->setIndex(0);
@@ -177,31 +176,36 @@ void makeModelsScene()
     light->setWattage(1000);
     g_scene->addLight(light);
 
+    light = new PointLight();
+    light->setPosition(Vector3(5, 10, -5));
+    light->setColor(Vector3(1, 1, 1));
+    light->setWattage(500);
+    g_scene->addLight(light);
+
+
 /*    Material* bunnyMat = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20, 0.3);
 	//bunnyMat->SetReflection(0.25f);
 	addModel("models/bunny.obj", bunnyMat, g_scene);*/
 
-    Material* mat = new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10, 0);
-	mat->SetRefraction(1.0f, 1.5);
+    //Material* mat = new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10, 0);
+	//mat->SetRefraction(1.0f, 1.5);
     Sphere * sphere = new Sphere;
     sphere->setCenter(Vector3(-2,1,-3));
     sphere->setRadius(1.5);
-    sphere->setMaterial(mat);
+    sphere->setMaterial(new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10, 1));
     g_scene->addObject(sphere);
 
-
-
     Material* teapotMat = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20);
-	teapotMat->SetReflection(0.25f);
-	teapotMat->SetRefraction(1, 1.5f);
+	teapotMat->SetReflection(0.5f);
 	addModel("models/teapot.obj", teapotMat, g_scene);
 
+	g_scene->setEnvironment(new LoadedTexture(string("gfx/autumnforrest.hdr")));
 
 	Plane * plane = new Plane();
     plane->setNormal(Vector3(0, 1, 0));
-    plane->setOrigin(Vector3(0, -1, 0));
-    //plane->setMaterial(new Lambert(Vector3(0.8, 0.8, 0.8), Vector3(0.1, 0.1, 0.1), 0.1f));
-    plane->setMaterial(new TexturedPhong(new LoadedTexture(string("gfx/autumnforrest.hdr")), Vector3(0.0, 0.0, 0.0), Vector3(1, 1, 1), 20, 0));
+    plane->setOrigin(Vector3(0, -3, 0));
+    plane->setMaterial(new Lambert(Vector3(0.8, 0.8, 0.8), Vector3(0.1, 0.1, 0.1), 0.0f));
+    //plane->setMaterial(new TexturedPhong(new LoadedTexture(string("gfx/autumnforrest.hdr")), Vector3(0.0, 0.0, 0.0), Vector3(1, 1, 1), 20, 0));
 
 /*
 	Plane * plane2 = new Plane();

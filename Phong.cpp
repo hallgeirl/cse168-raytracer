@@ -53,11 +53,11 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 
 
 		//should specular component use material specular color?
-		L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / (4 * PI)) * kd(hit.P) + (pow(std::max(0.0f, eDotr/falloff * pLight->wattage() / (4 * PI)), m_a)) * m_ks);
+		L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / (4 * PI)) * kd(hit.object->toTextureCoordinates(hit.P)) + (pow(std::max(0.0f, eDotr/falloff * pLight->wattage() / (4 * PI)), m_a)) * m_ks);
     }
 
     // add the ambient component
-    L += ka(hit.P); //*cr
+    L += ka(hit.object->toTextureCoordinates(hit.P));
 
     return L;
 }

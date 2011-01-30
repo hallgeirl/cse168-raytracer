@@ -1,3 +1,4 @@
+#include <cmath>
 #include "Miro.h"
 #include "Scene.h"
 #include "Camera.h"
@@ -87,36 +88,63 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 	Vector3 reflectResult;
 	Vector3 refractResult;
 
-    if (depth < TRACE_DEPTH && trace(hitInfo, ray))
+    if (depth < TRACE_DEPTH)
     {
-        shadeResult = hitInfo.material->shade(ray, hitInfo, *this);
-		++depth;
-
-		//if reflective material, send trace with ReflectRay
-		float reflection = hitInfo.material->GetReflection();
-		if (reflection > 0.0f)
+		if (trace(hitInfo, ray))
 		{
-			Ray reflectRay = ray.Reflect(hitInfo);
-			//fudge factor for now
-			reflectRay.o += reflectRay.d * 0.001;
-			if (traceScene(reflectRay, reflectResult, depth))
-			{
-				shadeResult = reflection * reflectResult + (1 - reflection) * shadeResult;
-			}
-		}
+			//shadeResult = hitInfo.material->shade(ray, hitInfo, *this);
+			++depth;
 
-		float refraction = hitInfo.material->GetRefraction();
-		//if refractive material, send trace with RefractRay
-		if (refraction > 0.0f)
+			//if reflective material, send trace with ReflectRay
+			float reflection = fmin(hitInfo.material->GetReflection(), 1);
+			if (reflection > 0.0f)
+			{
+				Ray reflectRay = ray.Reflect(hitInfo);
+				//fudge factor for now
+				reflectRay.o += reflectRay.d * 0.001;
+				if (!traceScene(reflectRay, reflectResult, depth))
+				{
+					reflection = 0;
+					reflectResult.set(0);
+				}
+			}
+
+			float refraction = hitInfo.material->GetRefraction();
+
+			//if refractive material, send trace with RefractRay
+			if (refraction > 0.0f)
+			{
+				Ray	refractRay = ray.Refract(hitInfo);
+				refractRay.o += refractRay.d * 0.0005;
+				if (!traceScene(refractRay, refractResult, depth))
+				{
+					refraction = 0;
+					refractResult.set(0);
+				}
+			}
+			//Keep the energy equation balanced (that is, don't refract+reflect+absorb more than 100% of the ray)
+			reflection = fmin(reflection, 1-refraction);
+			float absorb = 1-reflection-refraction;
+			shadeResult = refraction * refractResult + reflection * reflectResult + absorb * hitInfo.material->shade(ray, hitInfo, *this);
+		}
+		else
 		{
-			Ray	refractRay = ray.Refract(hitInfo);
-			refractRay.o += refractRay.d * 0.0005;
-			if (traceScene(refractRay, refractResult, depth))
+			//Environment mapping here
+			if (m_environment != 0)
 			{
-				shadeResult = refraction * refractResult + (1 - refraction) * shadeResult;
+				tex_coord_t coords;
+				//Calculate texture coordinates for where the ray hits the "sphere"
+				coords.u = (atan2(ray.d.x, ray.d.z)) / (2.0f * PI) + 0.5;
+				coords.v = (asin(ray.d.y)) / PI + 0.5;
+				//And just look up the shading value in the texture.
+				shadeResult = m_environment->lookup(coords);
 			}
-		}
+			else
+			{
+				shadeResult.x = 0.5; shadeResult.y = 0.5; shadeResult.z = 0.5;
+			}
 
+		}
 		return true;
 	}
 	return false;

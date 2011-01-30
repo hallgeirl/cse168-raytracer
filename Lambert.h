@@ -1,6 +1,8 @@
 #ifndef CSE168_LAMBERT_H_INCLUDED
 #define CSE168_LAMBERT_H_INCLUDED
 
+#include <cmath>
+#include "Object.h"
 #include "Material.h"
 
 class Lambert : public Material
@@ -13,17 +15,19 @@ public:
 			const float m_refractIndex = 1);
     virtual ~Lambert();
 
-    virtual Vector3 kd(const Vector3 & position) const {return m_kd;} //For lambert we just return the color we have set in the constructor (or with setKd).
-    virtual Vector3 ka(const Vector3 & position) const {return m_ka;}
+	//For lambert we just return the color we have set in the constructor (or with setKd).
+	//For other materials, we might return different values based on the texture coordinates given.
+    virtual Vector3 kd(const tex_coord_t & position) const {return m_kd;}
+    virtual Vector3 ka(const tex_coord_t & position) const {return m_ka;}
 	virtual float GetReflection() const {return m_reflect;}
 	virtual float GetRefraction() const {return m_refract;}
 	virtual float GetRefractionIndex() const {return m_refractIndex;}
 
     void setKd(const Vector3 & kd) {m_kd = kd;}
     void setKa(const Vector3 & ka) {m_ka = ka;}
-	virtual void SetReflection(const float reflect) {m_reflect = reflect;};
+	virtual void SetReflection(const float reflect) {m_reflect = fmin(reflect, 1);};
 	virtual void SetRefraction(const float refract, const float refractIndex)
-		{m_refract = refract; m_refractIndex = refractIndex;}
+		{m_refract = fmin(refract, 1); m_refractIndex = refractIndex;}
 
     virtual void preCalc() {}
 

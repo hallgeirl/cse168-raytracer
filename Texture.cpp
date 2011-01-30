@@ -7,7 +7,7 @@ LoadedTexture::LoadedTexture(std::string filename)
 {
 	FIBITMAP* tmp = FreeImage_Load(FIF_HDR, filename.c_str());
 
-	m_bitmap = FreeImage_TmoDrago03(tmp);
+	m_bitmap = FreeImage_TmoDrago03(tmp); //Do tonemapping to get pixel values in a sensible range
 }
 LoadedTexture::~LoadedTexture()
 {
@@ -15,20 +15,42 @@ LoadedTexture::~LoadedTexture()
 	free(m_bitmap);
 }
 
-Vector3 LoadedTexture::lookup(const Vector3 & texture_coords)
+//Aux function to retrieve pixel values and convert them to vectors.
+Vector3 getPixel(FIBITMAP* img, int x, int y)
 {
-	int w = FreeImage_GetWidth(m_bitmap), h = FreeImage_GetHeight(m_bitmap);
-	int tx = abs((int)(texture_coords.x*100)) % w, ty = (int)texture_coords.y, tz = abs((int)(texture_coords.z*100)) % h;
-	//cout << FreeImage_GetImageType(m_bitmap) << endl;
-	//FIRGBF color = ((FIRGBF*)(m_bitmap->data))[tz*w+tx];
 	RGBQUAD color;
-	FreeImage_GetPixelColor(m_bitmap, tx, tz, &color);
-	//cout << color.red << " " << color.green << " " << color.blue << endl;
-	//cout << tx << "\t" << tz << endl;
-	//return Vector3(color.red, color.green, color.blue);
+	FreeImage_GetPixelColor(img, x, y, &color);
+	return Vector3((float)color.rgbRed/255.0f,(float)color.rgbGreen/255.0f,(float)color.rgbBlue/255.0f);
+}
 
-	//return Vector3(1,1,1);
-	return Vector3((float)color.rgbRed/256.0f,(float)color.rgbGreen/256.0f,(float)color.rgbBlue/256.0f);
+Vector3 LoadedTexture::lookup(const tex_coord_t & texture_coords)
+{
+	float u = texture_coords.u, v = texture_coords.v;
+	//Image dimensions
+	int w = FreeImage_GetWidth(m_bitmap), h = FreeImage_GetHeight(m_bitmap);
+
+	//Do bilinear filtering
+	float px_real = (float)w*u, py_real = (float)h*v; //Point in image we really want
+
+	int x1 = (int)px_real, x2 = x1+1;
+	x1 %= w; x2 %= w;
+	float x1_error = px_real - (float)x1;
+
+	int y1 = (int)py_real, y2 = y1+1;
+	y1 %= h; y2 %= h;
+	float y1_error = py_real - (float)y1;
+
+	//Get pixel values
+	Vector3 f = (getPixel(m_bitmap, x1, y1) * (1-x1_error) + getPixel(m_bitmap, x2, y1) * x1_error) * (1 - y1_error) + (getPixel(m_bitmap, x1, y2) * (1-x1_error) + getPixel(m_bitmap, x2, y2) * x1_error) * y1_error;
+
+	return f;
+	//int tx = (int)((float)w*texture_coords.u) % w, ty = (int)((float)h*texture_coords.v) % h;
+
+	//TODO: Bilinear filtering.
+
+
+
+	//return Vector3((float)color.rgbRed/255.0f,(float)color.rgbGreen/255.0f,(float)color.rgbBlue/255.0f);
 }
 
 TexturedPhong::TexturedPhong(Texture * texture, const Vector3 & ka, const Vector3 & ks, const float shinyness, const float reflect, const float refract, const float refractIndex)
@@ -37,7 +59,7 @@ TexturedPhong::TexturedPhong(Texture * texture, const Vector3 & ka, const Vector
 
 }
 
-Vector3 TexturedPhong::kd(const Vector3 & texture_coords) const
+Vector3 TexturedPhong::kd(const tex_coord_t & texture_coords) const
 {
     return m_texture->lookup(texture_coords);
 }

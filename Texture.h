@@ -7,10 +7,10 @@
 class Texture
 {
 public:
-    virtual Vector3 lookup(const Vector3 & position) = 0; // Look up the color value for a specified position
+    virtual Vector3 lookup(const tex_coord_t & coords) = 0; // Look up the color value for a specified position
 };
 
-class ProceduralTexture3D : public Texture
+class ProceduralTexture2D : public Texture
 {
 
 };
@@ -21,7 +21,7 @@ class LoadedTexture : public Texture
 public:
     LoadedTexture(std::string filename);
 	~LoadedTexture();
-    virtual Vector3 lookup(const Vector3 & position);
+    virtual Vector3 lookup(const tex_coord_t & coords);
 protected:
 	FIBITMAP* m_bitmap;
 };
@@ -38,7 +38,7 @@ public:
 			            const float refract = 0,
 			            const float refractIndex = 1);
 
-    virtual Vector3 kd(const Vector3 & texture_coords) const;
+    virtual Vector3 kd(const tex_coord_t & texture_coords) const;
 protected:
     Texture * m_texture;
 };
