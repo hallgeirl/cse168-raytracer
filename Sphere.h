@@ -19,7 +19,7 @@ public:
     virtual void renderGL();
 
     //For spherical texture mapping
-    virtual tex_coord_t toTextureCoordinates(const Vector3 & xyz) const;
+    virtual tex_coord2d_t toUVCoordinates(const Vector3 & xyz) const;
 
     virtual bool intersect(HitInfo& result, const Ray& ray,
                            float tMin = 0.0f, float tMax = MIRO_TMAX);

@@ -156,6 +156,7 @@ void addModel(const char* filename, Material *mat, Scene* scene)
 
 void makeModelsScene()
 {
+	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"));
     g_camera = new Camera;
     g_scene = new Scene;
     g_image = new Image;
@@ -193,19 +194,22 @@ void makeModelsScene()
     sphere->setCenter(Vector3(-2,1,-3));
     sphere->setRadius(1.5);
     sphere->setMaterial(new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10, 1));
+    //sphere->setMaterial(new TexturedPhong(new TestTexture3D(), Vector3(0.1,0.1,0.1), Vector3(1,1,1), 1, 0));
     g_scene->addObject(sphere);
 
     Material* teapotMat = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20);
 	teapotMat->SetReflection(0.5f);
+	teapotMat->SetRefraction(0.5f, 1.5);
 	addModel("models/teapot.obj", teapotMat, g_scene);
 
-	g_scene->setEnvironment(new LoadedTexture(string("gfx/autumnforrest.hdr")));
+	g_scene->setEnvironment(autumnHDR);
 
 	Plane * plane = new Plane();
     plane->setNormal(Vector3(0, 1, 0));
     plane->setOrigin(Vector3(0, -3, 0));
-    plane->setMaterial(new Lambert(Vector3(0.8, 0.8, 0.8), Vector3(0.1, 0.1, 0.1), 0.0f));
-    //plane->setMaterial(new TexturedPhong(new LoadedTexture(string("gfx/autumnforrest.hdr")), Vector3(0.0, 0.0, 0.0), Vector3(1, 1, 1), 20, 0));
+    //plane->setMaterial(new Lambert(Vector3(0.8, 0.8, 0.8), Vector3(0.1, 0.1, 0.1), 0.0f));
+    plane->setMaterial(new TexturedPhong(new TestTexture3D(), Vector3(0,0,0)));
+//    plane->setMaterial(new TexturedPhong(autumnHDR, Vector3(0,0,0)));
 
 /*
 	Plane * plane2 = new Plane();

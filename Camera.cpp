@@ -9,7 +9,7 @@
 
 Camera * g_camera = 0;
 
-static bool firstRayTrace = true;
+//static bool firstRayTrace = true;
 
 const float HalfDegToRad = DegToRad/2.0f;
 

@@ -68,13 +68,13 @@ Sphere::intersect(HitInfo& result, const Ray& ray,
 }
 
 // Sphere mapping
-tex_coord_t Sphere::toTextureCoordinates(const Vector3 & xyz) const
+tex_coord2d_t Sphere::toUVCoordinates(const Vector3 & xyz) const
 {
 	//Get vector from xyz to center
 	Vector3 dir = xyz - m_center;
 	dir.normalize();
 
-	tex_coord_t coords;
+	tex_coord2d_t coords;
  	coords.u = (atan2(dir.x, dir.z)) / (2.0f * PI) + 0.5;
 	coords.v = (asin(dir.y)) / PI + 0.5;
 

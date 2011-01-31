@@ -51,13 +51,19 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 
 		Vector3 result = pLight->color();
 
+		//Look up the diffuse color
+		Vector3 diffuse;
+		if (GetLookupCoordinates() == UV)
+			diffuse = diffuse2D(hit.object->toUVCoordinates(hit.P));
+		else
+			diffuse = diffuse3D(tex_coord3d_t(hit.P.x, hit.P.y, hit.P.z));
 
 		//should specular component use material specular color?
-		L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / (4 * PI)) * kd(hit.object->toTextureCoordinates(hit.P)) + (pow(std::max(0.0f, eDotr/falloff * pLight->wattage() / (4 * PI)), m_a)) * m_ks);
+		L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / (4 * PI)) * diffuse + (pow(std::max(0.0f, eDotr/falloff * pLight->wattage() / (4 * PI)), m_a)) * m_ks);
     }
 
     // add the ambient component
-    L += ka(hit.object->toTextureCoordinates(hit.P));
+    L += ka(hit.object->toUVCoordinates(hit.P));
 
     return L;
 }

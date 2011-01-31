@@ -1,5 +1,6 @@
 #include "Texture.h"
 #include <FreeImage.h>
+
 using namespace std;
 
 
@@ -23,9 +24,10 @@ Vector3 getPixel(FIBITMAP* img, int x, int y)
 	return Vector3((float)color.rgbRed/255.0f,(float)color.rgbGreen/255.0f,(float)color.rgbBlue/255.0f);
 }
 
-Vector3 LoadedTexture::lookup(const tex_coord_t & texture_coords)
+Vector3 LoadedTexture::lookup2D(const tex_coord2d_t & texture_coords)
 {
 	float u = texture_coords.u, v = texture_coords.v;
+
 	//Image dimensions
 	int w = FreeImage_GetWidth(m_bitmap), h = FreeImage_GetHeight(m_bitmap);
 
@@ -59,7 +61,12 @@ TexturedPhong::TexturedPhong(Texture * texture, const Vector3 & ka, const Vector
 
 }
 
-Vector3 TexturedPhong::kd(const tex_coord_t & texture_coords) const
+Vector3 TexturedPhong::diffuse2D(const tex_coord2d_t & texture_coords) const
 {
-    return m_texture->lookup(texture_coords);
+    return m_texture->lookup2D(texture_coords);
+}
+
+Vector3 TexturedPhong::diffuse3D(const tex_coord3d_t & texture_coords) const
+{
+    return m_texture->lookup3D(texture_coords);
 }

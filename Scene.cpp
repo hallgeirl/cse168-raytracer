@@ -49,7 +49,7 @@ Scene::raytraceImage(Camera *cam, Image *img)
 
     // loop over all pixels in the image
     #ifdef OPENMP
-    #pragma omp parallel for private(ray, shadeResult, depth)
+    #pragma omp parallel for private(ray, shadeResult)
     #endif
     for (int i = 0; i < img->height(); ++i)
     {
@@ -132,12 +132,12 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 			//Environment mapping here
 			if (m_environment != 0)
 			{
-				tex_coord_t coords;
+				tex_coord2d_t coords;
 				//Calculate texture coordinates for where the ray hits the "sphere"
 				coords.u = (atan2(ray.d.x, ray.d.z)) / (2.0f * PI) + 0.5;
 				coords.v = (asin(ray.d.y)) / PI + 0.5;
 				//And just look up the shading value in the texture.
-				shadeResult = m_environment->lookup(coords);
+				shadeResult = m_environment->lookup2D(coords);
 			}
 			else
 			{

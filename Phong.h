@@ -9,7 +9,7 @@ public:
 	Phong(const Vector3 & kd = Vector3(1),
 			const Vector3 & ka = Vector3(0),
 			const Vector3 & ks = Vector3(1),
-			const float a = 0.f,
+			const float a = 1.f,
 			const float m_reflect = 0,
 			const float m_refract = 0,
 			const float m_refractIndex = 1);
