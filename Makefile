@@ -27,6 +27,6 @@ OBJS -=  parse.o lexer.o
 
 $(NAME): $(OBJS)
 	$(ECHO) "Linking $@..."
-	$(CXX) -o $@ *.o $(LDFLAGS) #$(OBJS) 
+	$(CXX) -o $@ $(OBJS) $(LDFLAGS)
 	$(ECHO) "Built $@!"
 	
