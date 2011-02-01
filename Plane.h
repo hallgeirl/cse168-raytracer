@@ -7,6 +7,7 @@
     The Plane class stores a pointer to a mesh and an index into its
     Plane array. The mesh stores all data needed by this Plane.
 */
+using namespace std;
 class Plane : public Object
 {
 public:
@@ -15,8 +16,7 @@ public:
 
     void setNormal(Vector3 normal) { this->normal = normal; }
     void setOrigin(Vector3 origin) { this->origin = origin; }
-
-	virtual tex_coord2d_t toUVCoordinates(const Vector3 & xyz) const { return tex_coord2d_t(fabs(xyz.x)/100.0, fabs(xyz.z)/100.0); }
+	virtual tex_coord2d_t toUVCoordinates(const Vector3 & xyz) const;
 
     virtual void renderGL();
     virtual bool intersect(HitInfo& result, const Ray& ray,

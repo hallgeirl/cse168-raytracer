@@ -4,8 +4,17 @@
 #include "Phong.h"
 #include <string>
 #include <iostream>
+#include <vector>
+#include <list>
 #include <FreeImage.h>
 #include <noise/noisegen.h>
+
+//Used for the grid in cellular textures
+typedef struct gridcell_s
+{
+    std::vector<tex_coord2d_t> points;
+    void addPoint(tex_coord2d_t point) { points.push_back(point); }
+} gridcell_t;
 
 class Texture
 {
@@ -27,6 +36,20 @@ public:
 	virtual LookupCoordinates GetLookupCoordinates() const {return UVW; }
 };
 
+class StoneTexture : public Texture2D
+{
+public:
+    StoneTexture(int points);
+    virtual Vector3 lookup2D(const tex_coord2d_t & coords);
+    
+protected:
+    static const int GRID_WIDTH=10, GRID_HEIGHT=10;
+
+    std::vector<tex_coord2d_t> m_points;
+    gridcell_t m_grid[GRID_HEIGHT][GRID_HEIGHT];
+};
+
+//Generates random 3D noise. For testing.
 class TestTexture3D : public Texture3D
 {
 public:
@@ -46,10 +69,7 @@ public:
 			freq *= 2;
 		}
 
-
-		//std::cout << out << std::endl;
 		return Vector3(out);
-		//return Vector3((float)(x%256) / 255.0, (float)(y%256) / 255.0, (float)(z%256) / 255.0);
 	}
 };
 

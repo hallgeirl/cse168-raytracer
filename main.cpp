@@ -165,8 +165,9 @@ void makeModelsScene()
 
     // set up the camera
     g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
-    g_camera->setEye(Vector3(-5, 1, 5));
-    g_camera->setLookAt(Vector3(0, 2, 0));
+    g_camera->setEye(Vector3(-5, 2, 7));
+    //g_camera->setEye(Vector3(-5, 30, 7));
+    g_camera->setLookAt(Vector3(-1.5, 0, 0));
     g_camera->setUp(Vector3(0, 1, 0));
     g_camera->setFOV(45);
 
@@ -184,8 +185,8 @@ void makeModelsScene()
     g_scene->addLight(light);
 
 
-/*    Material* bunnyMat = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20, 0.3);
-	//bunnyMat->SetReflection(0.25f);
+    /*Material* bunnyMat = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20, 0.3);
+	bunnyMat->SetReflection(0.25f);
 	addModel("models/bunny.obj", bunnyMat, g_scene);*/
 
     //Material* mat = new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10, 0);
@@ -194,7 +195,7 @@ void makeModelsScene()
     sphere->setCenter(Vector3(-2,1,-3));
     sphere->setRadius(1.5);
     sphere->setMaterial(new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10, 1));
-    //sphere->setMaterial(new TexturedPhong(new TestTexture3D(), Vector3(0.1,0.1,0.1), Vector3(1,1,1), 1, 0));
+    //sphere->setMaterial(new TexturedPhong(new StoneTexture(128), Vector3(0.1,0.1,0.1), Vector3(1,1,1), 1, 0));
     g_scene->addObject(sphere);
 
     Material* teapotMat = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20);
@@ -208,8 +209,8 @@ void makeModelsScene()
     plane->setNormal(Vector3(0, 1, 0));
     plane->setOrigin(Vector3(0, -3, 0));
     //plane->setMaterial(new Lambert(Vector3(0.8, 0.8, 0.8), Vector3(0.1, 0.1, 0.1), 0.0f));
-    plane->setMaterial(new TexturedPhong(new TestTexture3D(), Vector3(0,0,0)));
-//    plane->setMaterial(new TexturedPhong(autumnHDR, Vector3(0,0,0)));
+    //plane->setMaterial(new TexturedPhong(new TestTexture3D(), Vector3(0,0,0)));
+    plane->setMaterial(new TexturedPhong(new StoneTexture(512), Vector3(0,0,0)));
 
 /*
 	Plane * plane2 = new Plane();
