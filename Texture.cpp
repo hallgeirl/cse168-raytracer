@@ -5,8 +5,12 @@
 #include <cstdlib>
 #include <cstdio>
 #include <map>
+#include <stdexcept>
+#include <string>
+#include <sstream>
 
 using namespace std;
+
 
 /*******************************
 class LoadedTexture
@@ -56,45 +60,97 @@ Vector3 LoadedTexture::lookup2D(const tex_coord2d_t & texture_coords)
 	return f;
 }
 
-/*****************
-class StoneTexture
-Stone texture.
-******************/
-bool pointComparer (const tex_coord2d_t &p1, const tex_coord2d_t &p2) { return (p1.u < p2.u); }
-
-StoneTexture::StoneTexture(int points)
+/***********************************
+class Grid
+Grid for use with cellular textures.
+************************************/
+Grid::Grid(int gridWidth, int gridHeight) : m_gridWidth(gridWidth), m_gridHeight(gridHeight) 
 {
-    int _k;
-    
-    //Generate some points and put them in the grid
-    for (int k = 0; k < points; k++)
+    m_grid = new gridcell_t*[m_gridHeight];
+    for (int i = 0; i < gridHeight; i++)
     {
-        tex_coord2d_t point((float)rand() / (float)RAND_MAX, (float)rand() / (float)RAND_MAX);
-        int i = (int)(point.v*(float)GRID_HEIGHT), j = (int)(point.u*(float)GRID_WIDTH);
-        m_grid[i][j].addPoint(point);
+        m_grid[i] = new gridcell_t[m_gridWidth];
     }
 }
 
-Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
+void Grid::addPoint(tex_coord2d_t point)
+{
+    if (point.u < 0 || point.u > 1.0f || point.v < 0 || point.v > 1.0)
+    {
+        ostringstream ss;
+        ss << "Error adding point to grid. " << point.u << "," << point.v << "is outside the grid.";
+        throw runtime_error(ss.str());
+    }
+    
+
+    int i = (int)(point.v*(float)m_gridHeight), j = (int)(point.u*(float)m_gridWidth);
+    m_grid[i][j].addPoint(point);
+}
+
+
+/************************************************************************************
+class CellularTexture2D
+Base class for all 2D cellular textures. Has methods for finding closest points, etc.
+*************************************************************************************/
+CellularTexture2D::CellularTexture2D(int points, int gridWidth, int gridHeight) : m_grid(gridWidth, gridHeight)
+{
+    populateGrid(points);
+}
+
+void CellularTexture2D::populateGrid(int points)
+{
+    //Generate some random points and put them in the grid
+    for (int k = 0; k < points; k++)
+    {
+        tex_coord2d_t point((float)rand() / (float)RAND_MAX, (float)rand() / (float)RAND_MAX);
+        m_grid.addPoint(point);
+    }
+}
+
+
+
+Vector3 CellularTexture2D::lookup2D(const tex_coord2d_t & coords)
+{
+    float *f = getClosestDistances(coords, 4);
+    
+    float comb = exp(-(f[1]-f[0]+f[2])*100)*2;
+    //float out = exp(-(comb)*100);
+    //float out = comb > 0.8 ? 0.8 : 0.2;
+    float out = comb;
+    
+    //add some noise for good measure
+    //out += (rand()/(float)RAND_MAX)*0.4-0.2; 
+   
+    return Vector3(out);    
+}
+
+//Find the n closest distances to the given point
+float* CellularTexture2D::getClosestDistances(const tex_coord2d_t & coords, int n)
 {
     //Make sure coords is between 0 and 1
     float u = coords.u - int(coords.u), 
           v = coords.v - int(coords.v);
     
-    float cellWidth  = 1.0f/(float)GRID_WIDTH,
-          cellHeight = 1.0f/(float)GRID_HEIGHT; 
-          
+    float cellWidth  = 1.0f/(float)(m_grid.getWidth()),
+          cellHeight = 1.0f/(float)(m_grid.getHeight()); 
+    
+    int gridWidth = m_grid.getWidth(),
+        gridHeight = m_grid.getHeight();
+        
     //State of cells (visited, added). Removes the need for a linear search.
     //Bit 1 indicates visited or not, bit 2 indicates if it's added to the search queue.
     map<pair<int,int>, int> state;
     
-    //The two best points.
-    float f[2] = {2, 2}; 
+    //The best n points.
+    float *f = new float[n];
+    
+    for (int i = 0; i < n; i++)
+        f[i] = 2;//Initialize the distances to a number higher than the maximum distance (which is sqrt(2))
     
     vector<pair<int,int> > searchQueue;
    
     //Start in current cell.
-    pair<int,int> currentPos((int)(v*(float)GRID_HEIGHT), (int)(u*(float)GRID_WIDTH));
+    pair<int,int> currentPos((int)(v*(float)gridHeight), (int)(u*(float)gridWidth));
     searchQueue.push_back(currentPos);
     state[currentPos] = 0;
     int it = 0;
@@ -105,25 +161,30 @@ Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
         int _i = searchQueue.back().first, _j = searchQueue.back().second; // Current cell position
         state[searchQueue.back()] |= 1; //Mark as visited 
         searchQueue.pop_back();
+        const std::vector<tex_coord2d_t> &points = m_grid.getPoints(_i, _j);
         
         //Check the points in this grid cell
-        for (int i = 0; i < m_grid[_i][_j].points.size(); i++)
+        for (int i = 0; i < points.size(); i++)
         {
-            tex_coord2d_t diff(fabs(u - m_grid[_i][_j].points[i].u), fabs(v - m_grid[_i][_j].points[i].v));
+            tex_coord2d_t diff(fabs(u - points[i].u), fabs(v - points[i].v));
             if (diff.u > 0.5) diff.u = 1-diff.u;
             if (diff.v > 0.5) diff.v = 1-diff.v;
             float dist = sqrt(diff.u*diff.u + diff.v*diff.v);
             
-            if (dist < f[1])
+            //Check if we might get a better value for one of our distances. If not, just continue.
+            if (f[n-1] > dist)
             {
-                if (dist < f[0])
+                for (int j = 0; j < n; j++)
                 {
-                    //Found new best hit.
-                    f[1] = f[0]; f[0] = dist;
-                }
-                else
-                {
-                    f[1] = dist;
+                    if (dist < f[j])
+                    {
+                        for (int k = n-1; k > j; k--)
+                        {
+                            f[k] = f[k-1];
+                        }
+                        f[j] = dist;
+                        break;
+                    }
                 }
             }
         }
@@ -136,22 +197,22 @@ Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
             float y1 = (float)i*cellHeight, y2 = (float)(i+1)*cellHeight;
             //If it's impossible to get a better 2nd. best distance, we can't get a best distance either so just continue.
             //The check on i is done because of possible rounding errors when the point is near the center of the grid square.
-            if (fmin(fabs(v-y1), fabs(v-y2)) > f[1] && i != _i) continue;
+            if (fmin(fabs(v-y1), fabs(v-y2)) > f[n-1] && i != _i) continue;
 
-            int i_proper = i + (i<0?GRID_HEIGHT:0); // Wrapped position
-            i_proper %= GRID_HEIGHT;
+            int i_proper = i + (i<0?gridHeight:0); // Wrapped position
+            i_proper %= gridHeight;
             
             //printf("y1 %f\t y2 %f dist1 %f dist2 %f pointx %f pointy %f\n", y1, y2, fabs(v-y1), fabs(v-y2), );
             for (int j = _j-1; j <= _j+1; j++)
             {
-                int j_proper = j + (j<0?GRID_WIDTH:0);
-                j_proper %= GRID_WIDTH;
+                int j_proper = j + (j<0?gridWidth:0);
+                j_proper %= gridWidth;
                 
                 if (i_proper == _i && j_proper == _j) continue; //Ignore the center cell.
                 float x1 = (float)j*cellWidth, x2 = (float)(j+1)*cellWidth;
                 
                 //Again, we can ignore a cell whose horizontal distance to the point is more than the current best 2nd hit. 
-                if (fmin(fabs(u-x1), fabs(u-x2)) > f[1] && j != _j) continue;
+                if (fmin(fabs(u-x1), fabs(u-x2)) > f[n-1] && j != _j) continue;
                 
                 pair<int, int> neighbor(i_proper, j_proper);
                 
@@ -165,13 +226,8 @@ Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
             }
         }
     }
-    //printf("%d\n", it);
-//    float out = 2.0 * f[0] / (f[1]+f[0]);
-    
-    float out = exp(-(f[1]-f[0])*100)/2.72;
-    
-    //if (f[0] > f[1]) printf("FOOOO");
-    return Vector3(out);    
+
+    return f;
 }
 
 /**************************************************************

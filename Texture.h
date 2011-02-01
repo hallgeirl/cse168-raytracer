@@ -16,6 +16,20 @@ typedef struct gridcell_s
     void addPoint(tex_coord2d_t point) { points.push_back(point); }
 } gridcell_t;
 
+class Grid
+{
+public:
+    Grid(int gridWidth, int gridHeight);
+    void addPoint(tex_coord2d_t point);
+
+    const std::vector<tex_coord2d_t> &getPoints(int cellI, int cellJ) { return m_grid[cellI][cellJ].points; }
+    int getWidth() { return m_gridWidth; }
+    int getHeight() { return m_gridHeight; }
+private:
+    gridcell_t ** m_grid;
+    int m_gridWidth, m_gridHeight;
+};
+
 class Texture
 {
 public:
@@ -36,17 +50,26 @@ public:
 	virtual LookupCoordinates GetLookupCoordinates() const {return UVW; }
 };
 
-class StoneTexture : public Texture2D
+class CellularTexture2D : public Texture2D
 {
 public:
-    StoneTexture(int points);
-    virtual Vector3 lookup2D(const tex_coord2d_t & coords);
+    CellularTexture2D(int points, int gridWidth, int gridHeight);
+    float * getClosestDistances(const tex_coord2d_t &point, int n); //Get the n closest distances from a given point
+    
+    //Populate the grid with grid points. Override to control distribution of points.
+    virtual void populateGrid(int points); 
+    //Typically, this function combines the values gotten from getClosestDistances() and maps it to a color value.
+    virtual Vector3 lookup2D(const tex_coord2d_t & coords); 
     
 protected:
-    static const int GRID_WIDTH=10, GRID_HEIGHT=10;
-
     std::vector<tex_coord2d_t> m_points;
-    gridcell_t m_grid[GRID_HEIGHT][GRID_HEIGHT];
+    
+    Grid m_grid;
+};
+
+class StoneTexture : public CellularTexture2D
+{
+    
 };
 
 //Generates random 3D noise. For testing.

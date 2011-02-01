@@ -201,7 +201,7 @@ void makeModelsScene()
     Material* teapotMat = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20);
 	teapotMat->SetReflection(0.5f);
 	teapotMat->SetRefraction(0.5f, 1.5);
-	addModel("models/teapot.obj", teapotMat, g_scene);
+	//addModel("models/teapot.obj", teapotMat, g_scene);
 
 	g_scene->setEnvironment(autumnHDR);
 
@@ -210,7 +210,7 @@ void makeModelsScene()
     plane->setOrigin(Vector3(0, -3, 0));
     //plane->setMaterial(new Lambert(Vector3(0.8, 0.8, 0.8), Vector3(0.1, 0.1, 0.1), 0.0f));
     //plane->setMaterial(new TexturedPhong(new TestTexture3D(), Vector3(0,0,0)));
-    plane->setMaterial(new TexturedPhong(new StoneTexture(512), Vector3(0,0,0)));
+    plane->setMaterial(new TexturedPhong(new CellularTexture2D(2048, 10, 10), Vector3(0,0,0)));
 
 /*
 	Plane * plane2 = new Plane();
