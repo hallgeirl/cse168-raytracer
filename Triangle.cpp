@@ -88,7 +88,7 @@ Triangle::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
     const Vector3 & nC = m_mesh->normals()[ni3.z];
 
 #ifdef __SSE4_1__	
-	//this is actually loads in reverse order...
+	//this actually loads in reverse order...
 	__m128 _rd = _mm_set_ps(-r.d.x, -r.d.y, -r.d.z, 0.0f);
 	__m128 _ro = _mm_set_ps(r.o.x, r.o.y, r.o.z, 0.0f);
 
@@ -125,7 +125,7 @@ Triangle::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
 	result.N.y = _N.m128_f32[2];
 	result.N.z = _N.m128_f32[1];
 
-	result.t = _t.m128_f32[0];
+	result.t = _t.m128_f32[3];
 
 #else
 
