@@ -87,6 +87,8 @@ Triangle::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
     const Vector3 & nB = m_mesh->normals()[ni3.y];
     const Vector3 & nC = m_mesh->normals()[ni3.z];
 
+	HitInfo result2;
+
 #ifdef __SSE4_1__	
 	//this actually loads in reverse order...
 	__m128 _rd = _mm_set_ps(-r.d.x, -r.d.y, -r.d.z, 0.0f);
@@ -114,8 +116,8 @@ Triangle::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
 		return false;
 
 	__m128 _P = _mm_add_ps(_A, _mm_add_ps(_mm_mul_ps(_beta, _BmA), _mm_mul_ps(_gamma, _CmA)));
-	__m128 _alpha = _mm_sub_ps(_mm_set1_ps(1.0f), _mm_sub_ps(_beta, _gamma));
-	__m128 _N = _mm_add_ps(_mm_mul_ps(_alpha, _nA), _mm_add_ps(_mm_mul_ps(_beta, _nC), _mm_mul_ps(_gamma, _nC)));
+	__m128 _alpha = _mm_sub_ps(_mm_sub_ps(_mm_set1_ps(1.0f), _beta), _gamma);
+	__m128 _N = _mm_add_ps(_mm_mul_ps(_alpha, _nA), _mm_add_ps(_mm_mul_ps(_beta, _nB), _mm_mul_ps(_gamma, _nC)));
 
 	result.P.x = _P.m128_f32[3];
 	result.P.y = _P.m128_f32[2];
@@ -139,9 +141,9 @@ Triangle::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
 
     if (beta < -epsilon || gamma < -epsilon || beta+gamma > 1+epsilon || t < tMin || t > tMax) return false;
 
-    result.P = A + beta*BmA + gamma*CmA;
-    result.t = t;
-    result.N = (1-beta-gamma)*nA + beta*nB + gamma*nC;
+    result2.P = A + beta*BmA + gamma*CmA;
+    result2.t = t;
+    result2.N = (1-beta-gamma)*nA + beta*nB + gamma*nC;
 
 #endif
 
