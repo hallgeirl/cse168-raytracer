@@ -2,12 +2,37 @@
 #define _TEXTURE_H_
 
 #include "Phong.h"
+#include <Perlin.h>
 #include <string>
 #include <iostream>
 #include <vector>
 #include <list>
 #include <FreeImage.h>
-#include <noise/noisegen.h>
+#include <Worley.h>
+
+//Generate turbulent perlin noise at (x,y,z).
+//The returned number is between -1 and 1.
+//frequencyIncrease indicates how quickly the frequency increases over multiple turbulence iterations.
+//amplitudeFalloff indicates how quickly the amplitude of the higher frequency noise values decrease.
+//iterations determines the number of iterations to use for turbulence.
+inline float generateNoise(float x, float y, float z, float initialFrequency, float frequencyIncrease, float amplitudeFalloff, int iterations)
+{
+    float amplitude = 1;
+    float frequency = initialFrequency;
+    float value = 0;
+    float max_val = 0;
+    
+    for (int i = 0; i < iterations; i++)
+    {
+        value += amplitude * PerlinNoise::noise(x*frequency, y*frequency, z*frequency);
+        max_val += amplitude;
+        
+        frequency *= frequencyIncrease;
+        amplitude *= amplitudeFalloff;
+    }
+  
+    return value/max_val;
+}
 
 //Used for the grid in cellular textures
 typedef struct gridcell_s
@@ -33,6 +58,8 @@ private:
 class Texture
 {
 public:
+    virtual float bumpHeight2D(const tex_coord2d_t & coords) { return 0; }
+    virtual float bumpHeight3D(const tex_coord3d_t & coords) { return 0; }
 	virtual LookupCoordinates GetLookupCoordinates() const = 0;
     virtual Vector3 lookup2D(const tex_coord2d_t & coords) { return Vector3(0,0,0); } // Look up the color value for a specified position
     virtual Vector3 lookup3D(const tex_coord3d_t & coords) { return Vector3(0,0,0); } // For 3D textures
@@ -69,32 +96,11 @@ protected:
 
 class StoneTexture : public CellularTexture2D
 {
-    
-};
-
-//Generates random 3D noise. For testing.
-class TestTexture3D : public Texture3D
-{
 public:
-	virtual Vector3 lookup3D(const tex_coord3d_t & coords)
-	{
-		float x = fabs(coords.u) * 1.0, y = fabs(coords.v) * 1.0, z = fabs(coords.w) * 1.0;
-		//std::cout << x << " " << y << " " << z << std::endl;
-		//std::cout << Vector3((float)(x%256) / 255.0, (float)(y%256) / 255.0, (float)(z%256) / 255.0) << std::endl;
-		//return Vector3(0,0,0);
-		float out = 0;
-		float ampl = 1;
-		float freq = 1;
-		for (int i = 0; i < 6; i++)
-		{
-			out += ampl * (noise::GradientCoherentNoise3D (x*freq, y*freq, z*freq)/2.0 + 0.5);
-			ampl *= 0.7;
-			freq *= 2;
-		}
-
-		return Vector3(out);
-	}
+    StoneTexture(int points, int gridWidth, int gridHeight) : CellularTexture2D(points, gridWidth, gridHeight) {}
+    virtual Vector3 lookup2D(const tex_coord2d_t & coords);
 };
+
 
 //Texture loaded from a file
 class LoadedTexture : public Texture2D
@@ -104,8 +110,19 @@ public:
 	~LoadedTexture();
 
     virtual Vector3 lookup2D(const tex_coord2d_t & coords);
+//    virtual float bumpHeight2D(const tex_coord2d_t & coords) { return 0; }
+    
 protected:
-	FIBITMAP* m_bitmap;
+    Vector3 getPixel(int x, int y);     //Get the tonemapped pixel
+    FIRGBF getFloatPixel(int x, int y); //Get a pixel from the HDR
+    float tonemapValue(float val);
+
+	FIBITMAP* m_bitmap; 
+	FIBITMAP* m_toneMapped;
+	
+	float* m_toneMappedValues;
+	
+	float m_maxIntensity;
 };
 
 //Shading model that also does textures

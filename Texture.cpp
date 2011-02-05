@@ -1,4 +1,5 @@
 #include "Texture.h"
+#include <Perlin.h>
 #include <FreeImage.h>
 #include <algorithm>
 #include <memory.h>
@@ -16,24 +17,56 @@ using namespace std;
 class LoadedTexture
 Texture loaded from a image file.
 ********************************/
+
+//Tonemaps to (0,1)
+float LoadedTexture::tonemapValue(float value)
+{
+    return pow(value / m_maxIntensity, 0.3)*4; //This seems to give a fairly good image. +2ev, gamma ~3
+}
+
 LoadedTexture::LoadedTexture(std::string filename)
 {
-	FIBITMAP* tmp = FreeImage_Load(FIF_HDR, filename.c_str());
-
-	m_bitmap = FreeImage_TmoDrago03(tmp); //Do tonemapping to get pixel values in a sensible range
+	m_bitmap = FreeImage_Load(FIF_HDR, filename.c_str());
+    m_maxIntensity = -1e15;
+    
+    int w = FreeImage_GetWidth(m_bitmap), h = FreeImage_GetHeight(m_bitmap);
+    
+    for (int i = 0; i < h; i++)
+    {
+        for (int j = 0; j < w; j++)
+        {
+            FIRGBF p = getFloatPixel(j, i);
+            //Figure out the maximum intensity in the image for tone mapping
+            if (m_maxIntensity < p.red) m_maxIntensity = p.red;
+            if (m_maxIntensity < p.green) m_maxIntensity = p.green;
+            if (m_maxIntensity < p.blue) m_maxIntensity = p.blue;
+        }
+    }
+    m_toneMappedValues = new float[h*w];
+    
 }
 LoadedTexture::~LoadedTexture()
 {
 	free(m_bitmap->data);
 	free(m_bitmap);
+	
+	delete[] m_toneMappedValues;
 }
 
-//Aux. function to retrieve pixel values from a freeimage bitmap and convert them to vectors.
-Vector3 getPixel(FIBITMAP* img, int x, int y)
+FIRGBF LoadedTexture::getFloatPixel(int x, int y)
 {
-	RGBQUAD color;
-	FreeImage_GetPixelColor(img, x, y, &color);
-	return Vector3((float)color.rgbRed/255.0f,(float)color.rgbGreen/255.0f,(float)color.rgbBlue/255.0f);
+    return ((FIRGBF*)(m_bitmap->data))[y*FreeImage_GetWidth(m_bitmap)+x];
+}
+
+
+//Aux. function to retrieve pixel values from a freeimage bitmap, tonemap them and put them in a vector.
+Vector3 LoadedTexture::getPixel(int x, int y)
+{
+	FIRGBF color;
+	
+	color = getFloatPixel(x, y);
+	
+	return Vector3(tonemapValue(color.red), tonemapValue(color.green), tonemapValue(color.blue));
 }
 
 Vector3 LoadedTexture::lookup2D(const tex_coord2d_t & texture_coords)
@@ -55,7 +88,7 @@ Vector3 LoadedTexture::lookup2D(const tex_coord2d_t & texture_coords)
 	float y1_error = py_real - (float)y1;
 
 	//Get pixel values and average them
-	Vector3 f = (getPixel(m_bitmap, x1, y1) * (1-x1_error) + getPixel(m_bitmap, x2, y1) * x1_error) * (1 - y1_error) + (getPixel(m_bitmap, x1, y2) * (1-x1_error) + getPixel(m_bitmap, x2, y2) * x1_error) * y1_error;
+	Vector3 f = (getPixel(x1, y1) * (1-x1_error) + getPixel(x2, y1) * x1_error) * (1 - y1_error) + (getPixel(x1, y2) * (1-x1_error) + getPixel(x2, y2) * x1_error) * y1_error;
 
 	return f;
 }
@@ -113,7 +146,7 @@ Vector3 CellularTexture2D::lookup2D(const tex_coord2d_t & coords)
 {
     float *f = getClosestDistances(coords, 4);
     
-    float comb = exp(-(f[1]-f[0]+f[2])*100)*2;
+    float comb = exp(-(f[1]-f[0]+f[2]-0.8*f[3])*100);
     //float out = exp(-(comb)*100);
     //float out = comb > 0.8 ? 0.8 : 0.2;
     float out = comb;
@@ -121,7 +154,7 @@ Vector3 CellularTexture2D::lookup2D(const tex_coord2d_t & coords)
     //add some noise for good measure
     //out += (rand()/(float)RAND_MAX)*0.4-0.2; 
    
-    return Vector3(out);    
+    return Vector3(out);
 }
 
 //Find the n closest distances to the given point
@@ -229,6 +262,78 @@ float* CellularTexture2D::getClosestDistances(const tex_coord2d_t & coords, int 
 
     return f;
 }
+
+
+
+Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
+{
+    float red, green, blue;
+    float scale = 1;
+    float u = coords.u * scale, v = coords.v * scale;
+    long order = 3;
+    float pos[2] = {u, v}, 
+          *f = new float[order], 
+          (*delta)[2] = new float[order][2];
+    
+    unsigned long id;
+    WorleyNoise::noise2D(pos, order, f, delta, &id);
+
+    //For the outlining
+    float f1f0 = (1-pow(f[1]-f[0], 0.2))*1.5;
+
+    //Initial color value.
+    float base = fmax(pow((f[2]-f[1]+f[0]), 0.8) - f1f0, 0);
+    
+    //Some intensity variation based on which cell we're in
+    base *= ((float)(id%10))/20+0.5;
+    
+    //Add some perlin noise in the mix
+    float turb = generateNoise(u, v, 0, 2, 2, 0.8, 5);
+    base += 0.5*fabs(turb); //0.1*pow(fabs(sin(u*20+turb)), 30);
+
+    red = base+(float)(id%10)/25.0-0.2;
+    green = base;
+    blue = base;
+
+    //base = f1f0;
+
+    return Vector3(red, green, blue);
+
+/*    float *f = getClosestDistances(coords, 4);
+    
+    float scale = 10;
+    
+
+    float out;
+    
+    float comb = f[1]-f[0];
+ */
+   
+    //float v = sin(coords.u*5+0.0*generateNoise(coords.u, 0, 0, 50, 0.5, 0.5, 1))/2+0.5;
+/*
+    float turb = 5*generateNoise(u, v, 0, 5, 3, 0.2, 5);
+    //out = sin(u + turb);
+    out = pow(fabs(sin(u*20+turb)), 30);
+    out += 0.5*generateNoise(u, v, 0, 5, 3, 0.2, 5);*/
+    
+    /*if (fabs(out) < 0.9) v = 0;
+    else out = fabs(out);*/
+
+    //if (v < 0.99) v = 0; 
+    /*if (comb < 0.005) out = PerlinNoise::noise(coords.u, coords.v, 0);
+    else out = exp(-comb*100);*/
+
+    //float out = exp(-(comb)*100);
+    //float out = comb > 0.8 ? 0.8 : 0.2;
+    //float out = comb;
+    
+   
+    //add some noise for good measure
+    //out += (rand()/(float)RAND_MAX)*0.4-0.2; 
+   
+//    return Vector3(out, out, out);
+}
+
 
 /**************************************************************
 class TexturedPhong

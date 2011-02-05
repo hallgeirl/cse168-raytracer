@@ -47,12 +47,12 @@ Plane::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
 
 tex_coord2d_t Plane::toUVCoordinates(const Vector3 & xyz) const
 {
-    float inX = xyz.x / 40, inY = xyz.z / 40;
+    float inX = xyz.x, inY = xyz.z;
     // Wrap coordinates to [0,1]
-    inX -= (int)inX; 
+/*    inX -= (int)inX; 
     inY -= (int)inY;
     if (inX < 0) inX++;
-    if (inY < 0) inY++;
+    if (inY < 0) inY++;*/
     
     return tex_coord2d_t(inX, inY);
 }
