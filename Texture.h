@@ -58,8 +58,8 @@ private:
 class Texture
 {
 public:
-    virtual float bumpHeight2D(const tex_coord2d_t & coords) { return 0; }
-    virtual float bumpHeight3D(const tex_coord3d_t & coords) { return 0; }
+    virtual float bumpHeight2D(const tex_coord2d_t & coords) const { return 0; }
+    virtual float bumpHeight3D(const tex_coord3d_t & coords) const { return 0; }
 	virtual LookupCoordinates GetLookupCoordinates() const = 0;
     virtual Vector3 lookup2D(const tex_coord2d_t & coords) { return Vector3(0,0,0); } // Look up the color value for a specified position
     virtual Vector3 lookup3D(const tex_coord3d_t & coords) { return Vector3(0,0,0); } // For 3D textures
@@ -98,6 +98,7 @@ class StoneTexture : public CellularTexture2D
 {
 public:
     StoneTexture(int points, int gridWidth, int gridHeight) : CellularTexture2D(points, gridWidth, gridHeight) {}
+    virtual float bumpHeight2D(const tex_coord2d_t & coords) const;
     virtual Vector3 lookup2D(const tex_coord2d_t & coords);
 };
 
@@ -110,7 +111,6 @@ public:
 	~LoadedTexture();
 
     virtual Vector3 lookup2D(const tex_coord2d_t & coords);
-//    virtual float bumpHeight2D(const tex_coord2d_t & coords) { return 0; }
     
 protected:
     Vector3 getPixel(int x, int y);     //Get the tonemapped pixel
@@ -140,6 +140,8 @@ public:
 
     virtual Vector3 diffuse2D(const tex_coord2d_t & texture_coords) const;
     virtual Vector3 diffuse3D(const tex_coord3d_t & texture_coords) const;
+    virtual float   bumpHeight2D(const tex_coord2d_t & texture_coords) const;
+    virtual float   bumpHeight3D(const tex_coord3d_t & texture_coords) const;
 
 protected:
     Texture * m_texture;

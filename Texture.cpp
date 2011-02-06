@@ -264,6 +264,29 @@ float* CellularTexture2D::getClosestDistances(const tex_coord2d_t & coords, int 
 }
 
 
+float StoneTexture::bumpHeight2D(const tex_coord2d_t & coords) const
+{
+    float red, green, blue;
+    float scale = 2;
+    float u = coords.u * scale, v = coords.v * scale;
+    long order = 3;
+    float pos[2] = {u, v}, 
+          *f = new float[order], 
+          (*delta)[2] = new float[order][2];
+    
+    unsigned long id;
+    WorleyNoise::noise2D(pos, order, f, delta, &id);
+    
+    float f1f0 = 0;//(pow(f[1]-f[0], 0.2));
+
+    float turb = generateNoise(u, v, 0, 0.5, 2, 0.8, 1)/2+0.5;
+    
+    //f1f0 += 0.2*turb;
+    return 0;
+    //return 0.1*pow(sin(30*turb+u*5)/2+0.5, 0.05);
+    //return generateNoise(u, v, 0, 0.5, 2, 0.8, 1)/2+0.5;
+}
+
 
 Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
 {
@@ -353,4 +376,14 @@ Vector3 TexturedPhong::diffuse2D(const tex_coord2d_t & texture_coords) const
 Vector3 TexturedPhong::diffuse3D(const tex_coord3d_t & texture_coords) const
 {
     return m_texture->lookup3D(texture_coords);
+}
+
+float TexturedPhong::bumpHeight2D(const tex_coord2d_t & texture_coords) const
+{
+    return m_texture->bumpHeight2D(texture_coords);
+}
+
+float TexturedPhong::bumpHeight3D(const tex_coord3d_t & texture_coords) const
+{
+    return m_texture->bumpHeight3D(texture_coords);
 }

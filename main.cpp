@@ -165,10 +165,10 @@ void makeModelsScene()
 
     // set up the camera
     g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
-    //g_camera->setEye(Vector3(-5, 1, 7));
-    //g_camera->setLookAt(Vector3(-1.5, 2, 0));
-    g_camera->setEye(Vector3(-5, 20, 7));
-    g_camera->setLookAt(Vector3(-4, 0, 7));
+    g_camera->setEye(Vector3(-5, 2, 7));
+    g_camera->setLookAt(Vector3(-1.5, 0, 0));
+    //g_camera->setEye(Vector3(-5, 20, 7));
+    //g_camera->setLookAt(Vector3(-4, 1, 7));
     g_camera->setUp(Vector3(0, 1, 0));
     g_camera->setFOV(45);
 
@@ -213,7 +213,7 @@ void makeModelsScene()
     
     //plane->setMaterial(new TexturedPhong(new TestTexture3D(), Vector3(0,0,0)));
     //plane->setMaterial(new TexturedPhong(new CellularTexture2D(512, 5, 5), Vector3(0,0,0), Vector3(1), 1, 0));
-    plane->setMaterial(new TexturedPhong(new StoneTexture(512, 5, 5), Vector3(0.1,0.1,0.1), Vector3(1,1,1), 1, 0, 0, 1.5));
+    plane->setMaterial(new TexturedPhong(new StoneTexture(512, 5, 5), Vector3(0.1,0.1,0.1), Vector3(1,1,1), 1, 0, 0, 1.3));
 
 /*
 	Plane * plane2 = new Plane();

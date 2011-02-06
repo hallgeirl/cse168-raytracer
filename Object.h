@@ -5,19 +5,7 @@
 #include "Miro.h"
 #include "Material.h"
 
-typedef struct tex_coord2d_s
-{
-	tex_coord2d_s() : u(0), v(0) {}
-	tex_coord2d_s(float _u, float _v) : u(_u), v(_v) {}
-	float u, v;
-} tex_coord2d_t;
 
-typedef struct tex_coord3d_s
-{
-	tex_coord3d_s() : u(0), v(0), w(0) {}
-	tex_coord3d_s(float _u, float _v, float _w) : u(_u), v(_v), w(_w) {}
-	float u, v, w;
-} tex_coord3d_t;
 
 class Object
 {

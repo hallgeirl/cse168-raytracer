@@ -78,7 +78,35 @@ Scene::raytraceImage(Camera *cam, Image *img)
 bool
 Scene::trace(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
 {
-    return m_bvh.intersect(minHit, ray, tMin, tMax);
+    bool result = m_bvh.intersect(minHit, ray, tMin, tMax);
+    if (result)
+    {
+        //Bump mapping
+        float delta = 0.00001;
+        if (minHit.material->GetLookupCoordinates() == UV)
+        {
+            //Take a few samples to calculate the derivative
+            tex_coord2d_t center = minHit.object->toUVCoordinates(minHit.P);
+            float u = center.u, v = center.v;
+            float u1 = minHit.material->bumpHeight2D(tex_coord2d_t(u-delta, v)), 
+                  u2 = minHit.material->bumpHeight2D(tex_coord2d_t(u+delta, v)),
+                  v1 = minHit.material->bumpHeight2D(tex_coord2d_t(u, v-delta)),
+                  v2 = minHit.material->bumpHeight2D(tex_coord2d_t(u, v+delta));
+                  
+            //Approximate derivatives using central finite differences
+            float dx = (u2-u1)/(2*delta),
+                  dy = (v2-v1)/(2*delta);
+            
+            minHit.N += dx*(cross(minHit.N, Vector3(0,0,1)))-dy*(cross(minHit.N, Vector3(1,0,0)));
+            minHit.N.normalize();
+            
+        }   
+        //Todo: implement for 3D
+        //bumpHeight = minHit.material->bumpHeight3D(tex_coord3d_t(minHit.P.x, minHit.P.y, minHit.P.z));
+            
+        
+    }
+    return result;
 }
 
 bool
@@ -94,7 +122,7 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 		{
 			//shadeResult = hitInfo.material->shade(ray, hitInfo, *this);
 			++depth;
-
+	
 			//if reflective material, send trace with ReflectRay
 			float reflection = fmin(hitInfo.material->GetReflection(), 1);
 			if (reflection > 0.0f)
