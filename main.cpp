@@ -101,7 +101,7 @@ makeSphereScene()
     // set up the camera
     g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
     g_camera->setEye(Vector3(-5, 1, 3));
-    g_camera->setLookAt(Vector3(0, 0, 0));
+    g_camera->setLookAt(Vector3(0, 1, 0));
     g_camera->setUp(Vector3(0, 1, 0));
     g_camera->setFOV(45);
 
@@ -165,15 +165,16 @@ void makeModelsScene()
 
     // set up the camera
     g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
-    g_camera->setEye(Vector3(-5, 2, 7));
-    //g_camera->setEye(Vector3(-5, 30, 7));
-    g_camera->setLookAt(Vector3(-1.5, 0, 0));
+    //g_camera->setEye(Vector3(-5, 1, 7));
+    //g_camera->setLookAt(Vector3(-1.5, 2, 0));
+    g_camera->setEye(Vector3(-5, 20, 7));
+    g_camera->setLookAt(Vector3(-4, 0, 7));
     g_camera->setUp(Vector3(0, 1, 0));
     g_camera->setFOV(45);
 
     // create and place a point light source
     PointLight * light = new PointLight;
-    light->setPosition(Vector3(-5, 10, 5));
+    light->setPosition(Vector3(-5, 15, 5));
     light->setColor(Vector3(1, 1, 1));
     light->setWattage(1000);
     g_scene->addLight(light);
@@ -194,8 +195,8 @@ void makeModelsScene()
     Sphere * sphere = new Sphere;
     sphere->setCenter(Vector3(-2,1,-3));
     sphere->setRadius(1.5);
-    sphere->setMaterial(new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10, 1));
-    //sphere->setMaterial(new TexturedPhong(new StoneTexture(128), Vector3(0.1,0.1,0.1), Vector3(1,1,1), 1, 0));
+    sphere->setMaterial(new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10, 0.2, 0.8, 1.5));
+    //sphere->setMaterial(new TexturedPhong(new StoneTexture(512, 5, 5), Vector3(0.1,0.1,0.1), Vector3(1,1,1), 1, 0, 0, 1.5));
     g_scene->addObject(sphere);
 
     Material* teapotMat = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20);
@@ -207,10 +208,12 @@ void makeModelsScene()
 
 	Plane * plane = new Plane();
     plane->setNormal(Vector3(0, 1, 0));
-    plane->setOrigin(Vector3(0, -3, 0));
-    //plane->setMaterial(new Lambert(Vector3(0.8, 0.8, 0.8), Vector3(0.1, 0.1, 0.1), 0.0f));
+    plane->setOrigin(Vector3(0, -0.5, 0));
+    //plane->setMaterial(new Lambert(Vector3(0.8, 0.8, 0.8), Vector3(0.1, 0.1, 0.1), 1));
+    
     //plane->setMaterial(new TexturedPhong(new TestTexture3D(), Vector3(0,0,0)));
-    plane->setMaterial(new TexturedPhong(new StoneTexture(512), Vector3(0,0,0)));
+    //plane->setMaterial(new TexturedPhong(new CellularTexture2D(512, 5, 5), Vector3(0,0,0), Vector3(1), 1, 0));
+    plane->setMaterial(new TexturedPhong(new StoneTexture(512, 5, 5), Vector3(0.1,0.1,0.1), Vector3(1,1,1), 1, 0, 0, 1.5));
 
 /*
 	Plane * plane2 = new Plane();

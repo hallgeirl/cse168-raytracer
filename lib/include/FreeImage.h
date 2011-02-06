@@ -296,6 +296,7 @@ typedef struct tagFICOMPLEX {
 #define FI_RGBA_RED_SHIFT		0
 #define FI_RGBA_GREEN_SHIFT		8
 #define FI_RGBA_BLUE_SHIFT		16
+
 #define FI_RGBA_ALPHA_SHIFT		24
 #endif // FREEIMAGE_COLORORDER
 #else

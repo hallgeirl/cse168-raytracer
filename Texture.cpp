@@ -1,35 +1,72 @@
 #include "Texture.h"
+#include <Perlin.h>
 #include <FreeImage.h>
 #include <algorithm>
 #include <memory.h>
 #include <cstdlib>
 #include <cstdio>
 #include <map>
+#include <stdexcept>
+#include <string>
+#include <sstream>
 
 using namespace std;
+
 
 /*******************************
 class LoadedTexture
 Texture loaded from a image file.
 ********************************/
+
+//Tonemaps to (0,1)
+float LoadedTexture::tonemapValue(float value)
+{
+    return pow(value / m_maxIntensity, 0.3)*4; //This seems to give a fairly good image. +2ev, gamma ~3
+}
+
 LoadedTexture::LoadedTexture(std::string filename)
 {
-	FIBITMAP* tmp = FreeImage_Load(FIF_HDR, filename.c_str());
-
-	m_bitmap = FreeImage_TmoDrago03(tmp); //Do tonemapping to get pixel values in a sensible range
+	m_bitmap = FreeImage_Load(FIF_HDR, filename.c_str());
+    m_maxIntensity = -1e15;
+    
+    int w = FreeImage_GetWidth(m_bitmap), h = FreeImage_GetHeight(m_bitmap);
+    
+    for (int i = 0; i < h; i++)
+    {
+        for (int j = 0; j < w; j++)
+        {
+            FIRGBF p = getFloatPixel(j, i);
+            //Figure out the maximum intensity in the image for tone mapping
+            if (m_maxIntensity < p.red) m_maxIntensity = p.red;
+            if (m_maxIntensity < p.green) m_maxIntensity = p.green;
+            if (m_maxIntensity < p.blue) m_maxIntensity = p.blue;
+        }
+    }
+    m_toneMappedValues = new float[h*w];
+    
 }
 LoadedTexture::~LoadedTexture()
 {
 	free(m_bitmap->data);
 	free(m_bitmap);
+	
+	delete[] m_toneMappedValues;
 }
 
-//Aux. function to retrieve pixel values from a freeimage bitmap and convert them to vectors.
-Vector3 getPixel(FIBITMAP* img, int x, int y)
+FIRGBF LoadedTexture::getFloatPixel(int x, int y)
 {
-	RGBQUAD color;
-	FreeImage_GetPixelColor(img, x, y, &color);
-	return Vector3((float)color.rgbRed/255.0f,(float)color.rgbGreen/255.0f,(float)color.rgbBlue/255.0f);
+    return ((FIRGBF*)(m_bitmap->data))[y*FreeImage_GetWidth(m_bitmap)+x];
+}
+
+
+//Aux. function to retrieve pixel values from a freeimage bitmap, tonemap them and put them in a vector.
+Vector3 LoadedTexture::getPixel(int x, int y)
+{
+	FIRGBF color;
+	
+	color = getFloatPixel(x, y);
+	
+	return Vector3(tonemapValue(color.red), tonemapValue(color.green), tonemapValue(color.blue));
 }
 
 Vector3 LoadedTexture::lookup2D(const tex_coord2d_t & texture_coords)
@@ -51,50 +88,102 @@ Vector3 LoadedTexture::lookup2D(const tex_coord2d_t & texture_coords)
 	float y1_error = py_real - (float)y1;
 
 	//Get pixel values and average them
-	Vector3 f = (getPixel(m_bitmap, x1, y1) * (1-x1_error) + getPixel(m_bitmap, x2, y1) * x1_error) * (1 - y1_error) + (getPixel(m_bitmap, x1, y2) * (1-x1_error) + getPixel(m_bitmap, x2, y2) * x1_error) * y1_error;
+	Vector3 f = (getPixel(x1, y1) * (1-x1_error) + getPixel(x2, y1) * x1_error) * (1 - y1_error) + (getPixel(x1, y2) * (1-x1_error) + getPixel(x2, y2) * x1_error) * y1_error;
 
 	return f;
 }
 
-/*****************
-class StoneTexture
-Stone texture.
-******************/
-bool pointComparer (const tex_coord2d_t &p1, const tex_coord2d_t &p2) { return (p1.u < p2.u); }
-
-StoneTexture::StoneTexture(int points)
+/***********************************
+class Grid
+Grid for use with cellular textures.
+************************************/
+Grid::Grid(int gridWidth, int gridHeight) : m_gridWidth(gridWidth), m_gridHeight(gridHeight) 
 {
-    int _k;
-    
-    //Generate some points and put them in the grid
-    for (int k = 0; k < points; k++)
+    m_grid = new gridcell_t*[m_gridHeight];
+    for (int i = 0; i < gridHeight; i++)
     {
-        tex_coord2d_t point((float)rand() / (float)RAND_MAX, (float)rand() / (float)RAND_MAX);
-        int i = (int)(point.v*(float)GRID_HEIGHT), j = (int)(point.u*(float)GRID_WIDTH);
-        m_grid[i][j].addPoint(point);
+        m_grid[i] = new gridcell_t[m_gridWidth];
     }
 }
 
-Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
+void Grid::addPoint(tex_coord2d_t point)
+{
+    if (point.u < 0 || point.u > 1.0f || point.v < 0 || point.v > 1.0)
+    {
+        ostringstream ss;
+        ss << "Error adding point to grid. " << point.u << "," << point.v << "is outside the grid.";
+        throw runtime_error(ss.str());
+    }
+    
+
+    int i = (int)(point.v*(float)m_gridHeight), j = (int)(point.u*(float)m_gridWidth);
+    m_grid[i][j].addPoint(point);
+}
+
+
+/************************************************************************************
+class CellularTexture2D
+Base class for all 2D cellular textures. Has methods for finding closest points, etc.
+*************************************************************************************/
+CellularTexture2D::CellularTexture2D(int points, int gridWidth, int gridHeight) : m_grid(gridWidth, gridHeight)
+{
+    populateGrid(points);
+}
+
+void CellularTexture2D::populateGrid(int points)
+{
+    //Generate some random points and put them in the grid
+    for (int k = 0; k < points; k++)
+    {
+        tex_coord2d_t point((float)rand() / (float)RAND_MAX, (float)rand() / (float)RAND_MAX);
+        m_grid.addPoint(point);
+    }
+}
+
+
+
+Vector3 CellularTexture2D::lookup2D(const tex_coord2d_t & coords)
+{
+    float *f = getClosestDistances(coords, 4);
+    
+    float comb = exp(-(f[1]-f[0]+f[2]-0.8*f[3])*100);
+    //float out = exp(-(comb)*100);
+    //float out = comb > 0.8 ? 0.8 : 0.2;
+    float out = comb;
+    
+    //add some noise for good measure
+    //out += (rand()/(float)RAND_MAX)*0.4-0.2; 
+   
+    return Vector3(out);
+}
+
+//Find the n closest distances to the given point
+float* CellularTexture2D::getClosestDistances(const tex_coord2d_t & coords, int n)
 {
     //Make sure coords is between 0 and 1
     float u = coords.u - int(coords.u), 
           v = coords.v - int(coords.v);
     
-    float cellWidth  = 1.0f/(float)GRID_WIDTH,
-          cellHeight = 1.0f/(float)GRID_HEIGHT; 
-          
+    float cellWidth  = 1.0f/(float)(m_grid.getWidth()),
+          cellHeight = 1.0f/(float)(m_grid.getHeight()); 
+    
+    int gridWidth = m_grid.getWidth(),
+        gridHeight = m_grid.getHeight();
+        
     //State of cells (visited, added). Removes the need for a linear search.
     //Bit 1 indicates visited or not, bit 2 indicates if it's added to the search queue.
     map<pair<int,int>, int> state;
     
-    //The two best points.
-    float f[2] = {2, 2}; 
+    //The best n points.
+    float *f = new float[n];
+    
+    for (int i = 0; i < n; i++)
+        f[i] = 2;//Initialize the distances to a number higher than the maximum distance (which is sqrt(2))
     
     vector<pair<int,int> > searchQueue;
    
     //Start in current cell.
-    pair<int,int> currentPos((int)(v*(float)GRID_HEIGHT), (int)(u*(float)GRID_WIDTH));
+    pair<int,int> currentPos((int)(v*(float)gridHeight), (int)(u*(float)gridWidth));
     searchQueue.push_back(currentPos);
     state[currentPos] = 0;
     int it = 0;
@@ -105,25 +194,30 @@ Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
         int _i = searchQueue.back().first, _j = searchQueue.back().second; // Current cell position
         state[searchQueue.back()] |= 1; //Mark as visited 
         searchQueue.pop_back();
+        const std::vector<tex_coord2d_t> &points = m_grid.getPoints(_i, _j);
         
         //Check the points in this grid cell
-        for (int i = 0; i < m_grid[_i][_j].points.size(); i++)
+        for (int i = 0; i < points.size(); i++)
         {
-            tex_coord2d_t diff(fabs(u - m_grid[_i][_j].points[i].u), fabs(v - m_grid[_i][_j].points[i].v));
+            tex_coord2d_t diff(fabs(u - points[i].u), fabs(v - points[i].v));
             if (diff.u > 0.5) diff.u = 1-diff.u;
             if (diff.v > 0.5) diff.v = 1-diff.v;
             float dist = sqrt(diff.u*diff.u + diff.v*diff.v);
             
-            if (dist < f[1])
+            //Check if we might get a better value for one of our distances. If not, just continue.
+            if (f[n-1] > dist)
             {
-                if (dist < f[0])
+                for (int j = 0; j < n; j++)
                 {
-                    //Found new best hit.
-                    f[1] = f[0]; f[0] = dist;
-                }
-                else
-                {
-                    f[1] = dist;
+                    if (dist < f[j])
+                    {
+                        for (int k = n-1; k > j; k--)
+                        {
+                            f[k] = f[k-1];
+                        }
+                        f[j] = dist;
+                        break;
+                    }
                 }
             }
         }
@@ -136,22 +230,22 @@ Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
             float y1 = (float)i*cellHeight, y2 = (float)(i+1)*cellHeight;
             //If it's impossible to get a better 2nd. best distance, we can't get a best distance either so just continue.
             //The check on i is done because of possible rounding errors when the point is near the center of the grid square.
-            if (fmin(fabs(v-y1), fabs(v-y2)) > f[1] && i != _i) continue;
+            if (fmin(fabs(v-y1), fabs(v-y2)) > f[n-1] && i != _i) continue;
 
-            int i_proper = i + (i<0?GRID_HEIGHT:0); // Wrapped position
-            i_proper %= GRID_HEIGHT;
+            int i_proper = i + (i<0?gridHeight:0); // Wrapped position
+            i_proper %= gridHeight;
             
             //printf("y1 %f\t y2 %f dist1 %f dist2 %f pointx %f pointy %f\n", y1, y2, fabs(v-y1), fabs(v-y2), );
             for (int j = _j-1; j <= _j+1; j++)
             {
-                int j_proper = j + (j<0?GRID_WIDTH:0);
-                j_proper %= GRID_WIDTH;
+                int j_proper = j + (j<0?gridWidth:0);
+                j_proper %= gridWidth;
                 
                 if (i_proper == _i && j_proper == _j) continue; //Ignore the center cell.
                 float x1 = (float)j*cellWidth, x2 = (float)(j+1)*cellWidth;
                 
                 //Again, we can ignore a cell whose horizontal distance to the point is more than the current best 2nd hit. 
-                if (fmin(fabs(u-x1), fabs(u-x2)) > f[1] && j != _j) continue;
+                if (fmin(fabs(u-x1), fabs(u-x2)) > f[n-1] && j != _j) continue;
                 
                 pair<int, int> neighbor(i_proper, j_proper);
                 
@@ -165,14 +259,81 @@ Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
             }
         }
     }
-    //printf("%d\n", it);
-//    float out = 2.0 * f[0] / (f[1]+f[0]);
-    
-    float out = exp(-(f[1]-f[0])*100)/2.72;
-    
-    //if (f[0] > f[1]) printf("FOOOO");
-    return Vector3(out);    
+
+    return f;
 }
+
+
+
+Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
+{
+    float red, green, blue;
+    float scale = 1;
+    float u = coords.u * scale, v = coords.v * scale;
+    long order = 3;
+    float pos[2] = {u, v}, 
+          *f = new float[order], 
+          (*delta)[2] = new float[order][2];
+    
+    unsigned long id;
+    WorleyNoise::noise2D(pos, order, f, delta, &id);
+
+    //For the outlining
+    float f1f0 = (1-pow(f[1]-f[0], 0.2))*1.5;
+
+    //Initial color value.
+    float base = fmax(pow((f[2]-f[1]+f[0]), 0.8) - f1f0, 0);
+    
+    //Some intensity variation based on which cell we're in
+    base *= ((float)(id%10))/20+0.5;
+    
+    //Add some perlin noise in the mix
+    float turb = generateNoise(u, v, 0, 2, 2, 0.8, 5);
+    base += 0.5*fabs(turb); //0.1*pow(fabs(sin(u*20+turb)), 30);
+
+    red = base+(float)(id%10)/25.0-0.2;
+    green = base;
+    blue = base;
+
+    //base = f1f0;
+
+    return Vector3(red, green, blue);
+
+/*    float *f = getClosestDistances(coords, 4);
+    
+    float scale = 10;
+    
+
+    float out;
+    
+    float comb = f[1]-f[0];
+ */
+   
+    //float v = sin(coords.u*5+0.0*generateNoise(coords.u, 0, 0, 50, 0.5, 0.5, 1))/2+0.5;
+/*
+    float turb = 5*generateNoise(u, v, 0, 5, 3, 0.2, 5);
+    //out = sin(u + turb);
+    out = pow(fabs(sin(u*20+turb)), 30);
+    out += 0.5*generateNoise(u, v, 0, 5, 3, 0.2, 5);*/
+    
+    /*if (fabs(out) < 0.9) v = 0;
+    else out = fabs(out);*/
+
+    //if (v < 0.99) v = 0; 
+    /*if (comb < 0.005) out = PerlinNoise::noise(coords.u, coords.v, 0);
+    else out = exp(-comb*100);*/
+
+    //float out = exp(-(comb)*100);
+    //float out = comb > 0.8 ? 0.8 : 0.2;
+    //float out = comb;
+    
+   
+    //add some noise for good measure
+    //out += (rand()/(float)RAND_MAX)*0.4-0.2; 
+   
+//    return Vector3(out, out, out);
+}
+
 
 /**************************************************************
 class TexturedPhong
