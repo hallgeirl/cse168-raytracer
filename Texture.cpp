@@ -277,16 +277,21 @@ float StoneTexture::bumpHeight2D(const tex_coord2d_t & coords) const
     unsigned long *id = new unsigned long[order];
     WorleyNoise::noise2D(pos, order, f, delta, id);
     
-    float f1f0 = 0;//(pow(f[1]-f[0], 0.2));
+    float f1f0 = (1-pow(f[1]-f[0], 0.8f))*1.5;//(pow(f[1]-f[0], 0.2));
+	if (f1f0 < 1.1)
+		return 0;
 
-    float turb = generateNoise(u, v, 0, 0.5, 2, 0.8, 1)/2+0.5;
+ //   float turb = generateNoise(u, v, 0, 0.5, 2, 0.5, 5)/2+0.5;
+    float turb = generateNoise(u, v, 0, 0.5, 2, 0.5, 6)/2+0.5;
     
+
     //f1f0 += 0.2*turb;
-    delete f;
-	delete id;
-    return 0;
+//    return 0;
     //return 0.1*pow(sin(30*turb+u*5)/2+0.5, 0.05);
-	//return 0.7*generateNoise(u, v, 0, 0.5, 2, 0.5, 5)/2+0.5;
+	//float cells = ((float)(id[0]%10)/10.f);
+	delete id;
+    delete f;
+	return 0.6f*turb;
 }
 
 
