@@ -96,7 +96,7 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 			++depth;
 
 			//if reflective material, send trace with ReflectRay
-			float reflection = fmin(hitInfo.material->GetReflection(), 1);
+			float reflection = std::min(hitInfo.material->GetReflection(), 1.0f);
 			if (reflection > 0.0f)
 			{
 				Ray reflectRay = ray.Reflect(hitInfo);
@@ -123,7 +123,7 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 				}
 			}
 			//Keep the energy equation balanced (that is, don't refract+reflect+absorb more than 100% of the ray)
-			reflection = fmin(reflection, 1-refraction);
+			reflection = std::min(reflection, 1.0f-refraction);
 			float absorb = 1-reflection-refraction;
 			shadeResult = refraction * refractResult + reflection * reflectResult + absorb * hitInfo.material->shade(ray, hitInfo, *this);
 		}

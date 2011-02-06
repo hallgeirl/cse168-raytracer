@@ -21,7 +21,7 @@ Texture loaded from a image file.
 //Tonemaps to (0,1)
 float LoadedTexture::tonemapValue(float value)
 {
-    return pow(value / m_maxIntensity, 0.3)*4; //This seems to give a fairly good image. +2ev, gamma ~3
+    return pow(value / m_maxIntensity, 0.3f)*4; //This seems to give a fairly good image. +2ev, gamma ~3
 }
 
 LoadedTexture::LoadedTexture(std::string filename)
@@ -230,7 +230,7 @@ float* CellularTexture2D::getClosestDistances(const tex_coord2d_t & coords, int 
             float y1 = (float)i*cellHeight, y2 = (float)(i+1)*cellHeight;
             //If it's impossible to get a better 2nd. best distance, we can't get a best distance either so just continue.
             //The check on i is done because of possible rounding errors when the point is near the center of the grid square.
-            if (fmin(fabs(v-y1), fabs(v-y2)) > f[n-1] && i != _i) continue;
+            if (std::min(fabs(v-y1), fabs(v-y2)) > f[n-1] && i != _i) continue;
 
             int i_proper = i + (i<0?gridHeight:0); // Wrapped position
             i_proper %= gridHeight;
@@ -245,7 +245,7 @@ float* CellularTexture2D::getClosestDistances(const tex_coord2d_t & coords, int 
                 float x1 = (float)j*cellWidth, x2 = (float)(j+1)*cellWidth;
                 
                 //Again, we can ignore a cell whose horizontal distance to the point is more than the current best 2nd hit. 
-                if (fmin(fabs(u-x1), fabs(u-x2)) > f[n-1] && j != _j) continue;
+                if (std::min(fabs(u-x1), fabs(u-x2)) > f[n-1] && j != _j) continue;
                 
                 pair<int, int> neighbor(i_proper, j_proper);
                 
@@ -279,10 +279,10 @@ Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
     WorleyNoise::noise2D(pos, order, f, delta, &id);
 
     //For the outlining
-    float f1f0 = (1-pow(f[1]-f[0], 0.2))*1.5;
+    float f1f0 = (1-pow(f[1]-f[0], 0.2f))*1.5;
 
     //Initial color value.
-    float base = fmax(pow((f[2]-f[1]+f[0]), 0.8) - f1f0, 0);
+	float base = std::max(pow((f[2]-f[1]+f[0]), 0.8f) - f1f0, 0.f);
     
     //Some intensity variation based on which cell we're in
     base *= ((float)(id%10))/20+0.5;

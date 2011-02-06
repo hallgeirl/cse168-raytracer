@@ -26,9 +26,9 @@ public:
 
     void setKd(const Vector3 & kd) {m_kd = kd;}
     void setKa(const Vector3 & ka) {m_ka = ka;}
-	virtual void SetReflection(const float reflect) {m_reflect = fmin(reflect, 1);};
+	virtual void SetReflection(const float reflect) {m_reflect = std::min(reflect, 1.0f);};
 	virtual void SetRefraction(const float refract, const float refractIndex)
-		{m_refract = fmin(refract, 1); m_refractIndex = refractIndex;}
+		{m_refract = std::min(refract, 1.0f); m_refractIndex = refractIndex;}
 
     virtual void preCalc() {}
 
