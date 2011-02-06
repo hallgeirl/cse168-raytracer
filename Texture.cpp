@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <string>
 #include <sstream>
+#include <cmath>
 
 using namespace std;
 
@@ -21,7 +22,7 @@ Texture loaded from a image file.
 //Tonemaps to (0,1)
 float LoadedTexture::tonemapValue(float value)
 {
-    return pow(value / m_maxIntensity, 0.3f)*4; //This seems to give a fairly good image. +2ev, gamma ~3
+    return std::min(pow(value / m_maxIntensity, 0.3f)*4, 1.0f); //This seems to give a fairly good image. +2ev, gamma ~3
 }
 
 LoadedTexture::LoadedTexture(std::string filename)
@@ -266,7 +267,6 @@ float* CellularTexture2D::getClosestDistances(const tex_coord2d_t & coords, int 
 
 float StoneTexture::bumpHeight2D(const tex_coord2d_t & coords) const
 {
-    float red, green, blue;
     float scale = 2;
     float u = coords.u * scale, v = coords.v * scale;
     long order = 3;
@@ -282,9 +282,9 @@ float StoneTexture::bumpHeight2D(const tex_coord2d_t & coords) const
     float turb = generateNoise(u, v, 0, 0.5, 2, 0.8, 1)/2+0.5;
     
     //f1f0 += 0.2*turb;
-    return 0;
+    //return 0;
     //return 0.1*pow(sin(30*turb+u*5)/2+0.5, 0.05);
-    //return generateNoise(u, v, 0, 0.5, 2, 0.8, 1)/2+0.5;
+    return 0.7*generateNoise(u, v, 0, 0.5, 2, 0.5, 5)/2+0.5;
 }
 
 
@@ -321,40 +321,6 @@ Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
     //base = f1f0;
 
     return Vector3(red, green, blue);
-
-/*    float *f = getClosestDistances(coords, 4);
-    
-    float scale = 10;
-    
-
-    float out;
-    
-    float comb = f[1]-f[0];
- */
-   
-    //float v = sin(coords.u*5+0.0*generateNoise(coords.u, 0, 0, 50, 0.5, 0.5, 1))/2+0.5;
-/*
-    float turb = 5*generateNoise(u, v, 0, 5, 3, 0.2, 5);
-    //out = sin(u + turb);
-    out = pow(fabs(sin(u*20+turb)), 30);
-    out += 0.5*generateNoise(u, v, 0, 5, 3, 0.2, 5);*/
-    
-    /*if (fabs(out) < 0.9) v = 0;
-    else out = fabs(out);*/
-
-    //if (v < 0.99) v = 0; 
-    /*if (comb < 0.005) out = PerlinNoise::noise(coords.u, coords.v, 0);
-    else out = exp(-comb*100);*/
-
-    //float out = exp(-(comb)*100);
-    //float out = comb > 0.8 ? 0.8 : 0.2;
-    //float out = comb;
-    
-   
-    //add some noise for good measure
-    //out += (rand()/(float)RAND_MAX)*0.4-0.2; 
-   
-//    return Vector3(out, out, out);
 }
 
 
