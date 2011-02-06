@@ -279,10 +279,14 @@ float StoneTexture::bumpHeight2D(const tex_coord2d_t & coords) const
     
     float f1f0 = (1-pow(f[1]-f[0], 0.8f))*1.5;//(pow(f[1]-f[0], 0.2));
 	if (f1f0 < 1.1)
-		return 0;
+	{
+		//float cellturb = generateNoise(u, v, 0, 0.5, 2, 0.5, id[0]%5+2)/2+0.5;
+		float cellturb = generateNoise(u, v, 0, 0.5, 2, 0.5, id[0]%5+5)/5+0.5;
+		return 0.7f* cellturb;
+	}
 
  //   float turb = generateNoise(u, v, 0, 0.5, 2, 0.5, 5)/2+0.5;
-    float turb = generateNoise(u, v, 0, 0.5, 2, 0.5, 6)/2+0.5;
+    float turb = generateNoise(u, v, 0, 1, 2, 0.5, 3)/10+0.5;
     
 
     //f1f0 += 0.2*turb;
@@ -323,8 +327,8 @@ Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
 
 	if (f1f0 > 1.1)
 	{
-		float edges = std::min((pow(f1f0,2)-1.3f), 0.5f);
-		red = green = blue = edges + 0.5*fabs(turb);
+		float edges = std::min((pow(f1f0,2)-1.f), 0.75f);
+		red = green = blue = edges + 0.25*fabs(turb);
 	}
 	else
 	{
