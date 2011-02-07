@@ -274,51 +274,73 @@ float StoneTexture::bumpHeight2D(const tex_coord2d_t & coords) const
           *f = new float[order], 
           (*delta)[2] = new float[order][2];
     
-    unsigned long id;
-    WorleyNoise::noise2D(pos, order, f, delta, &id);
+    unsigned long *id = new unsigned long[order];
+    WorleyNoise::noise2D(pos, order, f, delta, id);
     
-    float f1f0 = 0;//(pow(f[1]-f[0], 0.2));
+    float f1f0 = (1-pow(f[1]-f[0], 0.8f))*1.5;//(pow(f[1]-f[0], 0.2));
+	if (f1f0 < 1.1)
+	{
+		//float cellturb = generateNoise(u, v, 0, 0.5, 2, 0.5, id[0]%5+2)/2+0.5;
+		float cellturb = generateNoise(u, v, 0, 0.5, 2, 0.5, id[0]%5+5)/5+0.5;
+		return 0.7f* cellturb;
+	}
 
-    float turb = generateNoise(u, v, 0, 0.5, 2, 0.8, 1)/2+0.5;
+ //   float turb = generateNoise(u, v, 0, 0.5, 2, 0.5, 5)/2+0.5;
+    float turb = generateNoise(u, v, 0, 1, 2, 0.5, 3)/10+0.5;
     
+
     //f1f0 += 0.2*turb;
-    //return 0;
+//    return 0;
     //return 0.1*pow(sin(30*turb+u*5)/2+0.5, 0.05);
-    return 0.7*generateNoise(u, v, 0, 0.5, 2, 0.5, 5)/2+0.5;
+	//float cells = ((float)(id[0]%10)/10.f);
+	delete id;
+    delete f;
+	return 0.6f*turb;
 }
 
 
 Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
 {
     float red, green, blue;
-    float scale = 1;
+    float scale = 2;
     float u = coords.u * scale, v = coords.v * scale;
     long order = 3;
     float pos[2] = {u, v}, 
           *f = new float[order], 
           (*delta)[2] = new float[order][2];
     
-    unsigned long id;
-    WorleyNoise::noise2D(pos, order, f, delta, &id);
+    unsigned long *id = new unsigned long[order];
+    WorleyNoise::noise2D(pos, order, f, delta, id);
 
     //For the outlining
-    float f1f0 = (1-pow(f[1]-f[0], 0.2f))*1.5;
+    float f1f0 = (1-pow(f[1]-f[0], 0.8f))*1.5;
 
     //Initial color value.
-	float base = std::max(pow((f[2]-f[1]+f[0]), 0.8f) - f1f0, 0.f);
+	float base = std::min(std::max(pow((f[2]-f[1]+f[0]), 0.1f) - f1f0, 0.f), 0.5f);
     
     //Some intensity variation based on which cell we're in
-    base *= ((float)(id%10))/20+0.5;
+    base *= ((float)(id[0]%10))/20+0.5;
     
     //Add some perlin noise in the mix
     float turb = generateNoise(u, v, 0, 2, 2, 0.8, 5);
     base += 0.5*fabs(turb); //0.1*pow(fabs(sin(u*20+turb)), 30);
 
-    red = base+(float)(id%10)/25.0-0.2;
-    green = base;
-    blue = base;
+	if (f1f0 > 1.1)
+	{
+		float edges = std::min((pow(f1f0,2)-1.f), 0.75f);
+		red = green = blue = edges + 0.25*fabs(turb);
+	}
+	else
+	{
+		//Color palette
+		red = base +(float)(id[0]%10)/10;
+		green = base +((float)(id[0]%10)/10)*0.5f;
+		blue = base +((float)(id[0]%5)/5)*0.25f;
+	}
 
     //base = f1f0;
+	delete f;
+	delete id;
 
     return Vector3(red, green, blue);
 }
