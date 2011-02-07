@@ -41,6 +41,17 @@ TriangleMesh::createSingleTriangle()
     m_texCoordIndices[0].y = 1;
     m_texCoordIndices[0].z = 2;
 
+    #ifdef __SSE4_1__
+    m_SSEvertices = new __m128[3];
+    m_SSEnormals = new __m128[3];
+    
+    for (int i = 0; i < 3; i++)
+    {
+        m_SSEvertices[i] = _mm_set_ps(m_vertices[i].x, m_vertices[i].y, m_vertices[i].z, 0.0f);
+        m_SSEnormals[i]  = _mm_set_ps(m_normals[i].x, m_normals[i].y, m_normals[i].z, 0.0f);
+    }
+    #endif    
+
     m_numTris = 1;
 }
 
@@ -126,6 +137,11 @@ TriangleMesh::loadObj(FILE* fp, const Matrix4x4& ctm)
 
     m_normals = new Vector3[std::max(nv,nf)];
     m_vertices = new Vector3[nv];
+    
+    #ifdef __SSE4_1__
+    m_SSEnormals = new __m128[std::max(nv,nf)];
+    m_SSEvertices = new __m128[nv];
+    #endif   
 
     if (nt)
     {   // got texture coordinates
@@ -155,6 +171,11 @@ TriangleMesh::loadObj(FILE* fp, const Matrix4x4& ctm)
                 Vector3 n(x, y, z);
                 m_normals[nnormals] = nctm*n;
                 m_normals[nnormals].normalize();
+                
+                #ifdef __SSE4_1__
+                m_SSEnormals[nnormals]  = _mm_set_ps(m_normals[nnormals].x, m_normals[nnormals].y, m_normals[nnormals].z, 0.0f);
+                #endif   
+                
                 nnormals++;
             }
             else if (line[1] == 't')
@@ -171,6 +192,9 @@ TriangleMesh::loadObj(FILE* fp, const Matrix4x4& ctm)
                 sscanf(&line[1], "%f %f %f\n", &x, &y, &z);
                 Vector3 v(x, y, z);
                 m_vertices[nvertices] = ctm*v;
+                #ifdef __SSE4_1__
+                m_SSEvertices[nvertices]  = _mm_set_ps(m_vertices[nvertices].x, m_vertices[nvertices].y, m_vertices[nvertices].z, 0.0f);
+                #endif   
                 nvertices++;
             }
         }
@@ -208,6 +232,11 @@ TriangleMesh::loadObj(FILE* fp, const Matrix4x4& ctm)
 
                 m_normals[nn] = cross(e1, e2);
                 m_normals[nn].normalize();
+                
+                #ifdef __SSE4_1__
+                m_SSEnormals[nn]  = _mm_set_ps(m_normals[nn].x, m_normals[nn].y, m_normals[nn].z, 0.0f);
+                #endif   
+                
                 m_normalIndices[nn].x = nn;
                 m_normalIndices[nn].y = nn;
                 m_normalIndices[nn].z = nn;

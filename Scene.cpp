@@ -82,7 +82,7 @@ Scene::trace(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
     if (result)
     {
         //Bump mapping
-        float delta = 0.00001;
+        float delta = 0.0001;
         if (minHit.material->GetLookupCoordinates() == UV)
         {
             //Take a few samples to calculate the derivative
@@ -129,7 +129,7 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 			{
 				Ray reflectRay = ray.Reflect(hitInfo);
 				//fudge factor for now
-				reflectRay.o += reflectRay.d * 0.001;
+				//reflectRay.o += reflectRay.d * 0.001;
 				if (!traceScene(reflectRay, reflectResult, depth))
 				{
 					reflection = 0;
@@ -137,27 +137,28 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 				}
 			}
 
-			float refraction = hitInfo.material->GetRefraction();
+			float refraction = std::min(hitInfo.material->GetRefraction(), 1.0f);
 
 			//if refractive material, send trace with RefractRay
 			if (refraction > 0.0f)
 			{
 				Ray	refractRay = ray.Refract(hitInfo);
-				refractRay.o += refractRay.d * 0.0005;
+				//refractRay.o += refractRay.d * 0.0005;
 				if (!traceScene(refractRay, refractResult, depth))
 				{
 					refraction = 0;
 					refractResult.set(0);
 				}
 			}
+			
 			//Keep the energy equation balanced (that is, don't refract+reflect+absorb more than 100% of the ray)
 			reflection = std::min(reflection, 1.0f-refraction);
-			float absorb = 1-reflection-refraction;
-			shadeResult = refraction * refractResult + reflection * reflectResult + absorb * hitInfo.material->shade(ray, hitInfo, *this);
+			float diffuse = 1-reflection-refraction;
+			shadeResult = refraction * refractResult + reflection * reflectResult + diffuse * hitInfo.material->shade(ray, hitInfo, *this);
 		}
 		else
 		{
-			//Environment mapping here
+    		//Environment mapping here
 			if (m_environment != 0)
 			{
 				tex_coord2d_t coords;
@@ -171,7 +172,6 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 			{
 				shadeResult.x = 0.5; shadeResult.y = 0.5; shadeResult.z = 0.5;
 			}
-
 		}
 		return true;
 	}
