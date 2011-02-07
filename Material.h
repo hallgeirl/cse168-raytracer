@@ -26,12 +26,16 @@ public:
     virtual float   bumpHeight2D(const tex_coord2d_t & texture_coords) const { return 0; }
     virtual float   bumpHeight3D(const tex_coord3d_t & texture_coords) const { return 0; }
 
-	virtual float GetReflection() const {return 0;}
-	virtual float GetRefraction() const {return 0;}
+	virtual bool IsReflective() const {return false;}
+	virtual bool IsRefractive() const {return false;}
+
+	virtual Vector3 GetReflection() const {return Vector3(0.f);}
+	virtual Vector3 GetRefraction() const {return Vector3(0.f);}
+	virtual Vector3 GetAbsorbtion() const {return Vector3(1.f);}
 	virtual float GetRefractionIndex() const {return 1.0f;}
 
-	virtual void SetReflection(const float reflect){};
-	virtual void SetRefraction(const float refract, const float refractIndex){};
+	virtual void SetReflection(const Vector3 reflect){};
+	virtual void SetRefraction(const Vector3 refract, const float refractIndex){};
 
     virtual void preCalc() {}
 

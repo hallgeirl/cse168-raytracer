@@ -2,11 +2,9 @@
 #include "Ray.h"
 #include "Scene.h"
 
-Lambert::Lambert(const Vector3 & kd, const Vector3 & ka, const float reflect, const float refract, const float refractIndex) :
+Lambert::Lambert(const Vector3 & kd, const Vector3 & ka) :
     m_kd(kd), m_ka(ka)
 {
-	SetReflection(reflect);
-	SetRefraction(refract, refractIndex);
 }
 
 Lambert::~Lambert()
@@ -35,6 +33,14 @@ Lambert::shade(const Ray& ray, const HitInfo& hit, const Scene& scene) const
 
         // normalize the light direction
         l /= sqrt(falloff);
+
+		Ray Shadow(hit.P+(l*epsilon), l);
+		HitInfo hitInfo;
+		if (scene.trace(hitInfo, Shadow))
+		{
+			if (hitInfo.t < sqrt(falloff))
+				continue;
+		}
 
         // get the diffuse component
         float nDotL = dot(hit.N, l);

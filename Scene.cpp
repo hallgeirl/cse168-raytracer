@@ -113,8 +113,7 @@ bool
 Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 {
     HitInfo hitInfo;
-	Vector3 reflectResult;
-	Vector3 refractResult;
+	shadeResult = Vector3(0.f);
 
     if (depth < TRACE_DEPTH)
     {
@@ -122,38 +121,38 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 		{
 			//shadeResult = hitInfo.material->shade(ray, hitInfo, *this);
 			++depth;
-
+			
+			//min checks should be done in material constructor, not every trace
+		
 			//if reflective material, send trace with ReflectRay
-			float reflection = std::min(hitInfo.material->GetReflection(), 1.0f);
-			if (reflection > 0.0f)
+			if (hitInfo.material->IsReflective())
 			{
+				Vector3 reflectResult;
 				Ray reflectRay = ray.Reflect(hitInfo);
-				//fudge factor for now
-				reflectRay.o += reflectRay.d * 0.001;
-				if (!traceScene(reflectRay, reflectResult, depth))
+
+				//Nudge Ray along normal to avoid Acne
+				reflectRay.o += reflectRay.d * epsilon;
+				if (traceScene(reflectRay, reflectResult, depth))
 				{
-					reflection = 0;
-					reflectResult.set(0);
+					shadeResult += hitInfo.material->GetReflection()* reflectResult;
 				}
 			}
-
-			float refraction = hitInfo.material->GetRefraction();
 
 			//if refractive material, send trace with RefractRay
-			if (refraction > 0.0f)
+			if (hitInfo.material->IsRefractive())
 			{
+				Vector3 refractResult;
 				Ray	refractRay = ray.Refract(hitInfo);
-				refractRay.o += refractRay.d * 0.0005;
-				if (!traceScene(refractRay, refractResult, depth))
+
+				//Nudge Ray along normal to avoid Acne
+				refractRay.o += refractRay.d * epsilon;
+				if (traceScene(refractRay, refractResult, depth))
 				{
-					refraction = 0;
-					refractResult.set(0);
+					shadeResult += hitInfo.material->GetRefraction()* refractResult;
 				}
 			}
-			//Keep the energy equation balanced (that is, don't refract+reflect+absorb more than 100% of the ray)
-			reflection = std::min(reflection, 1.0f-refraction);
-			float absorb = 1-reflection-refraction;
-			shadeResult = refraction * refractResult + reflection * reflectResult + absorb * hitInfo.material->shade(ray, hitInfo, *this);
+
+			shadeResult += hitInfo.material->GetAbsorbtion() * hitInfo.material->shade(ray, hitInfo, *this);
 		}
 		else
 		{

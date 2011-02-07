@@ -5,16 +5,29 @@
 
 using namespace std;
 
-Phong::Phong(const Vector3 &kd, const Vector3 &ka, const Vector3 &ks,
-				const float shinyness, const float reflect, const float refract, const float refractIndex)
-	:Lambert(kd, ka, reflect, refract, refractIndex), m_ks(ks), m_a(shinyness)
+Phong::Phong(const Vector3 &kd, const Vector3 &ka, const Vector3 &ks, const Vector3 &kt,
+				const float shinyness, const float refractIndex)
+	: m_kd(kd), m_ka(ka), m_ks(ks), m_kt(kt), m_a(shinyness), m_refractIndex(refractIndex)
 {
-
+	//Keep the energy equation balanced (that is, don't refract+reflect+absorb more than 100% of the ray)
+	m_ks.x = std::min(m_ks.x, 1.0f-m_kt.x);
+	m_ks.y = std::min(m_ks.y, 1.0f-m_kt.y);
+	m_ks.z = std::min(m_ks.z, 1.0f-m_kt.z);
 }
 
 Phong::~Phong()
 {
 
+}
+
+bool Phong::IsReflective() const
+{
+	return (m_ks.x > 0.f || m_ks.y > 0.f || m_ks.z > 0.f);
+}
+
+bool Phong::IsRefractive() const
+{
+	return (m_kt.x > 0.f || m_kt.y > 0.f || m_kt.z > 0.f);
 }
 
 Vector3
@@ -43,6 +56,15 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
         // normalize the light direction
         l /= sqrt(falloff);
 
+		// No light contribution if Ray hits an object 
+		Ray Shadow(hit.P+(l*epsilon), l);
+		HitInfo hitInfo;
+		if (scene.trace(hitInfo, Shadow))
+		{
+			if (hitInfo.t < sqrt(falloff))
+				continue;
+		}
+
         // get the diffuse component
         float nDotL = dot(hit.N, l);
 
@@ -58,8 +80,10 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 		else
 			diffuse = diffuse3D(tex_coord3d_t(hit.P.x, hit.P.y, hit.P.z));
 
-		//should specular component use material specular color?
-		L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / (4 * PI)) * diffuse + (pow(std::max(0.0f, eDotr/falloff * pLight->wattage() / (4 * PI)), m_a)) * m_ks);
+		if (m_ks.x > 0 && eDotr > 0.9)
+			int count = 0;
+
+		L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / (4 * PI)) * diffuse + (pow(std::max(0.0f, eDotr/falloff * pLight->wattage() / (4 * PI)), m_a))*m_ks);
     }
 
     // add the ambient component

@@ -350,8 +350,8 @@ Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
 class TexturedPhong
 Material that looks up diffuse colors from a texture (2D or 3D)
 ***************************************************************/
-TexturedPhong::TexturedPhong(Texture * texture, const Vector3 & ka, const Vector3 & ks, const float shinyness, const float reflect, const float refract, const float refractIndex)
- : Phong(Vector3(0,0,0), ka, ks, shinyness, reflect, refract, refractIndex), m_texture(texture)
+TexturedPhong::TexturedPhong(Texture * texture, const Vector3 & ka, const Vector3 & ks, const Vector3 & kt, const float shinyness, const float refractIndex)
+ : Phong(Vector3(0,0,0), ka, ks, kt, shinyness, refractIndex), m_texture(texture)
 {
 
 }

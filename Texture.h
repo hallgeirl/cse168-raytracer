@@ -131,10 +131,9 @@ class TexturedPhong : public Phong
 public:
     TexturedPhong(Texture * texture,
 			            const Vector3 & ka = Vector3(0),
-			            const Vector3 & ks = Vector3(1),
+			            const Vector3 & ks = Vector3(0),
+			            const Vector3 & kt = Vector3(0),
 			            const float shinyness = 1.0f,
-			            const float reflect = 0,
-			            const float refract = 0,
 			            const float refractIndex = 1);
 	virtual LookupCoordinates GetLookupCoordinates() const { return m_texture->GetLookupCoordinates(); }
 
