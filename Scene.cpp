@@ -49,7 +49,7 @@ Scene::raytraceImage(Camera *cam, Image *img)
 
     // loop over all pixels in the image
     #ifdef OPENMP
-    #pragma omp parallel for private(ray, shadeResult)
+    #pragma omp parallel for private(ray, shadeResult) schedule(dynamic, 10)
     #endif
     for (int i = 0; i < img->height(); ++i)
     {
