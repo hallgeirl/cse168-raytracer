@@ -165,8 +165,8 @@ void makeModelsScene()
 
     // set up the camera
     g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
-    g_camera->setEye(Vector3(0, 5, -10));
-    g_camera->setLookAt(Vector3(0, 2, 0));
+    g_camera->setEye(Vector3(0, 2, -10));	//0,5,-10
+    g_camera->setLookAt(Vector3(0, 0, 0));	//0,2,0
     //g_camera->setEye(Vector3(-5, 20, 7));
     //g_camera->setLookAt(Vector3(-4, 1, 7));
     g_camera->setUp(Vector3(0, 1, 0));
@@ -177,14 +177,14 @@ void makeModelsScene()
     light->setPosition(Vector3(3, 10, -3));
     //light->setPosition(Vector3(0, 10, 0));
     light->setColor(Vector3(1, 1, 1));
-    light->setWattage(1000);
+    light->setWattage(500);
     g_scene->addLight(light);
 
-    /*light = new PointLight();
-    light->setPosition(Vector3(5, 10, -5));
+    light = new PointLight();
+    light->setPosition(Vector3(-5, 10, 5));
     light->setColor(Vector3(1, 1, 1));
     light->setWattage(500);
-    g_scene->addLight(light);*/
+    g_scene->addLight(light);
 
 
     /*Material* bunnyMat = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20, 0.3);
@@ -193,7 +193,7 @@ void makeModelsScene()
 
     //Material* mat = new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10, 0);
 	//mat->SetRefraction(1.0f, 1.5);
-    Sphere * sphere = new Sphere;
+    /*Sphere * sphere = new Sphere;
     sphere->setCenter(Vector3(0,2,0));
     sphere->setRadius(1.5);
     sphere->setMaterial(new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(0.5f), Vector3(0.f), 5, 1.5));
@@ -214,7 +214,7 @@ void makeModelsScene()
     
     //plane->setMaterial(new TexturedPhong(new TestTexture3D(), Vector3(0,0,0)));
     //plane->setMaterial(new TexturedPhong(new CellularTexture2D(512, 5, 5), Vector3(0,0,0), Vector3(1), 1, 0));
-    plane->setMaterial(new TexturedPhong(new StoneTexture(512, 5, 5), Vector3(0.1,0.1,0.1), Vector3(0.f), Vector3(0.f), 1));
+    plane->setMaterial(new TexturedPhong(new StoneTexture(512, 5, 5), Vector3(0.1,0.1,0.1), Vector3(0.5f), Vector3(0.f), 1));
 
 /*
 	Plane * plane2 = new Plane();

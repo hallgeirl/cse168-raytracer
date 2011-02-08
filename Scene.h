@@ -29,6 +29,8 @@ public:
 	bool traceScene(const Ray& ray, Vector3& shadeResult, int depth);
 
 	void setEnvironment(Texture* environment) { m_environment = environment; }
+	Vector3 getEnvironmentMap(const Ray & ray);
+
 
 protected:
     Objects m_objects;

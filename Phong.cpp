@@ -87,7 +87,7 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
     }
 
     // add the ambient component
-    L += ka(hit.object->toUVCoordinates(hit.P));
+    L += ka(hit.object->toUVCoordinates(hit.P)) * GetAbsorption();
 
     return L;
 }

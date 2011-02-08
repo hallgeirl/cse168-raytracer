@@ -60,6 +60,10 @@ Scene::raytraceImage(Camera *cam, Image *img)
             {
 				img->setPixel(j, i, shadeResult);
             }
+			/*else
+			{
+				img->setPixel(j, i, getEnvironmentMap(ray));
+			}*/
         }
         #ifndef NO_GFX //If not rendering graphics to screen, don't draw scan lines (it will segfault in multithreading mode)
         img->drawScanline(i);
@@ -152,27 +156,34 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 				}
 			}
 
-			shadeResult += hitInfo.material->GetAbsorbtion() * hitInfo.material->shade(ray, hitInfo, *this);
+			shadeResult += hitInfo.material->shade(ray, hitInfo, *this);
 		}
 		else
 		{
-			//Environment mapping here
-			if (m_environment != 0)
-			{
-				tex_coord2d_t coords;
-				//Calculate texture coordinates for where the ray hits the "sphere"
-				coords.u = (atan2(ray.d.x, ray.d.z)) / (2.0f * PI) + 0.5;
-				coords.v = (asin(ray.d.y)) / PI + 0.5;
-				//And just look up the shading value in the texture.
-				shadeResult = m_environment->lookup2D(coords);
-			}
-			else
-			{
-				shadeResult.x = 0.5; shadeResult.y = 0.5; shadeResult.z = 0.5;
-			}
-
+			shadeResult = getEnvironmentMap(ray);
 		}
 		return true;
 	}
 	return false;
+}
+
+Vector3
+Scene::getEnvironmentMap(const Ray & ray)
+{
+	Vector3 envResult;
+	//Environment mapping here
+	if (m_environment != 0)
+	{
+		tex_coord2d_t coords;
+		//Calculate texture coordinates for where the ray hits the "sphere"
+		coords.u = (atan2(ray.d.x, ray.d.z)) / (2.0f * PI) + 0.5;
+		coords.v = (asin(ray.d.y)) / PI + 0.5;
+		//And just look up the shading value in the texture.
+		envResult = m_environment->lookup2D(coords);
+	}
+	else
+	{
+		envResult.x = 0.5; envResult.y = 0.5; envResult.z = 0.5;
+	}
+	return envResult;
 }
