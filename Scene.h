@@ -26,7 +26,7 @@ public:
     void raytraceImage(Camera *cam, Image *img);
     bool trace(HitInfo& minHit, const Ray& ray,
                float tMin = 0.0f, float tMax = MIRO_TMAX) const;
-	bool traceScene(const Ray& ray, Vector3& shadeResult, int depth);
+	bool traceScene(const Ray& ray, Vector3& shadeResult, int depth) const;
 
 	void setEnvironment(Texture* environment) { m_environment = environment; }
 

@@ -21,6 +21,7 @@ public:
     Vector3 N;                          //!< Shading normal vector
     const Material* material;           //!< Material of the intersected object
     const Object  * object;             //!< Material of the intersected object
+    int depth; //Trace depth. Used to limit the number of recursive steps in the raytracer.
 
     //! Default constructor.
     explicit HitInfo(float t = 0.0f,

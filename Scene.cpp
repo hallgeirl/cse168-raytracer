@@ -1,10 +1,11 @@
 #include <cmath>
+#include <iostream>
 #include "Miro.h"
 #include "Scene.h"
 #include "Camera.h"
 #include "Image.h"
 #include "Console.h"
-
+using namespace std;
 Scene * g_scene = 0;
 
 void
@@ -110,11 +111,9 @@ Scene::trace(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
 }
 
 bool
-Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
+Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth) const
 {
     HitInfo hitInfo;
-	Vector3 reflectResult;
-	Vector3 refractResult;
 
     if (depth < TRACE_DEPTH)
     {
@@ -122,50 +121,23 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 		{
 			//shadeResult = hitInfo.material->shade(ray, hitInfo, *this);
 			++depth;
+            hitInfo.depth = depth;
 
-			//if reflective material, send trace with ReflectRay
-			float reflection = std::min(hitInfo.material->GetReflection(), 1.0f);
-			if (reflection > 0.0f)
-			{
-				Ray reflectRay = ray.Reflect(hitInfo);
-				//fudge factor for now
-				//reflectRay.o += reflectRay.d * 0.001;
-				if (!traceScene(reflectRay, reflectResult, depth))
-				{
-					reflection = 0;
-					reflectResult.set(0);
-				}
-			}
-
-			float refraction = std::min(hitInfo.material->GetRefraction(), 1.0f);
-
-			//if refractive material, send trace with RefractRay
-			if (refraction > 0.0f)
-			{
-				Ray	refractRay = ray.Refract(hitInfo);
-				//refractRay.o += refractRay.d * 0.0005;
-				if (!traceScene(refractRay, refractResult, depth))
-				{
-					refraction = 0;
-					refractResult.set(0);
-				}
-			}
-			
 			//Keep the energy equation balanced (that is, don't refract+reflect+absorb more than 100% of the ray)
-			reflection = std::min(reflection, 1.0f-refraction);
-			float diffuse = 1-reflection-refraction;
-			shadeResult = refraction * refractResult + reflection * reflectResult + diffuse * hitInfo.material->shade(ray, hitInfo, *this);
+            shadeResult = hitInfo.material->shade(ray, hitInfo, *this);
 		}
 		else
 		{
-    		//Environment mapping here
+            //Environment mapping here
 			if (m_environment != 0)
 			{
 				tex_coord2d_t coords;
 				//Calculate texture coordinates for where the ray hits the "sphere"
-				coords.u = (atan2(ray.d.x, ray.d.z)) / (2.0f * PI) + 0.5;
-				coords.v = (asin(ray.d.y)) / PI + 0.5;
-				//And just look up the shading value in the texture.
+				if (std::abs(ray.d.z) > epsilon)
+                    coords.u = (atan2(ray.d.x, ray.d.z)) / (2.0f * PI) + 0.5;
+    
+				coords.v = (asin(std::min(1.0f, ray.d.y))) / PI + 0.5;
+                //And just look up the shading value in the texture.
 				shadeResult = m_environment->lookup2D(coords);
 			}
 			else
