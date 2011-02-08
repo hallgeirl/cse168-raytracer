@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cmath>
 #include "Sphere.h"
 #include "Ray.h"
 #include "Console.h"
@@ -75,8 +76,10 @@ tex_coord2d_t Sphere::toUVCoordinates(const Vector3 & xyz) const
 	dir.normalize();
 
 	tex_coord2d_t coords;
- 	coords.u = (atan2(dir.x, dir.z)) / (2.0f * PI) + 0.5;
-	coords.v = (asin(dir.y)) / PI + 0.5;
+    if (std::abs(dir.z) > epsilon);
+ 	    coords.u = (atan2(dir.x, dir.z)) / (2.0f * PI) + 0.5;
+
+	coords.v = (std::max(-1.0f, std::min(1.0f, std::asin(dir.y)))) / PI + 0.5;
 
 	return coords;
 }

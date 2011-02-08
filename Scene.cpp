@@ -163,8 +163,9 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 			{
 				tex_coord2d_t coords;
 				//Calculate texture coordinates for where the ray hits the "sphere"
-				coords.u = (atan2(ray.d.x, ray.d.z)) / (2.0f * PI) + 0.5;
-				coords.v = (asin(ray.d.y)) / PI + 0.5;
+                if (std::abs(ray.d.z) > epsilon);
+				    coords.u = (atan2(ray.d.x, ray.d.z)) / (2.0f * PI) + 0.5;
+				coords.v = (std::max(-1.0f, std::min(std::asin(ray.d.y), 1.0f))) / PI + 0.5;
 				//And just look up the shading value in the texture.
 				shadeResult = m_environment->lookup2D(coords);
 			}
