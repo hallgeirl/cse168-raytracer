@@ -1,9 +1,12 @@
 #include <cmath>
+#include <iostream>
 #include "Miro.h"
 #include "Scene.h"
 #include "Camera.h"
 #include "Image.h"
 #include "Console.h"
+
+using namespace std;
 
 Scene * g_scene = 0;
 
@@ -49,7 +52,7 @@ Scene::raytraceImage(Camera *cam, Image *img)
 
     // loop over all pixels in the image
     #ifdef OPENMP
-    #pragma omp parallel for private(ray, shadeResult)
+    #pragma omp parallel for private(ray, shadeResult) schedule(dynamic, 10)
     #endif
     for (int i = 0; i < img->height(); ++i)
     {
@@ -86,7 +89,7 @@ Scene::trace(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
     if (result)
     {
         //Bump mapping
-        float delta = 0.00001;
+        float delta = 0.0001;
         if (minHit.material->GetLookupCoordinates() == UV)
         {
             //Take a few samples to calculate the derivative
@@ -101,9 +104,22 @@ Scene::trace(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
             float dx = (u2-u1)/(2*delta),
                   dy = (v2-v1)/(2*delta);
             
-            minHit.N += dx*(cross(minHit.N, Vector3(0,0,1)))-dy*(cross(minHit.N, Vector3(1,0,0)));
+            //minHit.N += dx*(cross(minHit.N, Vector3(0,0,1)))-dy*(cross(minHit.N, Vector3(1,0,0)));
+            //Find two tangents
+            float n[3] = { minHit.N.x, minHit.N.y, minHit.N.z };
+            //float m = std::max(minHit.N.x, std::max(minHit.N.y, minHit.N.z));
+            int m = 0;
+            if (n[1] > n[0]) m = 1;
+            if (n[2] > n[m]) m = 2;
+            Vector3 randomVec(m == 2 ? -n[2] : 0, m == 0 ? -n[0] : 0, m == 1 ? -n[1] : 0);
+           
+            Vector3 t1 = cross(minHit.N, randomVec);
+            minHit.N += dx*(cross(minHit.N, t1))-dy*(cross(minHit.N, cross(minHit.N, t1)));
+
+            //cout << "t1=" << t1 << ", t2=" << cross(t1,minHit.N) << endl;
+
             minHit.N.normalize();
-            
+          //cout << minHit.N << endl;
         }   
         //Todo: implement for 3D
         //bumpHeight = minHit.material->bumpHeight3D(tex_coord3d_t(minHit.P.x, minHit.P.y, minHit.P.z));

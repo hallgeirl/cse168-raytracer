@@ -132,18 +132,17 @@ makeSphereScene()
     plane->setNormal(Vector3(0, 1, 0));
     plane->setOrigin(Vector3(0, -3, 0));
     plane->setMaterial(new Lambert(Vector3(0.8, 0.8, 0.8), Vector3(0.1, 0.1, 0.1)));
-	mat->SetReflection(0.25f);
     g_scene->addObject(plane);
 
     // let objects do pre-calculations if needed
     g_scene->preCalc();
 }
 
-void addModel(const char* filename, Material *mat, Scene* scene)
+void addModel(const char* filename, Material *mat, Scene* scene, Vector3 position)
 {
 	TriangleMesh * mesh = new TriangleMesh();
 	mesh->load(filename);
-
+    mesh->translate(position);
     for (int i = 0; i < mesh->numTris(); i++)
     {
 		Triangle *tri = new Triangle();
@@ -161,20 +160,28 @@ void makeModelsScene()
     g_scene = new Scene;
     g_image = new Image;
 
+    //g_image->resize(1024, 1024);
     g_image->resize(512, 512);
 
     // set up the camera
+    float viewAngleXZ = -PI;
+    float pitch = -0.2;
+    Vector3 dir(std::sin(viewAngleXZ),sin(pitch),std::cos(viewAngleXZ));
+    Vector3 eye(0, 3, 0);
+    cout << dir << endl;
     g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
-    g_camera->setEye(Vector3(0, 1, -10));	//0,5,-10
-    g_camera->setLookAt(Vector3(0, 0, 0));	//0,2,0
+    //g_camera->setEye(Vector3(0, 1, -10));	//0,5,-10
+    //g_camera->setLookAt(Vector3(0, 0, 0));	//0,2,0
+    g_camera->setEye(eye);
+    g_camera->setLookAt(eye+dir);
     //g_camera->setEye(Vector3(-5, 20, 7));
     //g_camera->setLookAt(Vector3(-4, 1, 7));
     g_camera->setUp(Vector3(0, 1, 0));
-    g_camera->setFOV(45);
+    g_camera->setFOV(60);
 
     // create and place a point light source
     PointLight * light = new PointLight;
-    light->setPosition(Vector3(3, 10, -3));
+ /*   light->setPosition(Vector3(3, 10, -3));
     //light->setPosition(Vector3(0, 10, 0));
     light->setColor(Vector3(1, 1, 1));
     light->setWattage(750);
@@ -183,27 +190,71 @@ void makeModelsScene()
     light = new PointLight();
     light->setPosition(Vector3(-5, 10, 5));
     light->setColor(Vector3(1, 1, 1));
-    light->setWattage(750);
+    light->setWattage(750);*/
+    light->setPosition(Vector3(-2, 3, -4));
+    light->setColor(Vector3(1, 1, 1));
+    light->setWattage(50);
     g_scene->addLight(light);
 
+    light = new PointLight();
+    light->setPosition(Vector3(2, 3, -4));
+    light->setColor(Vector3(1, 1, 1));
+    light->setWattage(80);
+    g_scene->addLight(light);
+    
+    light = new PointLight();
+    light->setPosition(Vector3(2, 20, -4));
+    light->setColor(Vector3(1, 1, 1));
+    light->setWattage(1000);
+    g_scene->addLight(light);
+    
+    light = new PointLight();
+    light->setPosition(Vector3(0, 5, -7));
+    light->setColor(Vector3(1, 1, 1));
+    light->setWattage(50);
+    g_scene->addLight(light);
 
     /*Material* bunnyMat = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20, 0.3);
 	bunnyMat->SetReflection(0.25f);
 	addModel("models/bunny.obj", bunnyMat, g_scene);*/
 
     Sphere * sphere = new Sphere;
-    sphere->setCenter(Vector3(0,2,0));
+/*    sphere->setCenter(Vector3(0,2,0));
     sphere->setRadius(1.5);
     sphere->setMaterial(new Phong(Vector3(0.25f, 1.f, 0.5f), Vector3(0.1, 0.1, 0.1), Vector3(0.8f), Vector3(0.f), 10, 1.5));
     //sphere->setMaterial(new TexturedPhong(new StoneTexture(512, 5, 5), Vector3(0.1,0.1,0.1), Vector3(1,1,1), 1, 0, 0, 1.5));
     g_scene->addObject(sphere);
 
-/*    Material* teapotMat = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20);
+    Material* teapotMat = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 20);
 	teapotMat->SetReflection(0.5f);
 	teapotMat->SetRefraction(0.5f, 1.5);
 	addModel("models/teapot.obj", teapotMat, g_scene);*/
+    sphere->setCenter(Vector3(0,1,-7));
+    sphere->setRadius(1.5);
+    sphere->setMaterial(new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(.3f), Vector3(.7f), 10, 1.5));
+    //sphere->setMaterial(new TexturedPhong(new StoneTexture(20), Vector3(0.1,0.1,0.1), Vector3(1,1,1), 5, 0, 0, 1.5));
+    //g_scene->addObject(sphere);
+    
+    sphere = new Sphere;
+    sphere->setCenter(Vector3(-2,1,-9));
+    sphere->setRadius(1.5);
+    //sphere->setMaterial(new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10, 0.2, 0.8, 1.5));
+    sphere->setMaterial(new TexturedPhong(new StoneTexture(20), Vector3(0.1,0.1,0.1), Vector3(0.f), Vector3(0.f), 5, 1.5));
+    g_scene->addObject(sphere);
 
-	//g_scene->setEnvironment(autumnHDR);
+    sphere = new Sphere;
+    sphere->setCenter(Vector3(2,1,-9));
+    sphere->setRadius(1.5);
+    //sphere->setMaterial(new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10, 0.2, 0.8, 1.5));
+    sphere->setMaterial(new TexturedPhong(new StoneTexture(20), Vector3(0.1,0.1,0.1), Vector3(0.f), Vector3(0.f), 5, 1.5));
+    g_scene->addObject(sphere);
+
+/*    Material* teapotMat = new Phong(Vector3(.5f, .5f, .5f), Vector3(0.1, 0.1, 0.1), Vector3(0.f), Vector3(0.f), 20);
+	teapotMat->SetReflection(0.5f);
+	teapotMat->SetRefraction(0.5f, 1.5f);
+    addModel("models/teapot.obj", teapotMat, g_scene, Vector3(0,0,-5));*/
+
+	g_scene->setEnvironment(autumnHDR);
 
 	Plane * plane = new Plane();
     plane->setNormal(Vector3(0, 1, 0));
@@ -212,7 +263,8 @@ void makeModelsScene()
     
     //plane->setMaterial(new TexturedPhong(new TestTexture3D(), Vector3(0,0,0)));
     //plane->setMaterial(new TexturedPhong(new CellularTexture2D(512, 5, 5), Vector3(0,0,0), Vector3(1), 1, 0));
-    plane->setMaterial(new TexturedPhong(new StoneTexture(512, 5, 5), Vector3(0.1,0.1,0.1), Vector3(0.f), Vector3(0.f), 10));
+    plane->setMaterial(new TexturedPhong(new StoneTexture(3), Vector3(0.1,0.1,0.1), Vector3(0.f), Vector3(0.f), 10));
+    //plane->setMaterial(new TexturedPhong(new StoneTexture(3), Vector3(0.1,0.1,0.1), Vector3(1,1,1), 5, 0, 0, 1.3));
 
 /*
 	Plane * plane2 = new Plane();

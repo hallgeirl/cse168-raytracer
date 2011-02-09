@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include "TriangleMesh.h"
 #include "Console.h"
+#include <vector>
 
 #ifndef __GNUC__
 // disable useless warnings
@@ -40,6 +41,17 @@ TriangleMesh::createSingleTriangle()
     m_texCoordIndices[0].x = 0;
     m_texCoordIndices[0].y = 1;
     m_texCoordIndices[0].z = 2;
+
+    #ifdef __SSE4_1__
+    m_SSEvertices = new __m128[3];
+    m_SSEnormals = new __m128[3];
+    
+    for (int i = 0; i < 3; i++)
+    {
+        m_SSEvertices[i] = _mm_set_ps(m_vertices[i].x, m_vertices[i].y, m_vertices[i].z, 0.0f);
+        m_SSEnormals[i]  = _mm_set_ps(m_normals[i].x, m_normals[i].y, m_normals[i].z, 0.0f);
+    }
+    #endif    
 
     m_numTris = 1;
 }
@@ -124,14 +136,28 @@ TriangleMesh::loadObj(FILE* fp, const Matrix4x4& ctm)
     fseek(fp, 0, 0);
 
 
-    m_normals = new Vector3[std::max(nv,nf)];
+    m_normals = new Vector3[std::max(nv,nf*3)];
     m_vertices = new Vector3[nv];
+    m_numVertices = nv;    
+    #ifdef __SSE4_1__
+    m_SSEnormals = new __m128[std::max(nv,nf*3)];
+    m_SSEvertices = new __m128[nv];
+    #endif   
 
     if (nt)
     {   // got texture coordinates
         m_texCoords = new VectorR2[nt];
         m_texCoordIndices = new TupleI3[nf];
     }
+    
+    //For normal averaging.
+    //Index i contains a list of all normals that are neighbors to vertex i.
+    vector<int>* neighboringNormals = new vector<int>[nv];
+    
+    // For indicating wether or not the normal must be "fixed" (averaged).
+    // For instance, if no normal is specified in the .obj file, it must be averaged.
+    bool * fixNormal = new bool[std::max(nv,nf*3)];
+   
     m_normalIndices = new TupleI3[nf]; // always make normals
     m_vertexIndices = new TupleI3[nf]; // always have vertices
 
@@ -143,7 +169,7 @@ TriangleMesh::loadObj(FILE* fp, const Matrix4x4& ctm)
     Matrix4x4 nctm = ctm;
     nctm.invert();
     nctm.transpose();
-
+    
     while (fgets(line, 80, fp) != 0)
     {
         if (line[0] == 'v')
@@ -155,6 +181,11 @@ TriangleMesh::loadObj(FILE* fp, const Matrix4x4& ctm)
                 Vector3 n(x, y, z);
                 m_normals[nnormals] = nctm*n;
                 m_normals[nnormals].normalize();
+                fixNormal[nnormals] = false;
+                
+                #ifdef __SSE4_1__
+                m_SSEnormals[nnormals]  = _mm_set_ps(m_normals[nnormals].x, m_normals[nnormals].y, m_normals[nnormals].z, 0.0f);
+                #endif   
                 nnormals++;
             }
             else if (line[1] == 't')
@@ -171,6 +202,9 @@ TriangleMesh::loadObj(FILE* fp, const Matrix4x4& ctm)
                 sscanf(&line[1], "%f %f %f\n", &x, &y, &z);
                 Vector3 v(x, y, z);
                 m_vertices[nvertices] = ctm*v;
+                #ifdef __SSE4_1__
+                m_SSEvertices[nvertices]  = _mm_set_ps(m_vertices[nvertices].x, m_vertices[nvertices].y, m_vertices[nvertices].z, 0.0f);
+                #endif   
                 nvertices++;
             }
         }
@@ -183,19 +217,28 @@ TriangleMesh::loadObj(FILE* fp, const Matrix4x4& ctm)
             getIndices(s1, &v, &t, &n);
             m_vertexIndices[m_numTris].x = v-1;
             if (n)
+            {
                 m_normalIndices[m_numTris].x = n-1;
+                neighboringNormals[v-1].push_back(n-1);
+            }
             if (t)
                 m_texCoordIndices[m_numTris].x = t-1;
             getIndices(s2, &v, &t, &n);
             m_vertexIndices[m_numTris].y = v-1;
             if (n)
+            {
                 m_normalIndices[m_numTris].y = n-1;
+                neighboringNormals[v-1].push_back(n-1);
+            }
             if (t)
                 m_texCoordIndices[m_numTris].y = t-1;
             getIndices(s3, &v, &t, &n);
             m_vertexIndices[m_numTris].z = v-1;
             if (n)
+            {
                 m_normalIndices[m_numTris].z = n-1;
+                neighboringNormals[v-1].push_back(n-1);
+            }
             if (t)
                 m_texCoordIndices[m_numTris].z = t-1;
 
@@ -206,16 +249,57 @@ TriangleMesh::loadObj(FILE* fp, const Matrix4x4& ctm)
                 Vector3 e2 = m_vertices[m_vertexIndices[m_numTris].z] -
                              m_vertices[m_vertexIndices[m_numTris].x];
 
-                m_normals[nn] = cross(e1, e2);
-                m_normals[nn].normalize();
-                m_normalIndices[nn].x = nn;
-                m_normalIndices[nn].y = nn;
-                m_normalIndices[nn].z = nn;
+                for (int i = 0; i < 3; i++)
+                {
+                    m_normals[nnormals] = cross(e1, e2);
+                    m_normals[nnormals].normalize();
+                    fixNormal[nnormals] = true;
+
+                    #ifdef __SSE4_1__
+                    m_SSEnormals[nnormals]  = _mm_set_ps(m_normals[nnormals].x, m_normals[nnormals].y, m_normals[nnormals].z, 0.0f);
+                    #endif   
+                    
+                    nnormals++;
+                }
+                
+                m_normalIndices[m_numTris].x = nnormals-3;
+                m_normalIndices[m_numTris].y = nnormals-2;
+                m_normalIndices[m_numTris].z = nnormals-1;
                 nn++;
+                
+                //Add the normals as neighbors to the vertices
+                neighboringNormals[m_vertexIndices[m_numTris].x].push_back(m_normalIndices[m_numTris].x);
+                neighboringNormals[m_vertexIndices[m_numTris].y].push_back(m_normalIndices[m_numTris].y);
+                neighboringNormals[m_vertexIndices[m_numTris].z].push_back(m_normalIndices[m_numTris].z);
             }
 
             m_numTris++;
         } //  else ignore line
     }
+
+    //Average normals that needs to be averaged 
+    for (int i = 0; i < nvertices; i++)
+    {
+        if (neighboringNormals[i].size() == 0) continue;
+        
+        Vector3 avg;
+        for (int j = 0; j < neighboringNormals[i].size(); j++)
+        {
+            avg += m_normals[neighboringNormals[i][j]];
+        }
+        avg /= neighboringNormals[i].size();
+        avg.normalize();
+
+        for (int j = 0; j < neighboringNormals[i].size(); j++)
+        {
+            if (!fixNormal[neighboringNormals[i][j]]) continue;
+            m_normals[neighboringNormals[i][j]] = avg;
+            #ifdef __SSE4_1__
+            m_SSEnormals[neighboringNormals[i][j]]  = _mm_set_ps(m_normals[neighboringNormals[i][j]].x, m_normals[neighboringNormals[i][j]].y, m_normals[neighboringNormals[i][j]].z, 0.0f);
+            #endif
+        }
+    }
+    
+    delete [] neighboringNormals;
 }
 
