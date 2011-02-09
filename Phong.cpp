@@ -17,9 +17,9 @@ Phong::Phong(const Vector3 &kd, const Vector3 &ka, const Vector3 &ks, const Vect
 	m_kt.z = std::max(std::min(m_kt.z, 1.0f-m_ks.z), 0.f);
 
 	//absorption is between 0.f and 1.f - reflection - refraction
-	m_absorb.x = std::max(std::min(m_kd.x, 1.0f-m_ks.x-m_kt.x), 0.f);
-	m_absorb.y = std::max(std::min(m_kd.y, 1.0f-m_ks.y-m_kt.y), 0.f);
-	m_absorb.z = std::max(std::min(m_kd.z, 1.0f-m_ks.z-m_kt.z), 0.f);
+	m_absorb.x = std::max(1.0f-m_ks.x-m_kt.x, 0.f);
+	m_absorb.y = std::max(1.0f-m_ks.y-m_kt.y, 0.f);
+	m_absorb.z = std::max(1.0f-m_ks.z-m_kt.z, 0.f);
 }
 
 Phong::~Phong()
