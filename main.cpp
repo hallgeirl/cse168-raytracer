@@ -246,7 +246,7 @@ void makeModelsScene()
     sphere->setCenter(Vector3(2,1,-9));
     sphere->setRadius(1.5);
     //sphere->setMaterial(new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10, 0.2, 0.8, 1.5));
-    sphere->setMaterial(new TexturedPhong(new StoneTexture(20), Vector3(0.1,0.1,0.1), Vector3(0.f), Vector3(0.f), 5, 1.5));
+    sphere->setMaterial(new TexturedPhong(new StoneTexture(20), Vector3(0.1,0.1,0.1), Vector3(1.f), Vector3(0.f), 5, 1.5));
     g_scene->addObject(sphere);
 
 /*    Material* teapotMat = new Phong(Vector3(.5f, .5f, .5f), Vector3(0.1, 0.1, 0.1), Vector3(0.f), Vector3(0.f), 20);

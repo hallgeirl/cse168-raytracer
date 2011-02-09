@@ -67,7 +67,12 @@ Vector3 LoadedTexture::getPixel(int x, int y)
 	
 	color = getFloatPixel(x, y);
 	
+	//Blue and Green are somehow reversed on Win32 machines
+#ifdef WIN32
+	return Vector3(tonemapValue(color.red), tonemapValue(color.blue), tonemapValue(color.green));
+#else
 	return Vector3(tonemapValue(color.red), tonemapValue(color.green), tonemapValue(color.blue));
+#endif
 }
 
 Vector3 LoadedTexture::lookup2D(const tex_coord2d_t & texture_coords)

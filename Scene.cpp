@@ -63,10 +63,6 @@ Scene::raytraceImage(Camera *cam, Image *img)
             {
 				img->setPixel(j, i, shadeResult);
             }
-			/*else
-			{
-				img->setPixel(j, i, getEnvironmentMap(ray));
-			}*/
         }
         #ifndef NO_GFX //If not rendering graphics to screen, don't draw scan lines (it will segfault in multithreading mode)
         img->drawScanline(i);
@@ -149,7 +145,6 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 				Vector3 reflectResult;
 				Ray reflectRay = ray.Reflect(hitInfo);
 
-				reflectRay.o += reflectRay.d * epsilon;
 				if (traceScene(reflectRay, reflectResult, depth))
 				{
 					shadeResult += hitInfo.material->GetReflection()* reflectResult;
