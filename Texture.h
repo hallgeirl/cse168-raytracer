@@ -94,10 +94,13 @@ protected:
     Grid m_grid;
 };
 
-class StoneTexture : public CellularTexture2D
+class StoneTexture : public Texture2D
 {
+protected:
+    float m_scale;
 public:
-    StoneTexture(int points, int gridWidth, int gridHeight) : CellularTexture2D(points, gridWidth, gridHeight) {}
+    StoneTexture(float scale=1) { m_scale = scale; }
+    //StoneTexture(int points, int gridWidth, int gridHeight) : CellularTexture2D(points, gridWidth, gridHeight) {}
     virtual float bumpHeight2D(const tex_coord2d_t & coords) const;
     virtual Vector3 lookup2D(const tex_coord2d_t & coords);
 };

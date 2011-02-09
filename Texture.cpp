@@ -267,8 +267,7 @@ float* CellularTexture2D::getClosestDistances(const tex_coord2d_t & coords, int 
 
 float StoneTexture::bumpHeight2D(const tex_coord2d_t & coords) const
 {
-    float scale = 2;
-    float u = coords.u * scale, v = coords.v * scale;
+    float u = coords.u * m_scale, v = coords.v * m_scale;
     long order = 3;
     float pos[2] = {u, v}, 
           *f = new float[order], 
@@ -282,28 +281,30 @@ float StoneTexture::bumpHeight2D(const tex_coord2d_t & coords) const
 	{
 		//float cellturb = generateNoise(u, v, 0, 0.5, 2, 0.5, id[0]%5+2)/2+0.5;
 		float cellturb = generateNoise(u, v, 0, 0.5, 2, 0.5, id[0]%5+5)/5+0.5;
-		return 0.7f* cellturb;
+		//return 0.7f* cellturb;
 	}
 
  //   float turb = generateNoise(u, v, 0, 0.5, 2, 0.5, 5)/2+0.5;
     float turb = generateNoise(u, v, 0, 1, 2, 0.5, 3)/10+0.5;
-    
-
+  
+    float height = 1/(1+exp(-20.0*(f[1]-f[0]-0.3)));
+    //if (f[1]-f[0] < 0.1) height = 0;
     //f1f0 += 0.2*turb;
-//    return 0;
+    //return 0;
     //return 0.1*pow(sin(30*turb+u*5)/2+0.5, 0.05);
 	//float cells = ((float)(id[0]%10)/10.f);
 	delete id;
     delete f;
-	return 0.6f*turb;
+	
+    return 1.0f*turb+height;
+
 }
 
 
 Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
 {
     float red, green, blue;
-    float scale = 2;
-    float u = coords.u * scale, v = coords.v * scale;
+    float u = coords.u * m_scale, v = coords.v * m_scale;
     long order = 3;
     float pos[2] = {u, v}, 
           *f = new float[order], 
@@ -322,8 +323,9 @@ Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
     base *= ((float)(id[0]%10))/20+0.5;
     
     //Add some perlin noise in the mix
-    float turb = generateNoise(u, v, 0, 2, 2, 0.8, 5);
-    base += 0.5*fabs(turb); //0.1*pow(fabs(sin(u*20+turb)), 30);
+    float turb = generateNoise(u, v, 0, 3, 2, 0.8, 5);
+    base = std::max(0.0f, base); 
+    base += 0.8*fabs(turb); //0.1*pow(fabs(sin(u*20+turb)), 30);
 
 	if (f1f0 > 1.1)
 	{

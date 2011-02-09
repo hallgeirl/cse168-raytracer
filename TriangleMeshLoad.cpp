@@ -138,7 +138,7 @@ TriangleMesh::loadObj(FILE* fp, const Matrix4x4& ctm)
 
     m_normals = new Vector3[std::max(nv,nf*3)];
     m_vertices = new Vector3[nv];
-    
+    m_numVertices = nv;    
     #ifdef __SSE4_1__
     m_SSEnormals = new __m128[std::max(nv,nf*3)];
     m_SSEvertices = new __m128[nv];
