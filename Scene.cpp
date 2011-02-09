@@ -123,18 +123,16 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
     {
 		if (trace(hitInfo, ray))
 		{
-			//shadeResult = hitInfo.material->shade(ray, hitInfo, *this);
 			++depth;
 			
-			//min checks should be done in material constructor, not every trace
-		
+			shadeResult = hitInfo.material->shade(ray, hitInfo, *this);
+			
 			//if reflective material, send trace with ReflectRay
 			if (hitInfo.material->IsReflective())
 			{
 				Vector3 reflectResult;
 				Ray reflectRay = ray.Reflect(hitInfo);
 
-				//Nudge Ray along normal to avoid Acne
 				reflectRay.o += reflectRay.d * epsilon;
 				if (traceScene(reflectRay, reflectResult, depth))
 				{
@@ -148,15 +146,11 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 				Vector3 refractResult;
 				Ray	refractRay = ray.Refract(hitInfo);
 
-				//Nudge Ray along normal to avoid Acne
-				refractRay.o += refractRay.d * epsilon;
 				if (traceScene(refractRay, refractResult, depth))
 				{
 					shadeResult += hitInfo.material->GetRefraction()* refractResult;
 				}
 			}
-
-			shadeResult += hitInfo.material->shade(ray, hitInfo, *this);
 		}
 		else
 		{

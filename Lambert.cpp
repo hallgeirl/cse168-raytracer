@@ -36,10 +36,9 @@ Lambert::shade(const Ray& ray, const HitInfo& hit, const Scene& scene) const
 
 		Ray Shadow(hit.P+(l*epsilon), l);
 		HitInfo hitInfo;
-		if (scene.trace(hitInfo, Shadow))
+		if (scene.trace(hitInfo, Shadow, 0.f, sqrt(falloff)))
 		{
-			if (hitInfo.t < sqrt(falloff))
-				continue;
+			continue;
 		}
 
         // get the diffuse component

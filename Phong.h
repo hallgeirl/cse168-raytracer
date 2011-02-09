@@ -46,6 +46,7 @@ protected:
     Vector3 m_ka;
 	Vector3 m_ks;
 	Vector3 m_kt;
+	Vector3 m_absorb;
 	float m_a;
 	float m_refractIndex;
 };

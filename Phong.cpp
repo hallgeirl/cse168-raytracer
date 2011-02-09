@@ -10,9 +10,16 @@ Phong::Phong(const Vector3 &kd, const Vector3 &ka, const Vector3 &ks, const Vect
 	: m_kd(kd), m_ka(ka), m_ks(ks), m_kt(kt), m_a(shinyness), m_refractIndex(refractIndex)
 {
 	//Keep the energy equation balanced (that is, don't refract+reflect+absorb more than 100% of the ray)
-	m_ks.x = std::min(m_ks.x, 1.0f-m_kt.x);
-	m_ks.y = std::min(m_ks.y, 1.0f-m_kt.y);
-	m_ks.z = std::min(m_ks.z, 1.0f-m_kt.z);
+
+	//refraction is between 0.f and 1.f - reflection 
+	m_kt.x = std::max(std::min(m_kt.x, 1.0f-m_ks.x), 0.f);
+	m_kt.y = std::max(std::min(m_kt.y, 1.0f-m_ks.y), 0.f);
+	m_kt.z = std::max(std::min(m_kt.z, 1.0f-m_ks.z), 0.f);
+
+	//absorption is between 0.f and 1.f - reflection - refraction
+	m_absorb.x = std::max(std::min(m_kd.x, 1.0f-m_ks.x-m_kt.x), 0.f);
+	m_absorb.y = std::max(std::min(m_kd.y, 1.0f-m_ks.y-m_kt.y), 0.f);
+	m_absorb.z = std::max(std::min(m_kd.z, 1.0f-m_ks.z-m_kt.z), 0.f);
 }
 
 Phong::~Phong()
@@ -37,6 +44,13 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 
 	Vector3 e = -ray.d;
 
+		//Look up the diffuse color
+	Vector3 diffuseColor;
+	if (GetLookupCoordinates() == UV)
+		diffuseColor = diffuse2D(hit.object->toUVCoordinates(hit.P));
+	else
+		diffuseColor = diffuse3D(tex_coord3d_t(hit.P.x, hit.P.y, hit.P.z));
+
 	const Lights *lightlist = scene.lights();
 
 	// loop over all of the lights
@@ -59,10 +73,9 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 		// No light contribution if Ray hits an object 
 		Ray Shadow(hit.P+(l*epsilon), l);
 		HitInfo hitInfo;
-		if (scene.trace(hitInfo, Shadow))
+		if (scene.trace(hitInfo, Shadow, 0.f, sqrt(falloff)))
 		{
-			if (hitInfo.t < sqrt(falloff))
-				continue;
+			continue;
 		}
 
         // get the diffuse component
@@ -73,21 +86,13 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 
 		Vector3 result = pLight->color();
 
-		//Look up the diffuse color
-		Vector3 diffuse;
-		if (GetLookupCoordinates() == UV)
-			diffuse = diffuse2D(hit.object->toUVCoordinates(hit.P));
-		else
-			diffuse = diffuse3D(tex_coord3d_t(hit.P.x, hit.P.y, hit.P.z));
-
-		if (m_ks.x > 0 && eDotr > 0.9)
-			int count = 0;
-
-		L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / (4 * PI)) * diffuse + (pow(std::max(0.0f, eDotr/falloff * pLight->wattage() / (4 * PI)), m_a))*m_ks);
+		//removed m_ks from specular highlight 
+		//specular highlight should be dependent on shinyness rather than reflective component
+		L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / (4 * PI)) * diffuseColor * m_absorb + (pow(std::max(0.0f, eDotr/falloff * pLight->wattage() / (4 * PI)), m_a)));
     }
 
     // add the ambient component
-    L += ka(hit.object->toUVCoordinates(hit.P)) * GetAbsorption();
+    L += ka(hit.object->toUVCoordinates(hit.P)); // * diffuseColor * m_absorb;
 
     return L;
 }

@@ -51,6 +51,9 @@ public:
 		Reflect.o = hitInfo.P;
 		Reflect.d = d - 2 * dot(hitInfo.N, d) * hitInfo.N;
 
+		//Nudge Ray along normal to avoid Acne
+		Reflect.o += Reflect.d * epsilon;
+
 		return Reflect;
 	}
 
@@ -83,6 +86,9 @@ public:
 			return Reflect(hitInfo);
 
 		Refract.d = n1 * (d - n * dot(d, n)) / n2 - n * sqrt(energy);
+
+		//Nudge Ray along normal to avoid Acne
+		Refract.o += Refract.d * epsilon;
 
 		return Refract;
 	}

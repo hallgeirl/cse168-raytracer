@@ -278,7 +278,8 @@ float StoneTexture::bumpHeight2D(const tex_coord2d_t & coords) const
     WorleyNoise::noise2D(pos, order, f, delta, id);
     
     float f1f0 = (1-pow(f[1]-f[0], 0.8f))*1.5;//(pow(f[1]-f[0], 0.2));
-	if (f1f0 < 1.1)
+	f1f0 *= -1.f;
+	if (f1f0 > -1.1)
 	{
 		//float cellturb = generateNoise(u, v, 0, 0.5, 2, 0.5, id[0]%5+2)/2+0.5;
 		float cellturb = generateNoise(u, v, 0, 0.5, 2, 0.5, id[0]%5+5)/5+0.5;
@@ -350,8 +351,9 @@ Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
 class TexturedPhong
 Material that looks up diffuse colors from a texture (2D or 3D)
 ***************************************************************/
+//set Phong m_kd default to 1.f in order for the balance equation to work out properly
 TexturedPhong::TexturedPhong(Texture * texture, const Vector3 & ka, const Vector3 & ks, const Vector3 & kt, const float shinyness, const float refractIndex)
- : Phong(Vector3(0,0,0), ka, ks, kt, shinyness, refractIndex), m_texture(texture)
+ : Phong(Vector3(1.f), ka, ks, kt, shinyness, refractIndex), m_texture(texture)
 {
 
 }
