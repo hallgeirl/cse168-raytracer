@@ -9,6 +9,13 @@
 
 \maketitle
 
+\section{Implementation of task 1-4}
+Task 1 and 2, the triangle intersection with barycentric interpolation, was implemented in Triangle.cpp.
+
+Task 3, the shading model, was in part implemented in Phong.cpp (for the highlight and shadow rays), and part in Scene.cpp in Scene::traceScene(), where we do the actual recursion to account for reflection and refraction. Point lights and diffuse shading was already implemented.
+
+Task 4, the texture, was implemented in Texture.h and Texture.cpp. Before we was given the source code for the Worley noise generator, we made our own (Because we didn't realize we were given one), which is quite fast. This is also included in that source file, but it's not used any more. The stone texture is implemented in the StoneTexture class - the interesting parts are in lookup2D() and bumpHeight2D().
+
 \section{Images}
 We included 3 images in the zip file.
 \subsection{reflection.ppm}
