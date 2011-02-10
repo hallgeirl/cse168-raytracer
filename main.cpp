@@ -222,8 +222,8 @@ void makeScene1()
     g_scene->addObject(sphere);
     
     sphere = new Sphere;
-    sphere->setCenter(Vector3(0,4.5,-11));
-    sphere->setRadius(2);
+    sphere->setCenter(Vector3(0,4.5,-10));
+    sphere->setRadius(1.5);
     sphere->setMaterial(new Phong(Vector3(0,0,1.0), Vector3(0.1, 0.1, 0.1), Vector3(0.1), Vector3(0.0, 0, 0.9), 3, 1.5));
     g_scene->addObject(sphere);
 
@@ -408,8 +408,8 @@ main(int argc, char*argv[])
         // create a scene
         //makeSpiralScene();
         //makeSphereScene();
-        //makeScene2();
-        makeBUNNIZ();
+        makeScene1();
+        //makeBUNNIZ();
         MiroWindow miro(&argc, argv);
 #ifndef NO_GFX
         miro.mainLoop();

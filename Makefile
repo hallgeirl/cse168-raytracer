@@ -1,10 +1,12 @@
 NAME = miro
 
+
 all: $(NAME)
 
 include Makedefs
 SOURCES -=  parse.cpp lexer.cpp
 OBJS -=  parse.o lexer.o
+
 # 
 # lexer.cpp: lexer.lex
 # 	$(ECHO) "Flex-ing lexer.lex"
