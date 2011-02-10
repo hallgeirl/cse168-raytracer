@@ -407,8 +407,11 @@ main(int argc, char*argv[])
 
         // create a scene
         //makeSpiralScene();
+        //makeBunnyScene();
+        //makeTeapotScene();
         //makeSphereScene();
         makeScene1();
+        //makeScene2();
         //makeBUNNIZ();
         MiroWindow miro(&argc, argv);
 #ifndef NO_GFX

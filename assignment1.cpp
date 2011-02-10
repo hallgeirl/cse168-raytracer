@@ -5,7 +5,7 @@
 #include "Camera.h"
 #include "Image.h"
 #include "Console.h"
-
+#include "Sphere.h"
 #include "PointLight.h"
 #include "TriangleMesh.h"
 #include "Triangle.h"
@@ -18,7 +18,8 @@ makeBunnyScene()
     g_scene = new Scene;
     g_image = new Image;
 
-    g_image->resize(128, 128);
+    g_image->resize(2048, 2048);
+
     
     // set up the camera
     g_camera->setBGColor(Vector3(0.0f, 0.0f, 0.2f));
@@ -37,7 +38,7 @@ makeBunnyScene()
     Material* mat = new Lambert(Vector3(1.0f));
 
     TriangleMesh * bunny = new TriangleMesh;
-    bunny->load("bunny.obj");
+    bunny->load("models/bunny.obj");
     
     // create all the triangles in the bunny mesh and add to the scene
     for (int i = 0; i < bunny->numTris(); ++i)
@@ -76,12 +77,12 @@ makeSphereScene()
     g_scene = new Scene;
     g_image = new Image;
 
-    g_image->resize(128, 128);
+    g_image->resize(2048, 2048);
     
     // set up the camera
     g_camera->setBGColor(Vector3(0.0f, 0.0f, 0.2f));
-    g_camera->setEye(Vector3(-2, 3, 5));
-    g_camera->setLookAt(Vector3(-.5, 1, 0));
+    g_camera->setEye(Vector3(-2, 1, 5));
+    g_camera->setLookAt(Vector3(0, 0, 0));
     g_camera->setUp(Vector3(0, 1, 0));
     g_camera->setFOV(45);
 
@@ -96,13 +97,14 @@ makeSphereScene()
 
     Sphere *sphere = new Sphere;
     sphere->setRadius(1.5);
+    sphere->setMaterial(mat);
 
     // create the floor triangle
     TriangleMesh * floor = new TriangleMesh;
     floor->createSingleTriangle();
-    floor->setV1(Vector3(  0, 0,  10));
-    floor->setV2(Vector3( 10, 0, -10));
-    floor->setV3(Vector3(-10, 0, -10));
+    floor->setV1(Vector3(  0, -1.5,  10));
+    floor->setV2(Vector3( 10, -1.5, -10));
+    floor->setV3(Vector3(-10, -1.5, -10));
     floor->setN1(Vector3(0, 1, 0));
     floor->setN2(Vector3(0, 1, 0));
     floor->setN3(Vector3(0, 1, 0));
@@ -125,12 +127,12 @@ makeTeapotScene()
     g_scene = new Scene;
     g_image = new Image;
 
-    g_image->resize(128, 128);
+    g_image->resize(2048, 2048);
     
     // set up the camera
     g_camera->setBGColor(Vector3(0.0f, 0.0f, 0.2f));
     g_camera->setEye(Vector3(-2, 3, 5));
-    g_camera->setLookAt(Vector3(-.5, 1, 0));
+    g_camera->setLookAt(Vector3(0, 1, 0));
     g_camera->setUp(Vector3(0, 1, 0));
     g_camera->setFOV(45);
 
@@ -144,14 +146,14 @@ makeTeapotScene()
     Material* mat = new Lambert(Vector3(1.0f));
 
     TriangleMesh * teapot = new TriangleMesh;
-    teapot->load("teapot.obj");
+    teapot->load("models/teapot.obj");
     
-    // create all the triangles in the bunny mesh and add to the scene
-    for (int i = 0; i < bunny->numTris(); ++i)
+    // create all the triangles in the triangle mesh and add to the scene
+    for (int i = 0; i < teapot->numTris(); ++i)
     {
         Triangle* t = new Triangle;
         t->setIndex(i);
-        t->setMesh(bunny);
+        t->setMesh(teapot);
         t->setMaterial(mat); 
         g_scene->addObject(t);
     }

@@ -17,11 +17,15 @@ Task 3, the shading model, was in part implemented in Phong.cpp (for the highlig
 Task 4, the texture, was implemented in Texture.h and Texture.cpp. Before we was given the source code for the Worley noise generator, we made our own (Because we didn't realize we were given one), which is quite fast. This is also included in that source file, but it's not used any more. The stone texture is implemented in the StoneTexture class - the interesting parts are in lookup2D() and bumpHeight2D().
 
 \section{Images}
-We included 3 images in the zip file.
-\subsection{reflection.ppm}
+We included 6 images in the archive. All image filenames start with "lawson\_alisha-lien\_hallgeir-" as according to the assignment text - this is not included in the filenames listed here, but is implicit.
+
+\subsection{teapot.png, sphere.png, bunny.png}
+These are the images generated from the makeBunnyScene(), makeSphereScene() and makeTeapotScene() functions. The material is 100\% diffuse.
+
+\subsection{reflections.png}
 This image includes 5 objects; the teapot is fully reflective, the plane and one of the spheres are texture mapped with the bump mapped stone texture, a partially reflective with a yellowish diffuse color, and finally a refractive blue sphere where we used a refractive component of (0, 0, 1).
 
-\subsection{refraction.ppm}
+\subsection{refractions.png}
 This image shows nine fully refractive spheres with increasing refractive indices. Starting at 1.0, which appears to be invisible because there's no refraction, it increases in steps of $.05$ from left to right, ending at 1.4 in the top right corner.
 
 \subsection{bunniez.ppm}
