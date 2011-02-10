@@ -99,16 +99,15 @@ Triangle::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
 	__m128 _ddotn = _mm_dp_ps(_rd, _normal, 0xEE);
 
     //Calculate t, beta and gamma
-    __m128 _beta_gamma_t = _mm_mul_ps(_mm_add_ps(_mm_dp_ps(_mm_sub_ps(_ro, _A), _normal, 0xE2), //(O-A) * N = ddotn*t -> r1
-                                                 _mm_add_ps(_mm_dp_ps(_rd, _mm_cross_ps(_mm_sub_ps(_ro, _A), _CmA), 0xE4), //d * (O-A)x(C-A) = ddotn*beta -> r2
-                                                            _mm_dp_ps(_rd, _mm_cross_ps(_BmA, _mm_sub_ps(_ro, _A)), 0xE8))), // = ddotn*gamma -> r3
-                                      _mm_rcp_ps(_ddotn));//Multiply by 1/_ddotn (this is actually faster than doing a division)
+    __m128 _beta_gamma_t = _mm_div_ps(_mm_add_ps(_mm_dp_ps(_mm_sub_ps(_ro, _A), _normal, 0xE2), //(O-A) * N = t -> r0
+                                                 _mm_add_ps(_mm_dp_ps(_rd, _mm_cross_ps(_mm_sub_ps(_ro, _A), _CmA), 0xE4), //d * (O-A)x(C-A) = beta -> r1
+                                                            _mm_dp_ps(_rd, _mm_cross_ps(_BmA, _mm_sub_ps(_ro, _A)), 0xE8))), // = gamma -> r2
+                                      _ddotn);
     
     //Compare to see if we have a hit 
-    float betagammat[4];
-    _mm_store_ps(betagammat, _beta_gamma_t);
-   
-    //__m128 comp1 = _mm_set_ps(-epsilon, -epsilon, tMin, -1-epsilon);
+	float betagammat[4];
+    _mm_storeu_ps(betagammat, _beta_gamma_t);
+    
     if (betagammat[2] < -epsilon || betagammat[3] < -epsilon || betagammat[2]+betagammat[3] > 1+epsilon || betagammat[1] < tMin || betagammat[1] > tMax) 
     {
 		return false;
@@ -119,13 +118,14 @@ Triangle::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
            _gamma = _mm_shuffle_ps(_beta_gamma_t, _beta_gamma_t, _MM_SHUFFLE(3, 3, 3, 3));
 	__m128 _alpha = _mm_sub_ps(_mm_sub_ps(_mm_set1_ps(1.0f), _beta), _gamma);
            
+    //_mm_test_all_zeros(_beta, _gamma);
     __m128 _P = _mm_add_ps(_A, _mm_add_ps(_mm_mul_ps(_beta, _BmA), _mm_mul_ps(_gamma, _CmA)));
 	__m128 _N = _mm_add_ps(_mm_mul_ps(_alpha, _nA), _mm_add_ps(_mm_mul_ps(_beta, _nB), _mm_mul_ps(_gamma, _nC)));
 	
     float P[4], N[4];
     
-    _mm_store_ps(P, _P);
-    _mm_store_ps(N, _N);
+    _mm_storeu_ps(P, _P);
+    _mm_storeu_ps(N, _N);
 
 	result.P.x = P[3];
 	result.P.y = P[2];
