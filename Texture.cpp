@@ -273,6 +273,7 @@ float* CellularTexture2D::getClosestDistances(const tex_coord2d_t & coords, int 
 float StoneTexture::bumpHeight2D(const tex_coord2d_t & coords) const
 {
     float u = coords.u * m_scale, v = coords.v * m_scale;
+    float heightFactor = 0.3;
     long order = 3;
     float pos[2] = {u, v}, 
           *f = new float[order], 
@@ -283,17 +284,17 @@ float StoneTexture::bumpHeight2D(const tex_coord2d_t & coords) const
     
     float f1f0 = (1-pow(f[1]-f[0], 0.8f))*1.5;//(pow(f[1]-f[0], 0.2));
 	f1f0 *= -1.f;
+    float height = 1/(1+exp(-20.0*(f[1]-f[0]-0.3)));
 	if (f1f0 > -1.1)
 	{
 		//float cellturb = generateNoise(u, v, 0, 0.5, 2, 0.5, id[0]%5+2)/2+0.5;
-		float cellturb = generateNoise(u, v, 0, 0.5, 2, 0.5, id[0]%5+5)/5+0.5;
-		//return 0.7f* cellturb;
+		float cellturb = generateNoise(u, v, 0, 0.5, 2, 0.5, id[0]%3+5)/5+0.5;
+		return 0.8f* cellturb+heightFactor*height;
 	}
 
  //   float turb = generateNoise(u, v, 0, 0.5, 2, 0.5, 5)/2+0.5;
     float turb = generateNoise(u, v, 0, 1, 2, 0.5, 3)/10+0.5;
   
-    float height = 1/(1+exp(-20.0*(f[1]-f[0]-0.3)));
     //if (f[1]-f[0] < 0.1) height = 0;
     //f1f0 += 0.2*turb;
     //return 0;
@@ -302,7 +303,7 @@ float StoneTexture::bumpHeight2D(const tex_coord2d_t & coords) const
 	delete id;
     delete f;
 	
-    return 1.0f*turb+height;
+    return 1.0f*turb+heightFactor*height;
 
 }
 
