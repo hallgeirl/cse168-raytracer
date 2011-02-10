@@ -24,14 +24,6 @@ public:
     inline void setN2(const Vector3& n) { setNormal(1, n); }
     inline void setN3(const Vector3& n) { setNormal(2, n); }
 
-    inline void translate(const Vector3 &t)
-    {
-        for (int i = 0; i < m_numVertices; i++)
-        {
-            m_vertices[i] += t;
-        }
-    }
-
     struct TupleI3
     {
         unsigned int x, y, z;

@@ -133,9 +133,9 @@ class TexturedPhong : public Phong
 {
 public:
     TexturedPhong(Texture * texture,
-			            const Vector3 & ka = Vector3(0),
-			            const Vector3 & ks = Vector3(0),
-			            const Vector3 & kt = Vector3(0),
+			            const Vector3 & ambientColor = Vector3(0),     //Magnitude of ambient lighting for this material. ambient*diffuse=ambient contribution.
+            			const Vector3 & specularColor = Vector3(0),    //Reflectivity for each color. 1 is fully reflective, 0 is fully non-reflective.
+			            const Vector3 & transparentColor = Vector3(0), //Transparency for each color. 1 is fully transparent (refracting according to refractIndex), 0 is fully opaque.
 			            const float shinyness = 1.0f,
 			            const float refractIndex = 1);
 	virtual LookupCoordinates GetLookupCoordinates() const { return m_texture->GetLookupCoordinates(); }
