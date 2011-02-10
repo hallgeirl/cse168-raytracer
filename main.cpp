@@ -1,6 +1,6 @@
 #include <math.h>
 #include <string>
-
+#include "assignment1.h"
 #include "Miro.h"
 #include "Scene.h"
 #include "Camera.h"
@@ -89,7 +89,7 @@ makeSpiralScene()
     g_scene->preCalc();
 }
 
-void
+/*void
 makeSphereScene()
 {
     g_camera = new Camera;
@@ -137,7 +137,7 @@ makeSphereScene()
     // let objects do pre-calculations if needed
     g_scene->preCalc();
 }
-
+*/
 void addModel(const char* filename, Material *mat, Scene* scene, Vector3 position, float rotY=0)
 {
 	TriangleMesh * mesh = new TriangleMesh();
