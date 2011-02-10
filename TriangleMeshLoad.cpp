@@ -43,15 +43,14 @@ TriangleMesh::createSingleTriangle()
     m_texCoordIndices[0].z = 2;
 
     #ifdef __SSE4_1__
+#ifdef WIN32
+    m_SSEvertices = (__m128*)_aligned_malloc(3 * sizeof(__m128), 16);
+    m_SSEnormals = (__m128*)_aligned_malloc(3 * sizeof(__m128), 16);
+#else
     m_SSEvertices = new __m128[3];
     m_SSEnormals = new __m128[3];
-    
-    for (int i = 0; i < 3; i++)
-    {
-        m_SSEvertices[i] = _mm_set_ps(m_vertices[i].x, m_vertices[i].y, m_vertices[i].z, 0.0f);
-        m_SSEnormals[i]  = _mm_set_ps(m_normals[i].x, m_normals[i].y, m_normals[i].z, 0.0f);
-    }
-    #endif    
+#endif
+	#endif    
 
     m_numTris = 1;
 }
@@ -140,8 +139,15 @@ TriangleMesh::loadObj(FILE* fp, const Matrix4x4& ctm)
     m_vertices = new Vector3[nv];
     m_numVertices = nv;    
     #ifdef __SSE4_1__
+
+#ifdef WIN32
+    m_SSEvertices = (__m128*)_aligned_malloc(nv * sizeof(__m128), 16);
+    m_SSEnormals = (__m128*)_aligned_malloc(std::max(nv,nf*3) * sizeof(__m128), 16);
+#else
     m_SSEnormals = new __m128[std::max(nv,nf*3)];
     m_SSEvertices = new __m128[nv];
+#endif
+
     #endif   
 
     if (nt)
