@@ -1,5 +1,5 @@
 TEX=pdflatex
-SRC=document
+SRC=Readme
 TRASH=$(shell ls *.aux *.idx *.log *.toc *.ilg *.ind *.backup)
 
 all:${SRC}
