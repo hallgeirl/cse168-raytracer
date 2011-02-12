@@ -5,7 +5,6 @@
 
 using namespace std;
 
-
 void getCornerPoints(Vector3 (&outCorners)[2], Objects * objs)
 {
     //Find the bounds of the root node
@@ -49,7 +48,7 @@ BVH::build(Objects * objs, int depth)
     getCornerPoints(m_corners, objs); 
 
     //Check if we're done
-    if (objs->size() < 4 || depth >= MAX_TREE_DEPTH)
+    if (objs->size() <= 4 || depth >= MAX_TREE_DEPTH)
     {
         m_objects = objs;
         m_isLeaf = true;
@@ -191,7 +190,7 @@ BVH::intersect(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
 			t[i].Bounds[j] = (m_corners[j][i] - ray.o[i]) / ray.d[0];
 		}
 		if (t[i].Bounds[0] > t[i].Bounds[1])
-			std::swap(t[i].Bounds[0], t[i].Bounds[0]);
+			std::swap(t[i].Bounds[0], t[i].Bounds[1]);
 	}
 
 	Component t_sorted[3];
@@ -241,19 +240,28 @@ BVH::intersect(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
 	if (t_sorted[0].Bounds[1] < t_sorted[1].Bounds[0] && t_sorted[1].Bounds[1] < t_sorted[2].Bounds[0])
 		return false;
 
+	HitInfo temp2MinHit;
 	if ((*m_children)[0]->intersect(tempMinHit, ray, tMin, tMax))
 	{
-		minHit = tempMinHit;
+		minHit.material = tempMinHit.material;
+		minHit.N = tempMinHit.N;
+		minHit.P = tempMinHit.P;
+		minHit.t = tempMinHit.t;
+		minHit.object = tempMinHit.object;
 		hit = true;
 	}
-	/*if ((*m_children)[1]->intersect(tempMinHit, ray, tMin, tMax))
+	if ((*m_children)[1]->intersect(temp2MinHit, ray, tMin, tMax))
 	{
-		if (tempMinHit.t < minHit.t)
-		{
-			minHit = tempMinHit;
+		if (temp2MinHit.t < minHit.t)
+		{	
+			minHit.material = temp2MinHit.material;
+			minHit.N = temp2MinHit.N;
+			minHit.P = temp2MinHit.P;
+			minHit.t = temp2MinHit.t;
+			minHit.object = temp2MinHit.object;
 			hit = true;
 		}
-	}*/
+	}
 	return hit;
 
 }
