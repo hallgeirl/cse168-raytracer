@@ -3,6 +3,16 @@
 #include "Ray.h"
 #include "Console.h"
 
+namespace
+{
+	void Swap(float& a, float& b)
+	{
+		float tmp = a;
+		a = b;
+		b = tmp;
+	}
+}
+
 void getCornerPoints(Vector3 (&outCorners)[2], Objects * objs)
 {
     //Find the bounds of the root node
@@ -139,20 +149,85 @@ BVH::intersect(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
     HitInfo tempMinHit;
     minHit.t = MIRO_TMAX;
 
-    for (size_t i = 0; i < m_objects->size(); ++i)
-    {
-        if ((*m_objects)[i]->intersect(tempMinHit, ray, tMin, tMax))
-        {
-            hit = true;
-            if (tempMinHit.t < minHit.t)
-            {
-            	minHit = tempMinHit;
+	if (m_isLeaf)
+	{
+		for (size_t i = 0; i < m_objects->size(); ++i)
+		{
+			if ((*m_objects)[i]->intersect(tempMinHit, ray, tMin, tMax))
+			{
+				hit = true;
+				if (tempMinHit.t < minHit.t)
+				{
+            		minHit = tempMinHit;
 
-            	//Update object reference
-            	minHit.object = (*m_objects)[i];
-            }
-        }
-    }
+            		//Update object reference
+            		minHit.object = (*m_objects)[i];
+				}
+			}
+		}
+	}
+	// intersect with node bounding box
+	else
+	{
+		Component t[3];
+		for (int i = 0; i < 3; ++i)
+		{
+			for (int j = 0; j < 2; ++j)
+			{
+				t[i].Bounds[j] = (m_corners[j][i] - ray.o[i]) / ray.d[0];
+			}
+			if (t[i].Bounds[0] > t[i].Bounds[1])
+				Swap(t[i].Bounds[0], t[i].Bounds[0]);
+		}
 
+		Component t_sorted[3];
+		if (t[0].Bounds[0] < t[1].Bounds[0] && t[0].Bounds[0] < t[2].Bounds[0])
+		{
+			t_sorted[0] = t[0];
+			if (t[1].Bounds[0] < t[2].Bounds[0])
+			{
+				t_sorted[1] = t[1];
+				t_sorted[2] = t[2];
+			}
+			else
+			{
+				t_sorted[1] = t[2];
+				t_sorted[2] = t[1];
+			}
+		}
+		else if (t[1].Bounds[0] < t[2].Bounds[0])
+		{
+			t_sorted[0] = t[1];
+			if (t[0].Bounds[0] < t[2].Bounds[0])
+			{
+				t_sorted[1] = t[0];
+				t_sorted[2] = t[2];
+			}
+			else
+			{
+				t_sorted[1] = t[2];
+				t_sorted[2] = t[0];
+			}
+		}
+		else
+		{
+			t_sorted[0] = t[2];
+			if (t[0].Bounds[0] < t[1].Bounds[0])
+			{
+				t_sorted[1] = t[0];
+				t_sorted[2] = t[1];
+			}
+			else
+			{
+				t_sorted[1] = t[1];
+				t_sorted[2] = t[0];
+			}
+		}
+
+		if (t_sorted[0].Bounds[1] < t_sorted[1].Bounds[0] && t_sorted[1].Bounds[1] < t_sorted[2].Bounds[0])
+			return hit;
+
+
+	}
     return hit;
 }
