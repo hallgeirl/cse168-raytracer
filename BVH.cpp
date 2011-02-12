@@ -66,7 +66,7 @@ BVH::build(Objects * objs, int depth)
         //Do a binary search for the best splitting position for each dimension. Pick the dimension with the best split.
         for (int dim = 0; dim < 3; dim++)
         {
-            float current = m_corners[1][dim] - m_corners[0][dim], beg = m_corners[0][dim], end = m_corners[1][dim];
+            float current = (m_corners[1][dim] + m_corners[0][dim])/2.0f, beg = m_corners[0][dim], end = m_corners[1][dim];
             bool done = false;
             Objects left, right;
 
@@ -120,7 +120,7 @@ BVH::build(Objects * objs, int depth)
                     {
                         if (right[i]->center()[dim] < current) 
                         {
-                            left.push_back(left[i]);
+                            left.push_back(right[i]);
                             right.erase(right.begin()+i);
                         }
                     }
@@ -239,21 +239,21 @@ BVH::intersect(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
 	}
 
 	if (t_sorted[0].Bounds[1] < t_sorted[1].Bounds[0] && t_sorted[1].Bounds[1] < t_sorted[2].Bounds[0])
-		return hit;
+		return false;
 
 	if ((*m_children)[0]->intersect(tempMinHit, ray, tMin, tMax))
 	{
 		minHit = tempMinHit;
 		hit = true;
 	}
-	if ((*m_children)[1]->intersect(tempMinHit, ray, tMin, tMax))
+	/*if ((*m_children)[1]->intersect(tempMinHit, ray, tMin, tMax))
 	{
 		if (tempMinHit.t < minHit.t)
 		{
 			minHit = tempMinHit;
 			hit = true;
 		}
-	}
+	}*/
 	return hit;
 
 }
