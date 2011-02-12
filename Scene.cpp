@@ -27,6 +27,7 @@ Scene::openGL(Camera *cam)
 void
 Scene::preCalc()
 {
+    debug("Precalcing objects\n");
     Objects::iterator it;
     for (it = m_objects.begin(); it != m_objects.end(); it++)
     {

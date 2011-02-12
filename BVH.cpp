@@ -3,6 +3,8 @@
 #include "Ray.h"
 #include "Console.h"
 
+using namespace std;
+
 void getCornerPoints(Vector3 (&outCorners)[2], Objects * objs)
 {
     //Find the bounds of the root node
@@ -41,8 +43,6 @@ void
 BVH::build(Objects * objs, int depth)
 {
     // construct the bounding volume hierarchy
-    //Remove this when we've constructed the tree
-    m_objects = objs;
 
     //Find the bounds of this node 
     getCornerPoints(m_corners, objs); 
@@ -51,6 +51,7 @@ BVH::build(Objects * objs, int depth)
     if (objs->size() < 4 || depth >= MAX_TREE_DEPTH)
     {
         m_objects = objs;
+        m_isLeaf = true;
     }
     else
     {
@@ -76,7 +77,7 @@ BVH::build(Objects * objs, int depth)
                     right.push_back((*objs)[i]);
             }
 
-            for (int depth = 0; depth < maxSearchDepth; depth++)
+            for (int searchDepth = 0; searchDepth < maxSearchDepth; searchDepth++)
             {
                 int n1 = left.size(), n2 = right.size();
                 Vector3 cornersLeft[2], cornersRight[2];
@@ -118,13 +119,35 @@ BVH::build(Objects * objs, int depth)
                         if (right[i]->center()[dim] < current) 
                         {
                             left.push_back(left[i]);
-                            right.erase(left.begin()+i);
+                            right.erase(right.begin()+i);
                         }
                     }
                 }
             }
-             
         }    
+        //Add child nodes
+        m_children = new vector<BVH*>;
+        Objects* left, * right;
+        left = new Objects; right = new Objects;
+
+        //Split the object array according to the best splitting plane we found
+        for (int i = 0; i < objs->size(); i++)
+        {
+            if ((*objs)[i]->center()[bestDim] < bestPosition)
+                left->push_back((*objs)[i]);
+            else
+                right->push_back((*objs)[i]);
+        }
+        
+        for (int i = 0; i < 2; i++)
+        {
+            Objects* current = (i == 0 ? left : right);
+            m_children->push_back(new BVH);
+            (*m_children)[i]->build(current, depth+1);
+
+            // If the new node is an internal one, free the object list since it wasn't used.
+            if (!(*m_children)[i]->m_isLeaf) delete current;
+        }
     }
 }
 
