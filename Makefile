@@ -27,7 +27,11 @@ OBJS -=  parse.o lexer.o
 
 -include .deps/*.d
 
-$(NAME): $(OBJS)
+freeimage:
+	$(MAKE) -C lib/src/FreeImage
+	mv lib/src/FreeImage/Dist/libfreeimage.a lib/lib/libfreeimage.a
+
+$(NAME): $(OBJS) freeimage
 	$(ECHO) "Linking $@..."
 	$(CXX) -o $@ $(OBJS) $(LDFLAGS)
 	$(ECHO) "Built $@!"

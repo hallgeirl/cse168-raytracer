@@ -24,11 +24,12 @@ public:
 protected:
     union
     {
-        std::vector<BVH*> * children; //Child nodes of this BVH, which are also BVHs. Only applicable for inner nodes.
+        std::vector<BVH*> * m_children; //Child nodes of this BVH, which are also BVHs. Only applicable for inner nodes.
         Objects * m_objects;          //Objects contained in the BVH. Only applicable for child nodes. 
     };
-    Vector3 m_corners[2]; //The min and max corner of the box. 
 
+    Vector3 m_corners[2]; //The min and max corner of the box.    
+    bool m_isLeaf;
     static const int MAX_TREE_DEPTH = 10;
     static const int OBJECTS_PER_LEAF = 4;
 };

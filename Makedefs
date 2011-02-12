@@ -27,9 +27,14 @@ SOURCES += $(wildcard *.cpp)
 OBJS = $(patsubst %.cpp, %.o, $(SOURCES))
 DEPS = $(patsubst %.cpp, %.d, $(SOURCES))
 
+purge: clean
+	$(MAKE) -C lib/src/FreeImage clean
+	$(ECHO) "All clean!"
+
 clean:
 	$(RM) core .deps *.o $(NAME)
 	$(RM) lexer.cpp parse.cpp parse.cpp.h
+	$(RM) lib/src/*.o
 	$(ECHO) "All clean!"
 
 deps:
