@@ -10,7 +10,7 @@ void getCornerPoints(Vector3 (&outCorners)[2], Objects * objs)
 {
     //Find the bounds of the root node
     outCorners[0].set(infinity, infinity, infinity),
-    outCorners[1].set(infinity, -infinity, -infinity);
+    outCorners[1].set(-infinity, -infinity, -infinity);
 
     for (size_t i = 0; i < objs->size(); ++i)
     {
@@ -61,6 +61,7 @@ BVH::build(Objects * objs, int depth)
         float bestCost = infinity, bestPosition = infinity;
         int bestDim = 0;
         const int maxSearchDepth = 16; //Max search depth for binary search.
+        m_isLeaf = false;
 
         //Do a binary search for the best splitting position for each dimension. Pick the dimension with the best split.
         for (int dim = 0; dim < 3; dim++)
@@ -179,69 +180,80 @@ BVH::intersect(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
 				}
 			}
 		}
+		return hit;
 	}
 	// intersect with node bounding box
-	else
+	Component t[3];
+	for (int i = 0; i < 3; ++i)
 	{
-		Component t[3];
-		for (int i = 0; i < 3; ++i)
+		for (int j = 0; j < 2; ++j)
 		{
-			for (int j = 0; j < 2; ++j)
-			{
-				t[i].Bounds[j] = (m_corners[j][i] - ray.o[i]) / ray.d[0];
-			}
-			if (t[i].Bounds[0] > t[i].Bounds[1])
-				std::swap(t[i].Bounds[0], t[i].Bounds[0]);
+			t[i].Bounds[j] = (m_corners[j][i] - ray.o[i]) / ray.d[0];
 		}
+		if (t[i].Bounds[0] > t[i].Bounds[1])
+			std::swap(t[i].Bounds[0], t[i].Bounds[0]);
+	}
 
-		Component t_sorted[3];
-		if (t[0].Bounds[0] < t[1].Bounds[0] && t[0].Bounds[0] < t[2].Bounds[0])
+	Component t_sorted[3];
+	if (t[0].Bounds[0] < t[1].Bounds[0] && t[0].Bounds[0] < t[2].Bounds[0])
+	{
+		t_sorted[0] = t[0];
+		if (t[1].Bounds[0] < t[2].Bounds[0])
 		{
-			t_sorted[0] = t[0];
-			if (t[1].Bounds[0] < t[2].Bounds[0])
-			{
-				t_sorted[1] = t[1];
-				t_sorted[2] = t[2];
-			}
-			else
-			{
-				t_sorted[1] = t[2];
-				t_sorted[2] = t[1];
-			}
-		}
-		else if (t[1].Bounds[0] < t[2].Bounds[0])
-		{
-			t_sorted[0] = t[1];
-			if (t[0].Bounds[0] < t[2].Bounds[0])
-			{
-				t_sorted[1] = t[0];
-				t_sorted[2] = t[2];
-			}
-			else
-			{
-				t_sorted[1] = t[2];
-				t_sorted[2] = t[0];
-			}
+			t_sorted[1] = t[1];
+			t_sorted[2] = t[2];
 		}
 		else
 		{
-			t_sorted[0] = t[2];
-			if (t[0].Bounds[0] < t[1].Bounds[0])
-			{
-				t_sorted[1] = t[0];
-				t_sorted[2] = t[1];
-			}
-			else
-			{
-				t_sorted[1] = t[1];
-				t_sorted[2] = t[0];
-			}
+			t_sorted[1] = t[2];
+			t_sorted[2] = t[1];
 		}
-
-		if (t_sorted[0].Bounds[1] < t_sorted[1].Bounds[0] && t_sorted[1].Bounds[1] < t_sorted[2].Bounds[0])
-			return hit;
-
-
 	}
-    return hit;
+	else if (t[1].Bounds[0] < t[2].Bounds[0])
+	{
+		t_sorted[0] = t[1];
+		if (t[0].Bounds[0] < t[2].Bounds[0])
+		{
+			t_sorted[1] = t[0];
+			t_sorted[2] = t[2];
+		}
+		else
+		{
+			t_sorted[1] = t[2];
+			t_sorted[2] = t[0];
+		}
+	}
+	else
+	{
+		t_sorted[0] = t[2];
+		if (t[0].Bounds[0] < t[1].Bounds[0])
+		{
+			t_sorted[1] = t[0];
+			t_sorted[2] = t[1];
+		}
+		else
+		{
+			t_sorted[1] = t[1];
+			t_sorted[2] = t[0];
+		}
+	}
+
+	if (t_sorted[0].Bounds[1] < t_sorted[1].Bounds[0] && t_sorted[1].Bounds[1] < t_sorted[2].Bounds[0])
+		return hit;
+
+	if ((*m_children)[0]->intersect(tempMinHit, ray, tMin, tMax))
+	{
+		minHit = tempMinHit;
+		hit = true;
+	}
+	if ((*m_children)[1]->intersect(tempMinHit, ray, tMin, tMax))
+	{
+		if (tempMinHit.t < minHit.t)
+		{
+			minHit = tempMinHit;
+			hit = true;
+		}
+	}
+	return hit;
+
 }
