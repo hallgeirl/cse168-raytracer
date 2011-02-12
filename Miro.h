@@ -16,6 +16,7 @@ const float TRACE_DEPTH = 5;
 #include "OpenGL.h"
 #include <stdio.h>
 #include <iostream>
+#include <limits>
 
 typedef struct tex_coord2d_s
 {
@@ -52,5 +53,7 @@ extern void initOpenGL();
 extern Camera* g_camera;
 extern Scene* g_scene;
 extern Image* g_image;
+
+const float infinity = std::numeric_limits<float>::infinity();
 
 #endif

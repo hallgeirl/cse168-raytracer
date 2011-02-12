@@ -18,8 +18,17 @@ public:
     virtual void renderGL() {}
     virtual void preCalc() {}
 
+    //Object boundaries and center used with bounding box creation.
+    virtual Vector3 coordsMin() const = 0;
+    virtual Vector3 coordsMax() const = 0;
+    virtual Vector3 center() const = 0;
+    
+    //Unbounded objects like planes should override this and return false.
+    virtual bool isBounded() const { return true; }
+
 	//Returns the (u,v) coordinates corresponding to a (x,y,z) coordinate.
 	virtual tex_coord2d_t toUVCoordinates(const Vector3 & xyz) const { return tex_coord2d_t(xyz.x, xyz.z); }
+
 
     virtual bool intersect(HitInfo& result, const Ray& ray,
                            float tMin = 0.0f, float tMax = MIRO_TMAX) = 0;

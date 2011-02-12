@@ -113,6 +113,7 @@ void debug(const char *fmt,...)
 
   cprintf(TEXT_GREEN"debug: "TEXT_NORMAL);
   cprintf(__internal_console_buffer__);
+  fflush(stdout);
 }
 
 void fatal(const char *fmt,...)

@@ -39,8 +39,10 @@ Scene::preCalc()
         PointLight* pLight = *lit;
         pLight->preCalc();
     }
-
+   
+    debug("Building BVH...\n");
     m_bvh.build(&m_objects);
+    debug("Done building BVH.\n");
 }
 
 void
@@ -49,10 +51,13 @@ Scene::raytraceImage(Camera *cam, Image *img)
     Ray ray;
     Vector3 shadeResult;
 	int depth = 0;
+    printf("Rendering Progress: %.3f%%\r", 0.0f);
+    fflush(stdout);
+
 
     // loop over all pixels in the image
     #ifdef OPENMP
-    #pragma omp parallel for private(ray, shadeResult) schedule(dynamic, 10)
+    #pragma omp parallel for private(ray, shadeResult) schedule(dynamic, 4)
     #endif
     for (int i = 0; i < img->height(); ++i)
     {

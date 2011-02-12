@@ -13,9 +13,12 @@ public:
     void setCenter(const Vector3& v)    {m_center = v;}
     void setRadius(const float f)       {m_radius = f;}
 
-    const Vector3& center() const       {return m_center;}
     float radius() const                {return m_radius;}
-
+    
+    //Object boundaries used with bounding box creation
+    virtual Vector3 coordsMin() const { return m_center - m_radius; }
+    virtual Vector3 coordsMax() const { return m_center + m_radius; }
+    virtual Vector3 center() const { return m_center; }
     virtual void renderGL();
 
     //For spherical texture mapping

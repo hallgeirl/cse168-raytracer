@@ -163,7 +163,7 @@ void makeScene1()
     g_scene = new Scene;
     g_image = new Image;
 
-    g_image->resize(2048, 2048);
+    g_image->resize(512, 512);
 
     // set up the camera
     float viewAngleXZ = -PI;
@@ -394,32 +394,31 @@ void makeBUNNIZ()
     g_scene->preCalc();
 }
  
- 
+
 int
 main(int argc, char*argv[])
 {
-        //Initialize FreeImage
-        FreeImage_Initialise();
-
+    //Initialize FreeImage
+    FreeImage_Initialise();
 #ifdef __SSE4_1__
-        cout << "Using SSE" << endl;
+    cout << "Using SSE" << endl;
 #endif
 
-        // create a scene
-        //makeSpiralScene();
-        //makeBunnyScene();
-        //makeTeapotScene();
-        //makeSphereScene();
-        makeScene1();
-        //makeScene2();
-        //makeBUNNIZ();
-        MiroWindow miro(&argc, argv);
+    // create a scene
+    //makeSpiralScene();
+    //makeBunnyScene();
+    //makeTeapotScene();
+    //makeSphereScene();
+    makeScene1();
+    //makeScene2();
+    //makeBUNNIZ();
+    MiroWindow miro(&argc, argv);
 #ifndef NO_GFX
-        miro.mainLoop();
+    miro.mainLoop();
 #else
-        g_camera->setRenderer(Camera::RENDER_RAYTRACE);
-        g_camera->click(g_scene, g_image);
-        g_image->writePPM();
+    g_camera->setRenderer(Camera::RENDER_RAYTRACE);
+    g_camera->click(g_scene, g_image);
+    g_image->writePPM();
 #endif
 
 

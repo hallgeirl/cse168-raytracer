@@ -8,16 +8,52 @@
 
 using namespace std;
 
-Triangle::Triangle(TriangleMesh * m, unsigned int i) :
-    m_mesh(m), m_index(i)
+Triangle::Triangle(TriangleMesh * m, unsigned int i)
 {
-
+    setMesh(m);
+    setIndex(i);
 }
 
 
 Triangle::~Triangle()
 {
 
+}
+
+void Triangle::preCalc()
+{
+    //Find the min and max boundaries
+    updateMinMax();
+
+    //Find the center of the triangle (center of mass) by using the barycentric coordinates
+    TriangleMesh::TupleI3 ti3 = m_mesh->vIndices()[m_index];
+    Vector3 verts[3] = {m_mesh->vertices()[ti3.x], m_mesh->vertices()[ti3.y], m_mesh->vertices()[ti3.z]};
+    Vector3 BmA = verts[1]-verts[0], CmA = verts[2]-verts[0];
+    m_cachedCenter = verts[0] + BmA/3 + CmA/3;
+}
+
+
+void Triangle::updateMinMax()
+{
+    if (m_mesh != 0 && m_index < m_mesh->numTris() && m_index >= 0)
+    {
+        TriangleMesh::TupleI3 ti3 = m_mesh->vIndices()[m_index];
+        Vector3 verts[3] = {m_mesh->vertices()[ti3.x], m_mesh->vertices()[ti3.y], m_mesh->vertices()[ti3.z]};
+
+        m_cachedMin = verts[0];
+        m_cachedMax = verts[0];
+
+
+        for (int i = 1; i < 3; i++)
+        {
+            if (verts[i].x < m_cachedMin.x) m_cachedMin.x = verts[i].x;
+            if (verts[i].y < m_cachedMin.y) m_cachedMin.y = verts[i].y;
+            if (verts[i].z < m_cachedMin.z) m_cachedMin.z = verts[i].z;
+            if (verts[i].x > m_cachedMax.x) m_cachedMax.x = verts[i].x;
+            if (verts[i].y > m_cachedMax.y) m_cachedMax.y = verts[i].y;
+            if (verts[i].z > m_cachedMax.z) m_cachedMax.z = verts[i].z;
+        }
+    }
 }
 
 
@@ -54,23 +90,6 @@ _mm_cross_ps( __m128 a , __m128 b ) {
 	__m128 xb = _mm_mul_ps( a , b );
 	// subtract
 	return _mm_sub_ps( xa , xb );
-}
-
-inline __m128 
-_mm_dot_ps(__m128 a, __m128 b)
-{
-	__m128 mul0 = _mm_mul_ps(a, b);
-	__m128 swp0 = _mm_shuffle_ps(mul0, mul0, _MM_SHUFFLE(2,1,3,0)); //2, 3, 0, 1
-	__m128 add0 = _mm_add_ps(mul0, swp0);
-	__m128 swp1 = _mm_shuffle_ps(mul0, mul0, _MM_SHUFFLE(1,3,2,0)); //0, 1, 2, 3
-	__m128 add1 = _mm_add_ps(add0, swp1);
-	return add1;
-}
-
-inline __m128 
-_mm_negate_ps( __m128 a )
-{
-  return _mm_sub_ps(_mm_setzero_ps(),a);
 }
 
 #endif

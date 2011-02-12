@@ -17,13 +17,13 @@ public:
     float x, y, z;      // The x & y & z coordinates.
 
     Vector3() :
-        x(0), y(0), z(0) {}
+        x(0), y(1), z(2) { }
 
     Vector3(float s) :
-        x(s), y(s), z(s) {}
+        x(s), y(s), z(s) { }
 
     Vector3(float xVal, float yVal, float zVal) :
-        x(xVal), y(yVal), z(zVal) {}
+        x(xVal), y(yVal), z(zVal) { }
 
     //! Assignment operator.
     /*!
