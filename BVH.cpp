@@ -156,8 +156,7 @@ BVH::build(Objects * objs, int depth)
 bool
 BVH::intersect(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
 {
-    // Here you would need to traverse the BVH to perform ray-intersection
-    // acceleration. For now we just intersect every object.
+    // Traverse the BVH to perform ray-intersection acceleration.
 
     bool hit = false;
     HitInfo tempMinHit;
@@ -181,6 +180,7 @@ BVH::intersect(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
 		}
 		return hit;
 	}
+
 	// intersect with node bounding box
 	Component t[3];
 	for (int i = 0; i < 3; ++i)
@@ -193,72 +193,31 @@ BVH::intersect(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
 			std::swap(t[i].Bounds[0], t[i].Bounds[1]);
 	}
 
-	Component t_sorted[3];
-	if (t[0].Bounds[0] < t[1].Bounds[0] && t[0].Bounds[0] < t[2].Bounds[0])
-	{
-		t_sorted[0] = t[0];
-		if (t[1].Bounds[0] < t[2].Bounds[0])
-		{
-			t_sorted[1] = t[1];
-			t_sorted[2] = t[2];
-		}
-		else
-		{
-			t_sorted[1] = t[2];
-			t_sorted[2] = t[1];
-		}
-	}
-	else if (t[1].Bounds[0] < t[2].Bounds[0])
-	{
-		t_sorted[0] = t[1];
-		if (t[0].Bounds[0] < t[2].Bounds[0])
-		{
-			t_sorted[1] = t[0];
-			t_sorted[2] = t[2];
-		}
-		else
-		{
-			t_sorted[1] = t[2];
-			t_sorted[2] = t[0];
-		}
-	}
-	else
-	{
-		t_sorted[0] = t[2];
-		if (t[0].Bounds[0] < t[1].Bounds[0])
-		{
-			t_sorted[1] = t[0];
-			t_sorted[2] = t[1];
-		}
-		else
-		{
-			t_sorted[1] = t[1];
-			t_sorted[2] = t[0];
-		}
-	}
+	// sort with worst case 3 comparisons and 9 memory records
+	// previous version had 2-3 comparisons and 4 memory records, but
+	// significantly more branching
+	if (t[0].Bounds[0] > t[1].Bounds[0])
+		std::swap(t[0], t[1]);
+	if (t[1].Bounds[0] > t[2].Bounds[0])
+		std::swap(t[1], t[2]);
+	if (t[0].Bounds[0] > t[1].Bounds[0])
+		std::swap(t[0], t[1]);
 
-	if (t_sorted[0].Bounds[1] < t_sorted[1].Bounds[0] && t_sorted[1].Bounds[1] < t_sorted[2].Bounds[0])
+	// return false if there is no overlap
+	if (t[0].Bounds[1] < t[1].Bounds[0] && t[1].Bounds[1] < t[2].Bounds[0])
 		return false;
 
-	HitInfo temp2MinHit;
+	// References do not seem to conflict
 	if ((*m_children)[0]->intersect(tempMinHit, ray, tMin, tMax))
 	{
-		minHit.material = tempMinHit.material;
-		minHit.N = tempMinHit.N;
-		minHit.P = tempMinHit.P;
-		minHit.t = tempMinHit.t;
-		minHit.object = tempMinHit.object;
+		minHit = tempMinHit;
 		hit = true;
 	}
-	if ((*m_children)[1]->intersect(temp2MinHit, ray, tMin, tMax))
+	if ((*m_children)[1]->intersect(tempMinHit, ray, tMin, tMax))
 	{
-		if (temp2MinHit.t < minHit.t)
+		if (tempMinHit.t < minHit.t)
 		{	
-			minHit.material = temp2MinHit.material;
-			minHit.N = temp2MinHit.N;
-			minHit.P = temp2MinHit.P;
-			minHit.t = temp2MinHit.t;
-			minHit.object = temp2MinHit.object;
+			minHit = tempMinHit;
 			hit = true;
 		}
 	}
