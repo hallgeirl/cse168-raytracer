@@ -31,6 +31,7 @@ void getCornerPoints(Vector3 (&outCorners)[2], Objects * objs)
     }
 }
 
+
 float getArea(const Vector3 (&corners)[2])
 {
     float area = corners[1][0]-corners[0][0];
@@ -45,8 +46,6 @@ void
 BVH::build(Objects * objs, int depth)
 {
     // construct the bounding volume hierarchy
-    //m_objects = objs;
-    //return;
     //Find the bounds of this node 
     getCornerPoints(m_corners, objs); 
 
@@ -190,14 +189,9 @@ int SSEintersectTriangles(Triangle *triangles[], int nTriangles, HitInfo& hitInf
                 {
                     verts[i][k*4+t] = m->vertices()[vInd.v[k]][i];
                     normals[i][k*4+t] = m->normals()[nInd.v[k]][i];
-                    //cout << "normal " << normals[i][k*4+t]<< endl;
                 }
             }
         }
-    }
-    for (int d = 0; d < nTriangles; d++)
-    {
-//       cout << "normal " << normals[0][d] << " " << normals[1][d] << " " << normals[2][d] << endl;
     }
 
     //Each __m128 contains the coordinates for 4 triangles and there is 3 dimensions.
@@ -230,12 +224,6 @@ int SSEintersectTriangles(Triangle *triangles[], int nTriangles, HitInfo& hitInf
     beta = _mm_mul_ps(SSEmultiDot(rayD, SSEmultiCross(RomA, CmA)), _mm_rcp_ps(ddotn)); 
     gamma = _mm_mul_ps(SSEmultiDot(rayD, SSEmultiCross(BmA, RomA)), _mm_rcp_ps(ddotn)); 
 
-   // cout << "Triangles " << nTriangles << endl;
-/*    cout << "t, beta, gamma" << endl;
-    SSEprintVec(t);
-    SSEprintVec(beta);
-    SSEprintVec(gamma);
-*/
     //Test t, beta and gamma
     int mask = _mm_movemask_ps(_mm_and_ps(_mm_cmpgt_ps(beta, _minus_epsilon),
                           _mm_and_ps(_mm_cmpgt_ps(gamma, _minus_epsilon),
@@ -301,9 +289,7 @@ inline bool intersectTriangleList(Triangle* triangles[4], int nTriangles, HitInf
 bool
 BVH::intersect(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
 {
-    // Here you would need to traverse the BVH to perform ray-intersection
-    // acceleration. For now we just intersect every object.
-
+    // Traverse the BVH to perform ray-intersection acceleration.
     bool hit = false;
     HitInfo tempMinHit;
     minHit.t = MIRO_TMAX;
@@ -361,8 +347,10 @@ BVH::intersect(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
             nTriangles = 0;
         }
         #endif
+        
 		return hit;
 	}
+
 	// intersect with node bounding box
 	Component t[3];
 	for (int i = 0; i < 3; ++i)
@@ -375,72 +363,31 @@ BVH::intersect(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
 			std::swap(t[i].Bounds[0], t[i].Bounds[1]);
 	}
 
-	Component t_sorted[3];
-	if (t[0].Bounds[0] < t[1].Bounds[0] && t[0].Bounds[0] < t[2].Bounds[0])
-	{
-		t_sorted[0] = t[0];
-		if (t[1].Bounds[0] < t[2].Bounds[0])
-		{
-			t_sorted[1] = t[1];
-			t_sorted[2] = t[2];
-		}
-		else
-		{
-			t_sorted[1] = t[2];
-			t_sorted[2] = t[1];
-		}
-	}
-	else if (t[1].Bounds[0] < t[2].Bounds[0])
-	{
-		t_sorted[0] = t[1];
-		if (t[0].Bounds[0] < t[2].Bounds[0])
-		{
-			t_sorted[1] = t[0];
-			t_sorted[2] = t[2];
-		}
-		else
-		{
-			t_sorted[1] = t[2];
-			t_sorted[2] = t[0];
-		}
-	}
-	else
-	{
-		t_sorted[0] = t[2];
-		if (t[0].Bounds[0] < t[1].Bounds[0])
-		{
-			t_sorted[1] = t[0];
-			t_sorted[2] = t[1];
-		}
-		else
-		{
-			t_sorted[1] = t[1];
-			t_sorted[2] = t[0];
-		}
-	}
+	// sort with worst case 3 comparisons and 9 memory records
+	// previous version had 2-3 comparisons and 4 memory records, but
+	// significantly more branching
+	if (t[0].Bounds[0] > t[1].Bounds[0])
+		std::swap(t[0], t[1]);
+	if (t[1].Bounds[0] > t[2].Bounds[0])
+		std::swap(t[1], t[2]);
+	if (t[0].Bounds[0] > t[1].Bounds[0])
+		std::swap(t[0], t[1]);
 
-	if (t_sorted[0].Bounds[1] < t_sorted[1].Bounds[0] && t_sorted[1].Bounds[1] < t_sorted[2].Bounds[0])
+	// return false if there is no overlap
+	if (t[0].Bounds[1] < t[1].Bounds[0] && t[1].Bounds[1] < t[2].Bounds[0])
 		return false;
 
-	HitInfo temp2MinHit;
+	// References do not seem to conflict
 	if ((*m_children)[0]->intersect(tempMinHit, ray, tMin, tMax))
 	{
-		minHit.material = tempMinHit.material;
-		minHit.N = tempMinHit.N;
-		minHit.P = tempMinHit.P;
-		minHit.t = tempMinHit.t;
-		minHit.object = tempMinHit.object;
+		minHit = tempMinHit;
 		hit = true;
 	}
-	if ((*m_children)[1]->intersect(temp2MinHit, ray, tMin, tMax))
+	if ((*m_children)[1]->intersect(tempMinHit, ray, tMin, tMax))
 	{
-		if (temp2MinHit.t < minHit.t)
+		if (tempMinHit.t < minHit.t)
 		{	
-			minHit.material = temp2MinHit.material;
-			minHit.N = temp2MinHit.N;
-			minHit.P = temp2MinHit.P;
-			minHit.t = temp2MinHit.t;
-			minHit.object = temp2MinHit.object;
+			minHit = tempMinHit;
 			hit = true;
 		}
 	}
