@@ -24,7 +24,7 @@ public:
     inline void setN2(const Vector3& n) { setNormal(1, n); }
     inline void setN3(const Vector3& n) { setNormal(2, n); }
 
-    typedef struct TupleI3
+    struct TupleI3
     {
         unsigned int v[3];
     };

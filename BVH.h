@@ -30,8 +30,12 @@ protected:
 
     Vector3 m_corners[2]; //The min and max corner of the box.    
     bool m_isLeaf;
-    static const int MAX_TREE_DEPTH = 10;
+    static const int MAX_TREE_DEPTH = 32;
+    #ifdef __SSE4_1__
+    static const int OBJECTS_PER_LEAF = 12; //For SSE, it is beneficial to have more objects in each leaf.
+    #else
     static const int OBJECTS_PER_LEAF = 4;
+    #endif
 };
 
 #endif // CSE168_BVH_H_INCLUDED

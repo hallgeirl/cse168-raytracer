@@ -1,4 +1,5 @@
 #include <algorithm>
+#include "Triangle.h"
 #include "SSE.h"
 #include "BVH.h"
 #include "Ray.h"
@@ -44,13 +45,13 @@ void
 BVH::build(Objects * objs, int depth)
 {
     // construct the bounding volume hierarchy
-    m_objects = objs;
-    return;
+    //m_objects = objs;
+    //return;
     //Find the bounds of this node 
     getCornerPoints(m_corners, objs); 
 
     //Check if we're done
-    if (objs->size() <= 4 || depth >= MAX_TREE_DEPTH)
+    if (objs->size() <= OBJECTS_PER_LEAF || depth >= MAX_TREE_DEPTH)
     {
         m_objects = objs;
         m_isLeaf = true;
@@ -156,125 +157,145 @@ BVH::build(Objects * objs, int depth)
 
 #ifdef __SSE4_1__
 
-//Do the cross product of 4 pairs of vectors
-inline SSEVectorTuple3 SSEmultiCross(const SSEVectorTuple3 &a, const SSEVectorTuple3 &b)
-{
-    SSEVectorTuple3 out;
-    //Do the cross product
-    out.v[0] = _mm_sub_ps(_mm_mul_ps(a.v[1], b.v[2]), _mm_mul_ps(a.v[2], b.v[1]));
-    out.v[1] = _mm_sub_ps(_mm_mul_ps(a.v[2], b.v[0]), _mm_mul_ps(a.v[0], b.v[2]));
-    out.v[2] = _mm_sub_ps(_mm_mul_ps(a.v[0], b.v[1]), _mm_mul_ps(a.v[1], b.v[0]));
-}
 
-inline __m128 SSEmultiDot(const SSEVectorTuple3 &a, const SSEVectorTuple3 &b)
+int SSEintersectTriangles(Triangle *triangles[], int nTriangles, HitInfo& hitInfo, const Ray &ray, float tMin, float tMax)
 {
-    return _mm_add_ps(_mm_mul_ps(a.v[0], b.v[0]) ,_mm_add_ps(_mm_mul_ps(a.v[1], b.v[1]), _mm_mul_ps(a.v[2], b.v[2])));
-}
-/*
-inline bool SSEintersectTriangles(Triangle *triangles[], int nTriangles, HitInfo& hitInfo, const Ray &ray, float tMin, float tMax)
-{
-    float verts[3][12];   //3 dimensions, up to 4*3 vertices. For each dimension, store (A1x, A2x, A3x, A4x, B1x, B2x, B3x...)
+    //Define some constants that are used throughout.
+    static const __m128 _one = _mm_set1_ps(1.0f);
+    static const __m128 _zero = _mm_setzero_ps();
+    static const __m128 _minus_epsilon = _mm_set1_ps(-epsilon);
+    static const __m128 _one_plus_epsilon = _mm_set1_ps(1.0f+epsilon);
+
+    //3 dimensions, up to 4*3 floats (3 components per vertex). For each dimension, store (A1x, A2x, A3x, A4x, B1x, B2x, B3x...)
+    float verts[3][12];       
     float normals[3][12]; 
-    float outT[4], outGamma[4], outBeta[4];
+    float outT[4], outP[3][4], outN[3][4];
 
     #pragma unroll(4)
-    for (int t = 0; t < nTriangles; j++)
+    for (int t = 0; t < nTriangles; t++)
     {
-        const TriangleMesh* m = triangles[i]->getMesh();
+        TriangleMesh* m = triangles[t]->getMesh();
         TriangleMesh::TupleI3 vInd = m->vIndices()[triangles[t]->getIndex()],
-                              nInd = m->vIndices()[triangles[t]->getIndex()]; 
+                              nInd = m->nIndices()[triangles[t]->getIndex()];
 
-        //for each dimension
+
+        //for each vertex (A, B, C)
         #pragma unroll(3)
-        for (int i = 0; i < 3; i++)
+        for (int k = 0; k < 3; k++)
         {
-            //for each point (A, B, C)
+            //for each dimension
             #pragma unroll(3)
-            for (int k = 0; k < 3; k++)
+            for (int i = 0; i < 3; i++)
             {
-                verts[i][k*4+t] = m->vertices()[vInd.v[k]][i];
-                normals[i][k*4+t] = m->normals()[nInd.v[k]][i];
+                {
+                    verts[i][k*4+t] = m->vertices()[vInd.v[k]][i];
+                    normals[i][k*4+t] = m->normals()[nInd.v[k]][i];
+                    //cout << "normal " << normals[i][k*4+t]<< endl;
+                }
             }
         }
+    }
+    for (int d = 0; d < nTriangles; d++)
+    {
+//       cout << "normal " << normals[0][d] << " " << normals[1][d] << " " << normals[2][d] << endl;
     }
 
     //Each __m128 contains the coordinates for 4 triangles and there is 3 dimensions.
     SSEVectorTuple3 A, B, C, nA, nB, nC, BmA, CmA, normal, rayD, rayO, RomA;
-    __m128 ddotn, t, beta, gamma; 
+    __m128 ddotn, t, beta, gamma, alpha, P[4], N[4]; 
 
     //For each dimension, load the A, B and C
     #pragma unroll(3)
     for (int i = 0; i < 3; i++)
     {
-        A.v[i] = _mm_loadu(&verts[i][0]);
-        B.v[i] = _mm_loadu(&verts[i][4]);
-        C.v[i] = _mm_loadu(&verts[i][8]);
-        nA.v[i] = _mm_loadu(&normals[i][0]);
-        nB.v[i] = _mm_loadu(&normals[i][4]);
-        nC.v[i] = _mm_loadu(&normals[i][8]);
-        BmA.v[i] = _mm_sub_ps(B[i], A[i]);
-        CmA.v[i] = _mm_sub_ps(C[i], A[i]);
-        rayO.v[i] = _mm_shuffle_ps(r.o_SSE, r.o_SSE, _MM_SHUFFLE(i,i,i,i));
-        rayD.v[i] = _mm_sub_ps(_mm_setzero_ps(), _mm_shuffle_ps(r.d_SSE, r.d_SSE, _MM_SHUFFLE(i,i,i,i)));
+        A.v[i] = _mm_loadu_ps(&verts[i][0]);
+        B.v[i] = _mm_loadu_ps(&verts[i][4]);
+        C.v[i] = _mm_loadu_ps(&verts[i][8]);
+        nA.v[i] = _mm_loadu_ps(&normals[i][0]);
+        nB.v[i] = _mm_loadu_ps(&normals[i][4]);
+        nC.v[i] = _mm_loadu_ps(&normals[i][8]);
+        BmA.v[i] = _mm_sub_ps(B.v[i], A.v[i]);
+        CmA.v[i] = _mm_sub_ps(C.v[i], A.v[i]);
+        rayO.v[i] = _mm_shuffle_ps(ray.o_SSE, ray.o_SSE, _MM_SHUFFLE(3-i,3-i,3-i,3-i));
+        rayD.v[i] = _mm_sub_ps(_zero, _mm_shuffle_ps(ray.d_SSE, ray.d_SSE, _MM_SHUFFLE(3-i,3-i,3-i,3-i)));
         RomA.v[i] = _mm_sub_ps(rayO.v[i], A.v[i]);
     }
 
     //Do the cross product
     normal = SSEmultiCross(BmA, CmA);
+    ddotn = SSEmultiDot(rayD, normal);
 
-    ddotn = SSEmultiDot(rayD, normal); 
-    
     //Calculate t, beta and gamma
-    t = _mm_mul_ps(SSEmultiDot(rayO, normal), _mm_rcp_ps(ddotn)); 
+    t = _mm_mul_ps(SSEmultiDot(RomA, normal), _mm_rcp_ps(ddotn)); 
     beta = _mm_mul_ps(SSEmultiDot(rayD, SSEmultiCross(RomA, CmA)), _mm_rcp_ps(ddotn)); 
     gamma = _mm_mul_ps(SSEmultiDot(rayD, SSEmultiCross(BmA, RomA)), _mm_rcp_ps(ddotn)); 
 
+   // cout << "Triangles " << nTriangles << endl;
+/*    cout << "t, beta, gamma" << endl;
+    SSEprintVec(t);
+    SSEprintVec(beta);
+    SSEprintVec(gamma);
+*/
+    //Test t, beta and gamma
+    int mask = _mm_movemask_ps(_mm_and_ps(_mm_cmpgt_ps(beta, _minus_epsilon),
+                          _mm_and_ps(_mm_cmpgt_ps(gamma, _minus_epsilon),
+                                     _mm_and_ps(_mm_cmplt_ps(_mm_add_ps(gamma, beta), _one_plus_epsilon),
+                                                _mm_and_ps(_mm_cmpgt_ps(t, _mm_set1_ps(tMin)), _mm_cmplt_ps(t, _mm_set1_ps(tMax)))))));
+
+    if (mask == 0) return -1;
+  
+    
     _mm_storeu_ps(outT, t);
-    _mm_storeu_ps(outBeta, beta);
-    _mm_storeu_ps(outGamma, gamma);
 
     //Find the lowest t > tMin
     int best = -1;
     for (int i = 0; i < nTriangles; i++)
     {
-        if (outT[i] > tMin && (best == -1 || outT[i] < outT[best]))
-            best = i;
+        if ((mask & (1 << i)) == 0)
+            continue;
+
+        if (best == -1 || outT[i] < outT[best]) best = i;
     }
 
-    //Compare to see if we have a hit 
-	float betagammat[4];
-    _mm_storeu_ps(betagammat, _beta_gamma_t);
+    alpha = _mm_sub_ps(_mm_sub_ps(_one, beta), gamma);
     
-    if (betagammat[2] < -epsilon || betagammat[3] < -epsilon || betagammat[2]+betagammat[3] > 1+epsilon || betagammat[1] < tMin || betagammat[1] > tMax) 
+    #pragma unroll(3)
+    for (int i = 0; i < 3; i++)
     {
-		return false;
-	}
+        _mm_storeu_ps(outP[i], _mm_add_ps(A.v[i], _mm_add_ps(_mm_mul_ps(beta, BmA.v[i]), _mm_mul_ps(gamma, CmA.v[i]))));
+	    _mm_storeu_ps(outN[i], _mm_add_ps(_mm_mul_ps(alpha, nA.v[i]), _mm_add_ps(_mm_mul_ps(beta, nB.v[i]), _mm_mul_ps(gamma, nC.v[i]))));
+    }
 
 
-    __m128 _beta  = _mm_shuffle_ps(_beta_gamma_t, _beta_gamma_t, _MM_SHUFFLE(2, 2, 2, 2)),
-           _gamma = _mm_shuffle_ps(_beta_gamma_t, _beta_gamma_t, _MM_SHUFFLE(3, 3, 3, 3));
-	__m128 _alpha = _mm_sub_ps(_mm_sub_ps(_mm_set1_ps(1.0f), _beta), _gamma);
-           
-    //_mm_test_all_zeros(_beta, _gamma);
-    __m128 _P = _mm_add_ps(_A, _mm_add_ps(_mm_mul_ps(_beta, _BmA), _mm_mul_ps(_gamma, _CmA)));
-	__m128 _N = _mm_add_ps(_mm_mul_ps(_alpha, _nA), _mm_add_ps(_mm_mul_ps(_beta, _nB), _mm_mul_ps(_gamma, _nC)));
-	
-    float P[4], N[4];
-    
-    _mm_storeu_ps(P, _P);
-    _mm_storeu_ps(N, _N);
+    hitInfo.t = outT[best];
 
-	result.P.x = P[3];
-	result.P.y = P[2];
-	result.P.z = P[1];
+    hitInfo.P = Vector3(outP[0][best], outP[1][best], outP[2][best]);
+    hitInfo.N = Vector3(outN[0][best], outN[1][best], outN[2][best]);
 
-	result.N.x = N[3];
-	result.N.y = N[2];
-	result.N.z = N[1];
-	
-	result.t = betagammat[1];
-    
-}*/
+    return best;
+}
+
+inline bool intersectTriangleList(Triangle* triangles[4], int nTriangles, HitInfo& minHit, const Ray& ray, float tMin, float tMax)
+{
+    HitInfo tempMinHit;
+
+    int best = SSEintersectTriangles(triangles, nTriangles, tempMinHit, ray, tMin, tMax);
+    if (best != -1)
+    {       
+        if (tempMinHit.t < minHit.t)
+        {
+            minHit = tempMinHit;
+
+            //Just call intersect to get the material
+            triangles[best]->intersect(minHit, ray, tMin, tMax);
+             
+            //Update object reference
+            minHit.object = triangles[best];
+        }
+        return true;
+    }
+    return false;
+}
 #endif
 
 bool
@@ -289,20 +310,57 @@ BVH::intersect(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
 
 	if (m_isLeaf)
 	{
-		for (size_t i = 0; i < m_objects->size(); ++i)
+        //For SSE, we put up to 4 triangles in a list before testing them.
+        #ifdef __SSE4_1__
+        Triangle* triangles[4];
+        int nTriangles = 0;
+        #endif
+		
+        for (size_t i = 0; i < m_objects->size(); ++i)
 		{
-			if ((*m_objects)[i]->intersect(tempMinHit, ray, tMin, tMax))
-			{
-				hit = true;
-				if (tempMinHit.t < minHit.t)
-				{
-            		minHit = tempMinHit;
+            //Build list for SSE
+            #ifdef __SSE4_1__
+            Triangle* tri = (Triangle*)(*m_objects)[i];
+            if (tri != 0)
+            {
+                //If this is indeed a triangle, add it to the array
+                triangles[nTriangles] = tri;
+                nTriangles++;
+                //If the array is full, test them
+                if (nTriangles == 4)
+                {
+                    if (intersectTriangleList(triangles, nTriangles, minHit, ray, tMin, tMax))
+                        hit = true;
+                    nTriangles = 0;
+                }
+            }
+            else
+            {
+            #endif
+    			if ((*m_objects)[i]->intersect(tempMinHit, ray, tMin, tMax))
+	    		{
+		    		hit = true;
+			    	if (tempMinHit.t < minHit.t)
+				    {
+                		minHit = tempMinHit;
 
-            		//Update object reference
-            		minHit.object = (*m_objects)[i];
-				}
-			}
-		}
+                		//Update object reference
+                		minHit.object = (*m_objects)[i];
+			    	}
+    			}
+            #ifdef __SSE4_1__
+            }
+            #endif
+        }
+        #ifdef __SSE4_1__
+        //Take care of any leftover triangles
+        if (nTriangles > 0)
+        {
+            if (intersectTriangleList(triangles, nTriangles, minHit, ray, tMin, tMax))
+                hit = true;
+            nTriangles = 0;
+        }
+        #endif
 		return hit;
 	}
 	// intersect with node bounding box

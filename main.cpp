@@ -89,55 +89,6 @@ makeSpiralScene()
     g_scene->preCalc();
 }
 
-/*void
-makeSphereScene()
-{
-    g_camera = new Camera;
-    g_scene = new Scene;
-    g_image = new Image;
-
-    g_image->resize(512, 512);
-
-    // set up the camera
-    g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
-    g_camera->setEye(Vector3(-5, 1, 3));
-    g_camera->setLookAt(Vector3(0, 1, 0));
-    g_camera->setUp(Vector3(0, 1, 0));
-    g_camera->setFOV(45);
-
-    // create and place a point light source
-    PointLight * light = new PointLight;
-    light->setPosition(Vector3(-3, 15, 10));
-    light->setColor(Vector3(1, 1, 1));
-    light->setWattage(5000);
-    g_scene->addLight(light);
-
-    Material* mat = new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1));
-	mat->SetRefraction(1.0f, 1.5);
-    Sphere * sphere = new Sphere;
-    sphere->setCenter(Vector3(0,0,0));
-    sphere->setRadius(1.5);
-    sphere->setMaterial(mat);
-    g_scene->addObject(sphere);
-
-    Material* mat2 = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1));
-	mat2->SetReflection(0.25f);
-	Sphere * sphere2 = new Sphere;
-    sphere2->setCenter(Vector3(5,0,-1));
-    sphere2->setRadius(2);
-    sphere2->setMaterial(mat2);
-    g_scene->addObject(sphere2);
-
-	Plane * plane = new Plane();
-    plane->setNormal(Vector3(0, 1, 0));
-    plane->setOrigin(Vector3(0, -3, 0));
-    plane->setMaterial(new Lambert(Vector3(0.8, 0.8, 0.8), Vector3(0.1, 0.1, 0.1)));
-    g_scene->addObject(plane);
-
-    // let objects do pre-calculations if needed
-    g_scene->preCalc();
-}
-*/
 void addModel(const char* filename, Material *mat, Scene* scene, Vector3 position, float rotY=0)
 {
 	TriangleMesh * mesh = new TriangleMesh();
@@ -321,7 +272,7 @@ void makeBUNNIZ()
     g_scene = new Scene;
     g_image = new Image;
 
-    g_image->resize(2048, 2048);
+    g_image->resize(512, 512);
 
     // set up the camera
     float viewAngleXZ = -PI-0.1;
@@ -394,6 +345,50 @@ void makeBUNNIZ()
     g_scene->preCalc();
 }
  
+void
+makeTestScene()
+{
+    cout << "Test scene" << endl;
+    g_camera = new Camera;
+    g_scene = new Scene;
+    g_image = new Image;
+
+    g_image->resize(512, 512);
+
+    // set up the camera
+    g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
+    //g_camera->setEye(Vector3(-5, 2, 3));
+    g_camera->setEye(Vector3(0, 0, -5));
+    g_camera->setLookAt(Vector3(0, 0, 0));
+    g_camera->setUp(Vector3(0, 1, 0));
+    g_camera->setFOV(45);
+
+    // create and place a point light source
+    PointLight * light = new PointLight;
+    light->setPosition(Vector3(-3, 15, -15));
+    light->setColor(Vector3(1, 1, 1));
+    light->setWattage(1000);
+    g_scene->addLight(light);
+
+    /*TriangleMesh *mesh = new TriangleMesh();
+    mesh->createSingleTriangle();
+
+    mesh->setV1(Vector3(0,0,0));
+    mesh->setV2(Vector3(0,3,0));
+    mesh->setV3(Vector3(5,5,0));
+    mesh->setN1(Vector3(0,0,-1));
+    mesh->setN2(Vector3(0.1,0.1,-1).normalize());
+    mesh->setN3(Vector3(-0.1,-0.2,-1).normalize());
+*/
+  /*  Triangle * triangle = new Triangle();
+    triangle->setMesh(mesh);
+    triangle->setIndex(0);
+    triangle->setMaterial(new Lambert(Vector3(0,1,0)));
+    g_scene->addObject(triangle);*/
+    addModel("models/testobj.obj", new Lambert(Vector3(0,1,0)), g_scene, Vector3(0), 0);
+
+    g_scene->preCalc();
+}
 
 int
 main(int argc, char*argv[])
@@ -406,10 +401,11 @@ main(int argc, char*argv[])
 
     // create a scene
     //makeSpiralScene();
-    //makeBunnyScene();
+    makeBunnyScene();
+    //makeTestScene();
     //makeTeapotScene();
     //makeSphereScene();
-    makeScene1();
+    //makeScene1();
     //makeScene2();
     //makeBUNNIZ();
     MiroWindow miro(&argc, argv);

@@ -73,11 +73,10 @@ Triangle::renderGL()
 bool
 Triangle::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
 {
-    TriangleMesh::TupleI3 ti3 = m_mesh->vIndices()[m_index];
-    TriangleMesh::TupleI3 ni3 = m_mesh->nIndices()[m_index];
 
 #ifdef __SSE4_1__
-    const __m128 _A = m_mesh->SSEvertices()[ti3.v[0]];
+
+/*    const __m128 _A = m_mesh->SSEvertices()[ti3.v[0]];
     const __m128 _B = m_mesh->SSEvertices()[ti3.v[1]];
     const __m128 _C = m_mesh->SSEvertices()[ti3.v[2]];
     const __m128 _nA = m_mesh->SSEnormals()[ni3.v[0]];
@@ -131,8 +130,10 @@ Triangle::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
 	result.N.z = N[1];
 	
 	result.t = betagammat[1];
-
+*/
 #else
+    TriangleMesh::TupleI3 ti3 = m_mesh->vIndices()[m_index];
+    TriangleMesh::TupleI3 ni3 = m_mesh->nIndices()[m_index];
 
     const Vector3 & A = m_mesh->vertices()[ti3.v[0]];
     const Vector3 & B = m_mesh->vertices()[ti3.v[1]];

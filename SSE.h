@@ -2,12 +2,45 @@
 
 #ifdef __SSE4_1__
 
+#include <iostream>
 #include <smmintrin.h>
 
-typedef struct SSEVectorTuple3
+struct SSEVectorTuple3
 {
     __m128 v[3];
 };
+
+//Do the cross product of 4 pairs of vectors
+inline SSEVectorTuple3 SSEmultiCross(const SSEVectorTuple3 &a, const SSEVectorTuple3 &b)
+{
+    SSEVectorTuple3 out;
+    //Do the cross product
+    out.v[0] = _mm_sub_ps(_mm_mul_ps(a.v[1], b.v[2]), _mm_mul_ps(a.v[2], b.v[1]));
+    out.v[1] = _mm_sub_ps(_mm_mul_ps(a.v[2], b.v[0]), _mm_mul_ps(a.v[0], b.v[2]));
+    out.v[2] = _mm_sub_ps(_mm_mul_ps(a.v[0], b.v[1]), _mm_mul_ps(a.v[1], b.v[0]));
+    return out;
+}
+
+
+inline void SSEprintVec(const __m128 &v)
+{
+    float tmp[4];
+    _mm_storeu_ps(tmp, v);
+    std::cout << "__m128(v3=" << tmp[0] << ",\tv2=" << tmp[1] << ",\tv1=" << tmp[2] << ",\tv0=" << tmp[3] << ")" << std::endl;
+}
+
+inline void SSEprintVecTuple(const SSEVectorTuple3 &v)
+{
+    std::cout << "SSEVectorTuple3(" << std::endl;
+    for (int i = 0; i < 3; i++)
+        SSEprintVec(v.v[i]);
+    std::cout << ")" << std::endl;
+}
+
+inline __m128 SSEmultiDot(const SSEVectorTuple3 &a, const SSEVectorTuple3 &b)
+{
+    return _mm_add_ps(_mm_mul_ps(a.v[0], b.v[0]) ,_mm_add_ps(_mm_mul_ps(a.v[1], b.v[1]), _mm_mul_ps(a.v[2], b.v[2])));
+}
 
 inline __m128 
 _mm_cross_ps( __m128 a , __m128 b ) {

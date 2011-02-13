@@ -25,7 +25,7 @@ public:
     void setIndex(unsigned int i) { m_index = i; }
     unsigned int getIndex() { return m_index; }
     void setMesh(TriangleMesh* m) { m_mesh = m; }
-    const TriangleMesh* getMesh() { return m_mesh; }
+    TriangleMesh* getMesh() { return m_mesh; }
 
 
     virtual void renderGL();
