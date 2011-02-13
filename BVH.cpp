@@ -187,7 +187,7 @@ BVH::intersect(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
 	{
 		for (int j = 0; j < 2; ++j)
 		{
-			t[i].Bounds[j] = (m_corners[j][i] - ray.o[i]) / ray.d[0];
+			t[i].Bounds[j] = (m_corners[j][i] - ray.o[i]) / ray.d[i];
 		}
 		if (t[i].Bounds[0] > t[i].Bounds[1])
 			std::swap(t[i].Bounds[0], t[i].Bounds[1]);
