@@ -10,7 +10,7 @@ void getCornerPoints(Vector3 (&outCorners)[2], Objects * objs)
 {
     //Find the bounds of the root node
     outCorners[0].set(infinity, infinity, infinity),
-    outCorners[1].set(infinity, -infinity, -infinity);
+    outCorners[1].set(-infinity, -infinity, -infinity);
 
     for (size_t i = 0; i < objs->size(); ++i)
     {
@@ -50,7 +50,7 @@ BVH::build(Objects * objs, int depth)
     getCornerPoints(m_corners, objs); 
 
     //Check if we're done
-    if (objs->size() < 4 || depth >= MAX_TREE_DEPTH)
+    if (objs->size() <= 4 || depth >= MAX_TREE_DEPTH)
     {
         m_objects = objs;
         m_isLeaf = true;
@@ -62,11 +62,12 @@ BVH::build(Objects * objs, int depth)
         float bestCost = infinity, bestPosition = infinity;
         int bestDim = 0;
         const int maxSearchDepth = 16; //Max search depth for binary search.
+        m_isLeaf = false;
 
         //Do a binary search for the best splitting position for each dimension. Pick the dimension with the best split.
         for (int dim = 0; dim < 3; dim++)
         {
-            float current = m_corners[1][dim] - m_corners[0][dim], beg = m_corners[0][dim], end = m_corners[1][dim];
+            float current = (m_corners[1][dim] + m_corners[0][dim])/2.0f, beg = m_corners[0][dim], end = m_corners[1][dim];
             bool done = false;
             Objects left, right;
 
@@ -120,7 +121,7 @@ BVH::build(Objects * objs, int depth)
                     {
                         if (right[i]->center()[dim] < current) 
                         {
-                            left.push_back(left[i]);
+                            left.push_back(right[i]);
                             right.erase(right.begin()+i);
                         }
                     }
@@ -286,20 +287,105 @@ BVH::intersect(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
     HitInfo tempMinHit;
     minHit.t = MIRO_TMAX;
 
-    for (size_t i = 0; i < m_objects->size(); ++i)
-    {
-        if ((*m_objects)[i]->intersect(tempMinHit, ray, tMin, tMax))
-        {
-            hit = true;
-            if (tempMinHit.t < minHit.t)
-            {
-            	minHit = tempMinHit;
+	if (m_isLeaf)
+	{
+		for (size_t i = 0; i < m_objects->size(); ++i)
+		{
+			if ((*m_objects)[i]->intersect(tempMinHit, ray, tMin, tMax))
+			{
+				hit = true;
+				if (tempMinHit.t < minHit.t)
+				{
+            		minHit = tempMinHit;
 
-            	//Update object reference
-            	minHit.object = (*m_objects)[i];
-            }
-        }
-    }
+            		//Update object reference
+            		minHit.object = (*m_objects)[i];
+				}
+			}
+		}
+		return hit;
+	}
+	// intersect with node bounding box
+	Component t[3];
+	for (int i = 0; i < 3; ++i)
+	{
+		for (int j = 0; j < 2; ++j)
+		{
+			t[i].Bounds[j] = (m_corners[j][i] - ray.o[i]) / ray.d[i];
+		}
+		if (t[i].Bounds[0] > t[i].Bounds[1])
+			std::swap(t[i].Bounds[0], t[i].Bounds[1]);
+	}
 
-    return hit;
+	Component t_sorted[3];
+	if (t[0].Bounds[0] < t[1].Bounds[0] && t[0].Bounds[0] < t[2].Bounds[0])
+	{
+		t_sorted[0] = t[0];
+		if (t[1].Bounds[0] < t[2].Bounds[0])
+		{
+			t_sorted[1] = t[1];
+			t_sorted[2] = t[2];
+		}
+		else
+		{
+			t_sorted[1] = t[2];
+			t_sorted[2] = t[1];
+		}
+	}
+	else if (t[1].Bounds[0] < t[2].Bounds[0])
+	{
+		t_sorted[0] = t[1];
+		if (t[0].Bounds[0] < t[2].Bounds[0])
+		{
+			t_sorted[1] = t[0];
+			t_sorted[2] = t[2];
+		}
+		else
+		{
+			t_sorted[1] = t[2];
+			t_sorted[2] = t[0];
+		}
+	}
+	else
+	{
+		t_sorted[0] = t[2];
+		if (t[0].Bounds[0] < t[1].Bounds[0])
+		{
+			t_sorted[1] = t[0];
+			t_sorted[2] = t[1];
+		}
+		else
+		{
+			t_sorted[1] = t[1];
+			t_sorted[2] = t[0];
+		}
+	}
+
+	if (t_sorted[0].Bounds[1] < t_sorted[1].Bounds[0] && t_sorted[1].Bounds[1] < t_sorted[2].Bounds[0])
+		return false;
+
+	HitInfo temp2MinHit;
+	if ((*m_children)[0]->intersect(tempMinHit, ray, tMin, tMax))
+	{
+		minHit.material = tempMinHit.material;
+		minHit.N = tempMinHit.N;
+		minHit.P = tempMinHit.P;
+		minHit.t = tempMinHit.t;
+		minHit.object = tempMinHit.object;
+		hit = true;
+	}
+	if ((*m_children)[1]->intersect(temp2MinHit, ray, tMin, tMax))
+	{
+		if (temp2MinHit.t < minHit.t)
+		{	
+			minHit.material = temp2MinHit.material;
+			minHit.N = temp2MinHit.N;
+			minHit.P = temp2MinHit.P;
+			minHit.t = temp2MinHit.t;
+			minHit.object = temp2MinHit.object;
+			hit = true;
+		}
+	}
+	return hit;
+
 }
