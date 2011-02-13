@@ -24,9 +24,9 @@ public:
     inline void setN2(const Vector3& n) { setNormal(1, n); }
     inline void setN3(const Vector3& n) { setNormal(2, n); }
 
-    struct TupleI3
+    typedef struct TupleI3
     {
-        unsigned int x, y, z;
+        unsigned int v[3];
     };
 
     struct VectorR2
@@ -60,7 +60,7 @@ protected:
     __m128* m_SSEvertices;
     #endif
     VectorR2* m_texCoords;
-
+    
     TupleI3* m_normalIndices;
     TupleI3* m_vertexIndices;
     TupleI3* m_texCoordIndices;

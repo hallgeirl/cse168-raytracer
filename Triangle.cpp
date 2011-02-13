@@ -1,10 +1,8 @@
+#include "SSE.h"
 #include "Triangle.h"
 #include "TriangleMesh.h"
 #include "Ray.h"
 
-#ifdef __SSE4_1__
-#include <smmintrin.h>
-#endif
 
 using namespace std;
 
@@ -27,7 +25,7 @@ void Triangle::preCalc()
 
     //Find the center of the triangle (center of mass) by using the barycentric coordinates
     TriangleMesh::TupleI3 ti3 = m_mesh->vIndices()[m_index];
-    Vector3 verts[3] = {m_mesh->vertices()[ti3.x], m_mesh->vertices()[ti3.y], m_mesh->vertices()[ti3.z]};
+    Vector3 verts[3] = {m_mesh->vertices()[ti3.v[0]], m_mesh->vertices()[ti3.v[1]], m_mesh->vertices()[ti3.v[2]]};
     Vector3 BmA = verts[1]-verts[0], CmA = verts[2]-verts[0];
     m_cachedCenter = verts[0] + BmA/3 + CmA/3;
 }
@@ -38,7 +36,7 @@ void Triangle::updateMinMax()
     if (m_mesh != 0 && m_index < m_mesh->numTris() && m_index >= 0)
     {
         TriangleMesh::TupleI3 ti3 = m_mesh->vIndices()[m_index];
-        Vector3 verts[3] = {m_mesh->vertices()[ti3.x], m_mesh->vertices()[ti3.y], m_mesh->vertices()[ti3.z]};
+        Vector3 verts[3] = {m_mesh->vertices()[ti3.v[0]], m_mesh->vertices()[ti3.v[1]], m_mesh->vertices()[ti3.v[2]]};
 
         m_cachedMin = verts[0];
         m_cachedMax = verts[0];
@@ -61,9 +59,9 @@ void
 Triangle::renderGL()
 {
     TriangleMesh::TupleI3 ti3 = m_mesh->vIndices()[m_index];
-    const Vector3 & v0 = m_mesh->vertices()[ti3.x]; //vertex a of triangle
-    const Vector3 & v1 = m_mesh->vertices()[ti3.y]; //vertex b of triangle
-    const Vector3 & v2 = m_mesh->vertices()[ti3.z]; //vertex c of triangle
+    const Vector3 & v0 = m_mesh->vertices()[ti3.v[0]]; //vertex a of triangle
+    const Vector3 & v1 = m_mesh->vertices()[ti3.v[1]]; //vertex b of triangle
+    const Vector3 & v2 = m_mesh->vertices()[ti3.v[2]]; //vertex c of triangle
 
     glBegin(GL_TRIANGLES);
         glVertex3f(v0.x, v0.y, v0.z);
@@ -72,28 +70,6 @@ Triangle::renderGL()
     glEnd();
 }
 
-#ifdef __SSE4_1__
-inline __m128 
-_mm_cross_ps( __m128 a , __m128 b ) {
-	__m128 ea , eb;
-	//account for reverse ordering
-
-	// set to a[1][2][0][3] , b[2][0][1][3]
-	ea = _mm_shuffle_ps( a, a, _MM_SHUFFLE(2,1,3,0) ); //3,0,2,1
-	eb = _mm_shuffle_ps( b, b, _MM_SHUFFLE(1,3,2,0) ); //3,1,0,2
-	// multiply
-	__m128 xa = _mm_mul_ps( ea , eb );
-	// set to a[2][0][1][3] , b[1][2][0][3]
-	a = _mm_shuffle_ps( a, a, _MM_SHUFFLE(1,3,2,0) ); //3,1,0,2
-	b = _mm_shuffle_ps( b, b, _MM_SHUFFLE(2,1,3,0) );	//3,0,2,1
-	// multiply
-	__m128 xb = _mm_mul_ps( a , b );
-	// subtract
-	return _mm_sub_ps( xa , xb );
-}
-
-#endif
-
 bool
 Triangle::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
 {
@@ -101,12 +77,12 @@ Triangle::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
     TriangleMesh::TupleI3 ni3 = m_mesh->nIndices()[m_index];
 
 #ifdef __SSE4_1__
-    const __m128 _A = m_mesh->SSEvertices()[ti3.x];
-    const __m128 _B = m_mesh->SSEvertices()[ti3.y];
-    const __m128 _C = m_mesh->SSEvertices()[ti3.z];
-    const __m128 _nA = m_mesh->SSEnormals()[ni3.x];
-    const __m128 _nB = m_mesh->SSEnormals()[ni3.y];
-    const __m128 _nC = m_mesh->SSEnormals()[ni3.z];
+    const __m128 _A = m_mesh->SSEvertices()[ti3.v[0]];
+    const __m128 _B = m_mesh->SSEvertices()[ti3.v[1]];
+    const __m128 _C = m_mesh->SSEvertices()[ti3.v[2]];
+    const __m128 _nA = m_mesh->SSEnormals()[ni3.v[0]];
+    const __m128 _nB = m_mesh->SSEnormals()[ni3.v[1]];
+    const __m128 _nC = m_mesh->SSEnormals()[ni3.v[2]];
 
 	//Load the ray origin and direction
 	__m128 _rd = _mm_sub_ps(_mm_setzero_ps(), r.d_SSE),
@@ -158,12 +134,12 @@ Triangle::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
 
 #else
 
-    const Vector3 & A = m_mesh->vertices()[ti3.x];
-    const Vector3 & B = m_mesh->vertices()[ti3.y];
-    const Vector3 & C = m_mesh->vertices()[ti3.z];
-    const Vector3 & nA = m_mesh->normals()[ni3.x];
-    const Vector3 & nB = m_mesh->normals()[ni3.y];
-    const Vector3 & nC = m_mesh->normals()[ni3.z];
+    const Vector3 & A = m_mesh->vertices()[ti3.v[0]];
+    const Vector3 & B = m_mesh->vertices()[ti3.v[1]];
+    const Vector3 & C = m_mesh->vertices()[ti3.v[2]];
+    const Vector3 & nA = m_mesh->normals()[ni3.v[0]];
+    const Vector3 & nB = m_mesh->normals()[ni3.v[1]];
+    const Vector3 & nC = m_mesh->normals()[ni3.v[2]];
 
     Vector3 BmA = B-A, CmA = C-A;
     Vector3 normal = cross(BmA, CmA);

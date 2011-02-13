@@ -30,17 +30,17 @@ TriangleMesh::createSingleTriangle()
     m_vertexIndices = new TupleI3[1];
     m_texCoordIndices = new TupleI3[1];
 
-    m_vertexIndices[0].x = 0;
-    m_vertexIndices[0].y = 1;
-    m_vertexIndices[0].z = 2;
+    m_vertexIndices[0].v[0] = 0;
+    m_vertexIndices[0].v[1] = 1;
+    m_vertexIndices[0].v[2] = 2;
 
-    m_normalIndices[0].x = 0;
-    m_normalIndices[0].y = 1;
-    m_normalIndices[0].z = 2;
+    m_normalIndices[0].v[0] = 0;
+    m_normalIndices[0].v[1] = 1;
+    m_normalIndices[0].v[2] = 2;
 
-    m_texCoordIndices[0].x = 0;
-    m_texCoordIndices[0].y = 1;
-    m_texCoordIndices[0].z = 2;
+    m_texCoordIndices[0].v[0] = 0;
+    m_texCoordIndices[0].v[1] = 1;
+    m_texCoordIndices[0].v[2] = 2;
 
     #ifdef __SSE4_1__
 #ifdef WIN32
@@ -221,39 +221,39 @@ TriangleMesh::loadObj(FILE* fp, const Matrix4x4& ctm)
             sscanf(&line[1], "%s %s %s\n", s1, s2, s3);
 
             getIndices(s1, &v, &t, &n);
-            m_vertexIndices[m_numTris].x = v-1;
+            m_vertexIndices[m_numTris].v[0] = v-1;
             if (n)
             {
-                m_normalIndices[m_numTris].x = n-1;
+                m_normalIndices[m_numTris].v[0] = n-1;
                 neighboringNormals[v-1].push_back(n-1);
             }
             if (t)
-                m_texCoordIndices[m_numTris].x = t-1;
+                m_texCoordIndices[m_numTris].v[0] = t-1;
             getIndices(s2, &v, &t, &n);
-            m_vertexIndices[m_numTris].y = v-1;
+            m_vertexIndices[m_numTris].v[1] = v-1;
             if (n)
             {
-                m_normalIndices[m_numTris].y = n-1;
+                m_normalIndices[m_numTris].v[1] = n-1;
                 neighboringNormals[v-1].push_back(n-1);
             }
             if (t)
-                m_texCoordIndices[m_numTris].y = t-1;
+                m_texCoordIndices[m_numTris].v[1] = t-1;
             getIndices(s3, &v, &t, &n);
-            m_vertexIndices[m_numTris].z = v-1;
+            m_vertexIndices[m_numTris].v[2] = v-1;
             if (n)
             {
-                m_normalIndices[m_numTris].z = n-1;
+                m_normalIndices[m_numTris].v[2] = n-1;
                 neighboringNormals[v-1].push_back(n-1);
             }
             if (t)
-                m_texCoordIndices[m_numTris].z = t-1;
+                m_texCoordIndices[m_numTris].v[2] = t-1;
 
             if (!n)
             {   // if no normal was supplied
-                Vector3 e1 = m_vertices[m_vertexIndices[m_numTris].y] -
-                             m_vertices[m_vertexIndices[m_numTris].x];
-                Vector3 e2 = m_vertices[m_vertexIndices[m_numTris].z] -
-                             m_vertices[m_vertexIndices[m_numTris].x];
+                Vector3 e1 = m_vertices[m_vertexIndices[m_numTris].v[1]] -
+                             m_vertices[m_vertexIndices[m_numTris].v[0]];
+                Vector3 e2 = m_vertices[m_vertexIndices[m_numTris].v[2]] -
+                             m_vertices[m_vertexIndices[m_numTris].v[0]];
 
                 for (int i = 0; i < 3; i++)
                 {
@@ -268,15 +268,15 @@ TriangleMesh::loadObj(FILE* fp, const Matrix4x4& ctm)
                     nnormals++;
                 }
                 
-                m_normalIndices[m_numTris].x = nnormals-3;
-                m_normalIndices[m_numTris].y = nnormals-2;
-                m_normalIndices[m_numTris].z = nnormals-1;
+                m_normalIndices[m_numTris].v[0] = nnormals-3;
+                m_normalIndices[m_numTris].v[1] = nnormals-2;
+                m_normalIndices[m_numTris].v[2] = nnormals-1;
                 nn++;
                 
                 //Add the normals as neighbors to the vertices
-                neighboringNormals[m_vertexIndices[m_numTris].x].push_back(m_normalIndices[m_numTris].x);
-                neighboringNormals[m_vertexIndices[m_numTris].y].push_back(m_normalIndices[m_numTris].y);
-                neighboringNormals[m_vertexIndices[m_numTris].z].push_back(m_normalIndices[m_numTris].z);
+                neighboringNormals[m_vertexIndices[m_numTris].v[0]].push_back(m_normalIndices[m_numTris].v[0]);
+                neighboringNormals[m_vertexIndices[m_numTris].v[1]].push_back(m_normalIndices[m_numTris].v[1]);
+                neighboringNormals[m_vertexIndices[m_numTris].v[2]].push_back(m_normalIndices[m_numTris].v[2]);
             }
 
             m_numTris++;
