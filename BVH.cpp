@@ -54,6 +54,85 @@ BVH::build(Objects * objs, int depth)
     {
         m_objects = objs;
         m_isLeaf = true;
+
+        #ifdef __SSE4_1__
+        //Build the triangle cache for SSE
+        int nTriangles = 0;
+        for (int i = 0; i < objs->size(); i++)
+        {
+            if (dynamic_cast<Triangle*>((*objs)[i]) != 0) nTriangles++;
+        }
+
+        //m_triangleCache = new SSETriangleCache[nTriangles/4 + (nTriangles % 4 == 0 ? 0 : 1)];
+        m_triangleCache = new std::vector<SSETriangleCache>;
+        int tr = 0;
+        for (int i = 0; i < objs->size(); i++)
+        {
+            Triangle *t = dynamic_cast<Triangle*>((*objs)[i]);
+            if (t == 0) continue;
+            else
+            {
+                objs->erase(objs->begin() + i);
+                i--;
+            }
+            if (tr/4 >= m_triangleCache->size())
+            {
+                m_triangleCache->push_back(SSETriangleCache());
+            }
+            (*m_triangleCache)[tr/4].triangles[tr%4] = t;
+            (*m_triangleCache)[tr/4].nTriangles++;
+            tr ++;
+        }
+
+        // Put the vertices and normals into SSE vectors
+        for (int i = 0; i < m_triangleCache->size(); i++)
+        {
+            SSETriangleCache & c = (*m_triangleCache)[i];
+            
+            //3 dimensions, up to 4*3 floats (3 components per vertex). For each dimension, store (A1x, A2x, A3x, A4x, B1x, B2x, B3x...)
+            float verts[3][12];       
+            float normals[3][12]; 
+            #pragma unroll(4)
+            for (int t = 0; t < c.nTriangles; t++)
+            {
+                TriangleMesh* m = c.triangles[t]->getMesh();
+                TriangleMesh::TupleI3 vInd = m->vIndices()[c.triangles[t]->getIndex()];
+                TriangleMesh::TupleI3 nInd = m->nIndices()[c.triangles[t]->getIndex()];
+
+                //for each vertex (A, B, C)
+                #pragma unroll(3)
+                for (int k = 0; k < 3; k++)
+                {
+                    //for each dimension
+                    #pragma unroll(3)
+                    for (int i = 0; i < 3; i++)
+                    {
+                        {
+                            verts[i][k*4+t] = m->vertices()[vInd.v[k]][i];
+                            normals[i][k*4+t] = m->normals()[nInd.v[k]][i];
+                        }
+                    }
+                }
+            }
+
+            //For each dimension, load the A, B and C
+            #pragma unroll(3)
+            for (int i = 0; i < 3; i++)
+            {
+                c.A.v[i] = _mm_loadu_ps(&verts[i][0]);
+                c.B.v[i] = _mm_loadu_ps(&verts[i][4]);
+                c.C.v[i] = _mm_loadu_ps(&verts[i][8]);
+                c.nA.v[i] = _mm_loadu_ps(&normals[i][0]);
+                c.nB.v[i] = _mm_loadu_ps(&normals[i][4]);
+                c.nC.v[i] = _mm_loadu_ps(&normals[i][8]);
+                c.BmA.v[i] = _mm_sub_ps(c.B.v[i], c.A.v[i]);
+                c.CmA.v[i] = _mm_sub_ps(c.C.v[i], c.A.v[i]);
+            }
+
+            //Do the cross product
+            c.normal = SSEmultiCross(c.BmA, c.CmA);
+        }
+        #endif
     }
     else
     {
@@ -157,7 +236,7 @@ BVH::build(Objects * objs, int depth)
 #ifdef __SSE4_1__
 
 
-int SSEintersectTriangles(Triangle *triangles[], int nTriangles, HitInfo& hitInfo, const Ray &ray, float tMin, float tMax)
+int SSEintersectTriangles(SSETriangleCache &cache, HitInfo& hitInfo, const Ray &ray, float tMin, float tMax, float currentBest)
 {
     //Define some constants that are used throughout.
     static const __m128 _one = _mm_set1_ps(1.0f);
@@ -165,64 +244,27 @@ int SSEintersectTriangles(Triangle *triangles[], int nTriangles, HitInfo& hitInf
     static const __m128 _minus_epsilon = _mm_set1_ps(-epsilon);
     static const __m128 _one_plus_epsilon = _mm_set1_ps(1.0f+epsilon);
 
-    //3 dimensions, up to 4*3 floats (3 components per vertex). For each dimension, store (A1x, A2x, A3x, A4x, B1x, B2x, B3x...)
-    float verts[3][12];       
-    float normals[3][12]; 
     float outT[4], outP[3][4], outN[3][4];
 
-    #pragma unroll(4)
-    for (int t = 0; t < nTriangles; t++)
-    {
-        TriangleMesh* m = triangles[t]->getMesh();
-        TriangleMesh::TupleI3 vInd = m->vIndices()[triangles[t]->getIndex()],
-                              nInd = m->nIndices()[triangles[t]->getIndex()];
-
-
-        //for each vertex (A, B, C)
-        #pragma unroll(3)
-        for (int k = 0; k < 3; k++)
-        {
-            //for each dimension
-            #pragma unroll(3)
-            for (int i = 0; i < 3; i++)
-            {
-                {
-                    verts[i][k*4+t] = m->vertices()[vInd.v[k]][i];
-                    normals[i][k*4+t] = m->normals()[nInd.v[k]][i];
-                }
-            }
-        }
-    }
-
     //Each __m128 contains the coordinates for 4 triangles and there is 3 dimensions.
-    SSEVectorTuple3 A, B, C, nA, nB, nC, BmA, CmA, normal, rayD, rayO, RomA;
+    SSEVectorTuple3 rayD, rayO, RomA;
     __m128 ddotn, t, beta, gamma, alpha, P[4], N[4]; 
 
     //For each dimension, load the A, B and C
     #pragma unroll(3)
     for (int i = 0; i < 3; i++)
     {
-        A.v[i] = _mm_loadu_ps(&verts[i][0]);
-        B.v[i] = _mm_loadu_ps(&verts[i][4]);
-        C.v[i] = _mm_loadu_ps(&verts[i][8]);
-        nA.v[i] = _mm_loadu_ps(&normals[i][0]);
-        nB.v[i] = _mm_loadu_ps(&normals[i][4]);
-        nC.v[i] = _mm_loadu_ps(&normals[i][8]);
-        BmA.v[i] = _mm_sub_ps(B.v[i], A.v[i]);
-        CmA.v[i] = _mm_sub_ps(C.v[i], A.v[i]);
         rayO.v[i] = _mm_shuffle_ps(ray.o_SSE, ray.o_SSE, _MM_SHUFFLE(3-i,3-i,3-i,3-i));
         rayD.v[i] = _mm_sub_ps(_zero, _mm_shuffle_ps(ray.d_SSE, ray.d_SSE, _MM_SHUFFLE(3-i,3-i,3-i,3-i)));
-        RomA.v[i] = _mm_sub_ps(rayO.v[i], A.v[i]);
+        RomA.v[i] = _mm_sub_ps(rayO.v[i], cache.A.v[i]);
     }
 
-    //Do the cross product
-    normal = SSEmultiCross(BmA, CmA);
-    ddotn = SSEmultiDot(rayD, normal);
+    ddotn = _mm_rcp_ps(SSEmultiDot(rayD, cache.normal));
 
     //Calculate t, beta and gamma
-    t = _mm_mul_ps(SSEmultiDot(RomA, normal), _mm_rcp_ps(ddotn)); 
-    beta = _mm_mul_ps(SSEmultiDot(rayD, SSEmultiCross(RomA, CmA)), _mm_rcp_ps(ddotn)); 
-    gamma = _mm_mul_ps(SSEmultiDot(rayD, SSEmultiCross(BmA, RomA)), _mm_rcp_ps(ddotn)); 
+    t = _mm_mul_ps(SSEmultiDot(RomA, cache.normal), ddotn); 
+    beta = _mm_mul_ps(SSEmultiDot(rayD, SSEmultiCross(RomA, cache.CmA)), ddotn); 
+    gamma = _mm_mul_ps(SSEmultiDot(rayD, SSEmultiCross(cache.BmA, RomA)), ddotn); 
 
     //Test t, beta and gamma
     int mask = _mm_movemask_ps(_mm_and_ps(_mm_cmpgt_ps(beta, _minus_epsilon),
@@ -231,13 +273,12 @@ int SSEintersectTriangles(Triangle *triangles[], int nTriangles, HitInfo& hitInf
                                                 _mm_and_ps(_mm_cmpgt_ps(t, _mm_set1_ps(tMin)), _mm_cmplt_ps(t, _mm_set1_ps(tMax)))))));
 
     if (mask == 0) return -1;
-  
     
     _mm_storeu_ps(outT, t);
 
     //Find the lowest t > tMin
     int best = -1;
-    for (int i = 0; i < nTriangles; i++)
+    for (int i = 0; i < cache.nTriangles; i++)
     {
         if ((mask & (1 << i)) == 0)
             continue;
@@ -245,13 +286,17 @@ int SSEintersectTriangles(Triangle *triangles[], int nTriangles, HitInfo& hitInf
         if (best == -1 || outT[i] < outT[best]) best = i;
     }
 
+    // We didn't get a better time, so just quit
+    if (outT[best] > currentBest) return -1;
+
     alpha = _mm_sub_ps(_mm_sub_ps(_one, beta), gamma);
     
     #pragma unroll(3)
     for (int i = 0; i < 3; i++)
     {
-        _mm_storeu_ps(outP[i], _mm_add_ps(A.v[i], _mm_add_ps(_mm_mul_ps(beta, BmA.v[i]), _mm_mul_ps(gamma, CmA.v[i]))));
-	    _mm_storeu_ps(outN[i], _mm_add_ps(_mm_mul_ps(alpha, nA.v[i]), _mm_add_ps(_mm_mul_ps(beta, nB.v[i]), _mm_mul_ps(gamma, nC.v[i]))));
+        //Any way to improve this?
+        _mm_storeu_ps(outP[i], _mm_add_ps(cache.A.v[i], _mm_add_ps(_mm_mul_ps(beta, cache.BmA.v[i]), _mm_mul_ps(gamma, cache.CmA.v[i]))));
+	    _mm_storeu_ps(outN[i], _mm_add_ps(_mm_mul_ps(alpha, cache.nA.v[i]), _mm_add_ps(_mm_mul_ps(beta, cache.nB.v[i]), _mm_mul_ps(gamma, cache.nC.v[i]))));
     }
 
 
@@ -263,11 +308,11 @@ int SSEintersectTriangles(Triangle *triangles[], int nTriangles, HitInfo& hitInf
     return best;
 }
 
-inline bool intersectTriangleList(Triangle* triangles[4], int nTriangles, HitInfo& minHit, const Ray& ray, float tMin, float tMax)
+inline bool intersectTriangleList(SSETriangleCache &cache, HitInfo& minHit, const Ray& ray, float tMin, float tMax)
 {
     HitInfo tempMinHit;
 
-    int best = SSEintersectTriangles(triangles, nTriangles, tempMinHit, ray, tMin, tMax);
+    int best = SSEintersectTriangles(cache, tempMinHit, ray, tMin, tMax, minHit.t);
     if (best != -1)
     {       
         if (tempMinHit.t < minHit.t)
@@ -275,10 +320,10 @@ inline bool intersectTriangleList(Triangle* triangles[4], int nTriangles, HitInf
             minHit = tempMinHit;
 
             //Just call intersect to get the material
-            triangles[best]->intersect(minHit, ray, tMin, tMax);
+            cache.triangles[best]->intersect(minHit, ray, tMin, tMax);
              
             //Update object reference
-            minHit.object = triangles[best];
+            minHit.object = cache.triangles[best];
         }
         return true;
     }
@@ -296,58 +341,29 @@ BVH::intersect(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
 
 	if (m_isLeaf)
 	{
-        //For SSE, we put up to 4 triangles in a list before testing them.
+        //For SSE, we have already put a lot of stuff in our cache datastructure, so just call the triangle list intersection        
         #ifdef __SSE4_1__
-        Triangle* triangles[4];
-        int nTriangles = 0;
+        for (int i = 0; i < m_triangleCache->size(); i++)
+        {
+            if (intersectTriangleList((*m_triangleCache)[i], minHit, ray, tMin, tMax))
+                hit = true;
+        }
         #endif
 		
         for (size_t i = 0; i < m_objects->size(); ++i)
 		{
-            //Build list for SSE
-            #ifdef __SSE4_1__
-            Triangle* tri = (Triangle*)(*m_objects)[i];
-            if (tri != 0)
+            if ((*m_objects)[i]->intersect(tempMinHit, ray, tMin, tMax))
             {
-                //If this is indeed a triangle, add it to the array
-                triangles[nTriangles] = tri;
-                nTriangles++;
-                //If the array is full, test them
-                if (nTriangles == 4)
+                hit = true;
+                if (tempMinHit.t < minHit.t)
                 {
-                    if (intersectTriangleList(triangles, nTriangles, minHit, ray, tMin, tMax))
-                        hit = true;
-                    nTriangles = 0;
+                    minHit = tempMinHit;
+
+                    //Update object reference
+                    minHit.object = (*m_objects)[i];
                 }
             }
-            else
-            {
-            #endif
-    			if ((*m_objects)[i]->intersect(tempMinHit, ray, tMin, tMax))
-	    		{
-		    		hit = true;
-			    	if (tempMinHit.t < minHit.t)
-				    {
-                		minHit = tempMinHit;
-
-                		//Update object reference
-                		minHit.object = (*m_objects)[i];
-			    	}
-    			}
-            #ifdef __SSE4_1__
-            }
-            #endif
         }
-        #ifdef __SSE4_1__
-        //Take care of any leftover triangles
-        if (nTriangles > 0)
-        {
-            if (intersectTriangleList(triangles, nTriangles, minHit, ray, tMin, tMax))
-                hit = true;
-            nTriangles = 0;
-        }
-        #endif
-        
 		return hit;
 	}
 

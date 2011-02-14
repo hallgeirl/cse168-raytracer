@@ -88,6 +88,20 @@ bool
 Scene::trace(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
 {
     bool result = m_bvh.intersect(minHit, ray, tMin, tMax);
+    
+    //Trace the unbounded objects (like planes)
+    for (int i = 0; i < m_unboundedObjects.size(); i++)
+    {
+        HitInfo tempMinHit;
+        bool ubresult = m_unboundedObjects[i]->intersect(tempMinHit, ray, tMin, tMax);
+        if (ubresult && (!result || tempMinHit.t < minHit.t))
+        {
+            result = true;
+            minHit = tempMinHit;
+            minHit.object = m_unboundedObjects[i];
+        }
+    }
+
     if (result)
     {
         //Bump mapping

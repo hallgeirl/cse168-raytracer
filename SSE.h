@@ -1,4 +1,5 @@
 #ifndef __SSE_H__
+#define __SSE_H__
 
 #ifdef __SSE4_1__
 

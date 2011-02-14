@@ -14,7 +14,11 @@ class Scene
 {
 public:
 	Scene() { m_environment = 0; }
-    void addObject(Object* pObj)        {m_objects.push_back(pObj);}
+    void addObject(Object* pObj)        
+    { 
+        if (pObj->isBounded()) m_objects.push_back(pObj);
+        else m_unboundedObjects.push_back(pObj);
+    }
     const Objects* objects() const      {return &m_objects;}
 
     void addLight(PointLight* pObj)     {m_lights.push_back(pObj);}
@@ -34,6 +38,7 @@ public:
 
 protected:
     Objects m_objects;
+    Objects m_unboundedObjects;
     BVH m_bvh;
     Lights m_lights;
     Texture * m_environment; //Environment map

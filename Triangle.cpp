@@ -73,7 +73,6 @@ Triangle::renderGL()
 bool
 Triangle::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
 {
-
 #ifdef __SSE4_1__
 
 /*    const __m128 _A = m_mesh->SSEvertices()[ti3.v[0]];
