@@ -1,6 +1,7 @@
 #include <math.h>
 #include <string>
 #include "assignment1.h"
+#include "assignment2.h"
 #include "Miro.h"
 #include "Scene.h"
 #include "Camera.h"
@@ -398,16 +399,19 @@ main(int argc, char*argv[])
 #ifdef __SSE4_1__
     cout << "Using SSE" << endl;
 #endif
-
-    // create a scene
-    //makeSpiralScene();
-    makeBunnyScene();
     //makeTestScene();
-    //makeTeapotScene();
-    //makeSphereScene();
+    //makeSpiralScene();
+
+    //Assignment 1 scenes
+    //A1makeTeapotScene();
+    //A1makeSphereScene();
     //makeScene1();
     //makeScene2();
     //makeBUNNIZ();
+    A1makeBunnyScene();
+
+    // create a scene
+    //makeBunny20Scene();
     MiroWindow miro(&argc, argv);
 #ifndef NO_GFX
     miro.mainLoop();

@@ -1,3 +1,4 @@
+#include "Utility.h"
 #include <cmath>
 #include <iostream>
 #include "Miro.h"
@@ -28,6 +29,7 @@ void
 Scene::preCalc()
 {
     debug("Precalcing objects\n");
+    double t1 = -getTime();
     Objects::iterator it;
     for (it = m_objects.begin(); it != m_objects.end(); it++)
     {
@@ -40,10 +42,14 @@ Scene::preCalc()
         PointLight* pLight = *lit;
         pLight->preCalc();
     }
-   
+    t1 += getTime();
+    printf("Time spent preprocessing objects and lights: %lf\n", t1);
     debug("Building BVH...\n");
+    t1 = -getTime();
     m_bvh.build(&m_objects);
+    t1 += getTime();
     debug("Done building BVH.\n");
+    printf("Time spent building BVH: %lf\n", t1);
 }
 
 void
@@ -55,6 +61,7 @@ Scene::raytraceImage(Camera *cam, Image *img)
     printf("Rendering Progress: %.3f%%\r", 0.0f);
     fflush(stdout);
 
+    double t1 = -getTime();
 
     // loop over all pixels in the image
     #ifdef OPENMP
@@ -80,8 +87,12 @@ Scene::raytraceImage(Camera *cam, Image *img)
         }
     }
 
+
+    t1 += getTime();
+
     printf("Rendering Progress: 100.000%%\n");
-    debug("done Raytracing!\n");
+    debug("Done raytracing!\n");
+    printf("Time spent raytracing image: %lf seconds.\n", t1);
 }
 
 bool

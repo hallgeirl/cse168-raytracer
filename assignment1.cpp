@@ -10,15 +10,19 @@
 #include "TriangleMesh.h"
 #include "Triangle.h"
 #include "Lambert.h"
+#include <string>
+
+using namespace std;
 
 void
-makeBunnyScene()
+A1makeBunnyScene()
 {
+	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"));
     g_camera = new Camera;
     g_scene = new Scene;
     g_image = new Image;
 
-    g_image->resize(2048, 2048);
+    g_image->resize(512, 512);
 
     
     // set up the camera
@@ -27,6 +31,8 @@ makeBunnyScene()
     g_camera->setLookAt(Vector3(-.5, 1, 0));
     g_camera->setUp(Vector3(0, 1, 0));
     g_camera->setFOV(45);
+
+    g_scene->setEnvironment(autumnHDR);
 
     // create and place a point light source
     PointLight * light = new PointLight;
@@ -64,14 +70,14 @@ makeBunnyScene()
     t->setIndex(0);
     t->setMesh(floor);
     t->setMaterial(mat); 
-    g_scene->addObject(t);
+    //g_scene->addObject(t);
     
     // let objects do pre-calculations if needed
     g_scene->preCalc();
 }
 
 void
-makeSphereScene()
+A1makeSphereScene()
 {
     g_camera = new Camera;
     g_scene = new Scene;
@@ -121,14 +127,15 @@ makeSphereScene()
 }
 
 void
-makeTeapotScene()
+A1makeTeapotScene()
 {
+	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"));
     g_camera = new Camera;
     g_scene = new Scene;
     g_image = new Image;
 
-    g_image->resize(2048, 2048);
-    
+    g_image->resize(256, 256);
+    g_scene->setEnvironment(autumnHDR);
     // set up the camera
     g_camera->setBGColor(Vector3(0.0f, 0.0f, 0.2f));
     g_camera->setEye(Vector3(-2, 3, 5));
@@ -172,7 +179,7 @@ makeTeapotScene()
     t->setIndex(0);
     t->setMesh(floor);
     t->setMaterial(mat); 
-    g_scene->addObject(t);
+    //g_scene->addObject(t);
     
     // let objects do pre-calculations if needed
     g_scene->preCalc();

@@ -34,12 +34,14 @@ void getCornerPoints(Vector3 (&outCorners)[2], Objects * objs)
 
 float getArea(const Vector3 (&corners)[2])
 {
-    float area = corners[1][0]-corners[0][0];
-    for (int i = 1; i < 3; i++)
+    float area = 0;
+    for (int d = 0; d < 3; d++)
     {
-        area *= (corners[1][i]-corners[0][i]);
+        int dim1 = (d+1)%3, dim2 = (d+2)%3;
+        area += (corners[1][dim1]-corners[0][dim1])*(corners[1][dim2]-corners[0][dim2]); 
     }
-    return area;
+    
+    return 2*area;
 }
 
 void
@@ -63,7 +65,6 @@ BVH::build(Objects * objs, int depth)
             if (dynamic_cast<Triangle*>((*objs)[i]) != 0) nTriangles++;
         }
 
-        //m_triangleCache = new SSETriangleCache[nTriangles/4 + (nTriangles % 4 == 0 ? 0 : 1)];
         m_triangleCache = new std::vector<SSETriangleCache>;
         int tr = 0;
         for (int i = 0; i < objs->size(); i++)
@@ -92,6 +93,7 @@ BVH::build(Objects * objs, int depth)
             //3 dimensions, up to 4*3 floats (3 components per vertex). For each dimension, store (A1x, A2x, A3x, A4x, B1x, B2x, B3x...)
             float verts[3][12];       
             float normals[3][12]; 
+
             #pragma unroll(4)
             for (int t = 0; t < c.nTriangles; t++)
             {
@@ -115,18 +117,16 @@ BVH::build(Objects * objs, int depth)
                 }
             }
 
-            //For each dimension, load the A, B and C
+            //For each dimension, load the A and calculate B-A and C-A.
             #pragma unroll(3)
             for (int i = 0; i < 3; i++)
             {
                 c.A.v[i] = _mm_loadu_ps(&verts[i][0]);
-                c.B.v[i] = _mm_loadu_ps(&verts[i][4]);
-                c.C.v[i] = _mm_loadu_ps(&verts[i][8]);
                 c.nA.v[i] = _mm_loadu_ps(&normals[i][0]);
                 c.nB.v[i] = _mm_loadu_ps(&normals[i][4]);
                 c.nC.v[i] = _mm_loadu_ps(&normals[i][8]);
-                c.BmA.v[i] = _mm_sub_ps(c.B.v[i], c.A.v[i]);
-                c.CmA.v[i] = _mm_sub_ps(c.C.v[i], c.A.v[i]);
+                c.BmA.v[i] = _mm_sub_ps(_mm_loadu_ps(&verts[i][4]), c.A.v[i]);
+                c.CmA.v[i] = _mm_sub_ps(_mm_loadu_ps(&verts[i][8]), c.A.v[i]);
             }
 
             //Do the cross product
@@ -136,7 +136,7 @@ BVH::build(Objects * objs, int depth)
     }
     else
     {
-        //Split the node somehow
+        //Split the node
         //and recurse into children
         float bestCost = infinity, bestPosition = infinity;
         int bestDim = 0;
@@ -148,7 +148,9 @@ BVH::build(Objects * objs, int depth)
         {
             float current = (m_corners[1][dim] + m_corners[0][dim])/2.0f, beg = m_corners[0][dim], end = m_corners[1][dim];
             bool done = false;
+            int nocheckBoundaryLeft = 0, nocheckBoundaryRight = 0; //
             Objects left, right;
+            Vector3 cornersLeft[2], cornersRight[2];
 
             //Put objects into the "left" and "right" node respectively
             for (int i = 0; i < objs->size(); i++)
@@ -159,12 +161,14 @@ BVH::build(Objects * objs, int depth)
                     right.push_back((*objs)[i]);
             }
 
+            getCornerPoints(cornersLeft, &left);
+            getCornerPoints(cornersRight, &right);
+            
             for (int searchDepth = 0; searchDepth < maxSearchDepth; searchDepth++)
             {
                 int n1 = left.size(), n2 = right.size();
-                Vector3 cornersLeft[2], cornersRight[2];
-                getCornerPoints(cornersLeft, &left);
-                getCornerPoints(cornersRight, &right);
+                /*getCornerPoints(cornersLeft, &left);
+                getCornerPoints(cornersRight, &right);*/
 
                 float costLeft = n1 * getArea(cornersLeft), costRight = n2 * getArea(cornersRight);
                 if (costLeft+costRight < bestCost)
@@ -175,38 +179,83 @@ BVH::build(Objects * objs, int depth)
                 }
                 
                 //If the left node has a higher cost, we want to reduce that area. If not, we want to reduce the right area.
+                //We also know that the side that we are reducing must have decreasing or equal max corners, and increasing or equal min corners.
+                //Vica versa for the area we are increasing.
+                //Also, we know that the existing objects in the area we are increasing won't ever be needed to be checked again.
                 if (costLeft > costRight)
                 {
                     end = current;
                     current = (beg+end)/2;
-                    
+
+                    //"Mark" the right array so that the items in there at the moment won't be checked again.
+                    //We already determined that the area is too small, so that is certain.
+                    nocheckBoundaryRight = right.size();
+
                     //Move the objects from left to right
-                    for (int i = left.size() - 1; i >= 0; i--)
+                    for (int i = left.size() - 1; i >= nocheckBoundaryLeft; i--)
                     {
                         if (left[i]->center()[dim] > current) 
                         {
+                            Vector3 cmax = left[i]->coordsMax();
+                            Vector3 cmin = left[i]->coordsMin();
+
+                            //Check if we need to increase the bounds of the right side 
+                            for (int j = 0; j < 3; j++)
+                            {
+                                if (cmax[j] > cornersRight[1][j])
+                                {
+                                    cornersRight[1][j] = cmax[j];
+                                }
+                                if (cmin[j] < cornersRight[0][j])
+                                {
+                                    cornersRight[0][j] = cmin[j];
+                                }
+                            }
+
                             right.push_back(left[i]);
                             left.erase(left.begin()+i);
                         }
                     }
+                    //The left side must be rechecked for boundaries because it might have shrunk
+                    getCornerPoints(cornersLeft, &left);
                 }
                 else
                 {
                     beg = current;
                     current = (beg+end)/2;
 
+                    nocheckBoundaryLeft = left.size();
+
                     //Move the objects from right to left
-                    for (int i = right.size() - 1; i >= 0; i--)
+                    for (int i = right.size() - 1; i >= nocheckBoundaryRight; i--)
                     {
                         if (right[i]->center()[dim] < current) 
                         {
+                            Vector3 cmax = right[i]->coordsMax();
+                            Vector3 cmin = right[i]->coordsMin();
+
+                            //Check if we need to increase the bounds of the left side 
+                            for (int j = 0; j < 3; j++)
+                            {
+                                if (cmax[j] > cornersLeft[1][j])
+                                {
+                                    cornersLeft[1][j] = cmax[j];
+                                }
+                                if (cmin[j] < cornersLeft[0][j])
+                                {
+                                    cornersLeft[0][j] = cmin[j];
+                                }
+                            }
+
                             left.push_back(right[i]);
                             right.erase(right.begin()+i);
                         }
                     }
+                    getCornerPoints(cornersRight, &right);
                 }
             }
         }    
+
         //Add child nodes
         m_children = new vector<BVH*>;
         Objects* left, * right;
@@ -234,8 +283,6 @@ BVH::build(Objects * objs, int depth)
 }
 
 #ifdef __SSE4_1__
-
-
 int SSEintersectTriangles(SSETriangleCache &cache, HitInfo& hitInfo, const Ray &ray, float tMin, float tMax, float currentBest)
 {
     //Define some constants that are used throughout.
@@ -243,19 +290,16 @@ int SSEintersectTriangles(SSETriangleCache &cache, HitInfo& hitInfo, const Ray &
     static const __m128 _zero = _mm_setzero_ps();
     static const __m128 _minus_epsilon = _mm_set1_ps(-epsilon);
     static const __m128 _one_plus_epsilon = _mm_set1_ps(1.0f+epsilon);
-
     float outT[4], outP[3][4], outN[3][4];
 
     //Each __m128 contains the coordinates for 4 triangles and there is 3 dimensions.
-    SSEVectorTuple3 rayD, rayO, RomA;
-    __m128 ddotn, t, beta, gamma, alpha, P[4], N[4]; 
-
-    //For each dimension, load the A, B and C
+    const SSEVectorTuple3 &rayD = ray.d_SSE, &rayO = ray.o_SSE;
+    SSEVectorTuple3 RomA;
+    __m128 ddotn, t, beta, gamma, alpha;
+    //For each dimension
     #pragma unroll(3)
     for (int i = 0; i < 3; i++)
     {
-        rayO.v[i] = _mm_shuffle_ps(ray.o_SSE, ray.o_SSE, _MM_SHUFFLE(3-i,3-i,3-i,3-i));
-        rayD.v[i] = _mm_sub_ps(_zero, _mm_shuffle_ps(ray.d_SSE, ray.d_SSE, _MM_SHUFFLE(3-i,3-i,3-i,3-i)));
         RomA.v[i] = _mm_sub_ps(rayO.v[i], cache.A.v[i]);
     }
 
@@ -286,19 +330,20 @@ int SSEintersectTriangles(SSETriangleCache &cache, HitInfo& hitInfo, const Ray &
         if (best == -1 || outT[i] < outT[best]) best = i;
     }
 
+    if (best == -1) return -1;
+
     // We didn't get a better time, so just quit
     if (outT[best] > currentBest) return -1;
 
     alpha = _mm_sub_ps(_mm_sub_ps(_one, beta), gamma);
-    
+
     #pragma unroll(3)
     for (int i = 0; i < 3; i++)
     {
-        //Any way to improve this?
+        //Any way to improve this, as we only need 1/3rd of the values?
         _mm_storeu_ps(outP[i], _mm_add_ps(cache.A.v[i], _mm_add_ps(_mm_mul_ps(beta, cache.BmA.v[i]), _mm_mul_ps(gamma, cache.CmA.v[i]))));
 	    _mm_storeu_ps(outN[i], _mm_add_ps(_mm_mul_ps(alpha, cache.nA.v[i]), _mm_add_ps(_mm_mul_ps(beta, cache.nB.v[i]), _mm_mul_ps(gamma, cache.nC.v[i]))));
     }
-
 
     hitInfo.t = outT[best];
 

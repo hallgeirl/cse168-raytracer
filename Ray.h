@@ -4,9 +4,7 @@
 #include "Vector3.h"
 #include "Material.h"
 
-#ifdef __SSE4_1__
-#include <smmintrin.h>
-#endif
+#include "SSE.h"
 
 //! Contains information about a ray hit with a surface.
 /*!
@@ -41,22 +39,35 @@ public:
 
 
     #ifdef __SSE4_1__
-    __m128 o_SSE, d_SSE;
+    SSEVectorTuple3 o_SSE, d_SSE;
+
+    void setupSSE()
+    {
+        static const __m128 _zero = _mm_setzero_ps();
+        float _o[4] = {o.x, o.y, o.z, 0};
+        float _d[4] = {d.x, d.y, d.z, 0};
+        __m128 _d_sse = _mm_loadu_ps(_d);
+        __m128 _o_sse = _mm_loadu_ps(_o);
+        #pragma unroll(3)
+        for (int i = 0; i < 3; i++)
+        {
+            o_SSE.v[i] = _mm_shuffle_ps(_o_sse, _o_sse, _MM_SHUFFLE(i,i,i,i));
+            d_SSE.v[i] = _mm_sub_ps(_zero, _mm_shuffle_ps(_d_sse, _d_sse, _MM_SHUFFLE(i,i,i,i)));
+        }
+    }
     #endif
 
     Ray() : o(), d(Vector3(0.0f,0.0f,1.0f))
     {
         #ifdef __SSE4_1__
-        o_SSE = _mm_set_ps(o.x, o.y, o.z, 0.0f);
-        d_SSE = _mm_set_ps(d.x, d.y, d.z, 0.0f);
+        setupSSE();
         #endif
     }
 
     Ray(const Vector3& o, const Vector3& d) : o(o), d(d)
     {
         #ifdef __SSE4_1__
-        o_SSE = _mm_set_ps(o.x, o.y, o.z, 0.0f);
-        d_SSE = _mm_set_ps(d.x, d.y, d.z, 0.0f);
+        setupSSE();
         #endif
     }
 

@@ -22,14 +22,17 @@ void Triangle::preCalc()
 {
     //Find the min and max boundaries
     updateMinMax();
+}
 
-    //Find the center of the triangle (center of mass) by using the barycentric coordinates
+
+Vector3 Triangle::center() const
+{
     TriangleMesh::TupleI3 ti3 = m_mesh->vIndices()[m_index];
     Vector3 verts[3] = {m_mesh->vertices()[ti3.v[0]], m_mesh->vertices()[ti3.v[1]], m_mesh->vertices()[ti3.v[2]]};
     Vector3 BmA = verts[1]-verts[0], CmA = verts[2]-verts[0];
-    m_cachedCenter = verts[0] + BmA/3 + CmA/3;
+ 
+    return verts[0] + BmA/3 + CmA/3;
 }
-
 
 void Triangle::updateMinMax()
 {

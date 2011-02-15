@@ -18,7 +18,7 @@ public:
     //Object boundaries used with bounding box creation
     virtual Vector3 coordsMin() const { return m_cachedMin; }
     virtual Vector3 coordsMax() const { return m_cachedMax; }
-    virtual Vector3 center() const { return m_cachedCenter; }
+    virtual Vector3 center() const;
 
     virtual void preCalc();
 
@@ -26,7 +26,6 @@ public:
     unsigned int getIndex() { return m_index; }
     void setMesh(TriangleMesh* m) { m_mesh = m; }
     TriangleMesh* getMesh() { return m_mesh; }
-
 
     virtual void renderGL();
     virtual bool intersect(HitInfo& result, const Ray& ray,
@@ -36,7 +35,6 @@ protected:
     TriangleMesh* m_mesh;
     unsigned int m_index;
     Vector3 m_cachedMin, m_cachedMax;
-    Vector3 m_cachedCenter;
 private:
     void updateMinMax(); 
 };

@@ -18,7 +18,8 @@ struct SSETriangleCache
     SSETriangleCache() { nTriangles = 0; }
     Triangle *triangles[4];
     int nTriangles;
-    SSEVectorTuple3 A, B, C, nA, nB, nC, BmA, CmA, normal;
+    SSEVectorTuple3 A, BmA, CmA, normal, nA, nB, nC;
+    //__m128 nA[4], nB[4], nC[4], /*A_nt[4],*/ BmA_nt[4], CmA_nt[4];//Non-transposed
 };
 #endif
 
