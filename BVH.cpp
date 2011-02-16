@@ -49,8 +49,10 @@ BVH::build(Objects * objs, int depth)
 {
     // construct the bounding volume hierarchy
     //Find the bounds of this node 
-    getCornerPoints(m_corners, objs); 
-
+    if (m_corners[0].x == infinity)
+    {
+        getCornerPoints(m_corners, objs); 
+    }   
     //Check if we're done
     if (objs->size() <= OBJECTS_PER_LEAF || depth >= MAX_TREE_DEPTH)
     {
@@ -139,7 +141,7 @@ BVH::build(Objects * objs, int depth)
         //Split the node
         //and recurse into children
         float bestCost = infinity, bestPosition = infinity;
-        int bestDim = 0;
+        int bestDim = 0; Vector3 bestCorners[2][2];
         const int maxSearchDepth = 16; //Max search depth for binary search.
         m_isLeaf = false;
 
@@ -167,8 +169,6 @@ BVH::build(Objects * objs, int depth)
             for (int searchDepth = 0; searchDepth < maxSearchDepth; searchDepth++)
             {
                 int n1 = left.size(), n2 = right.size();
-                /*getCornerPoints(cornersLeft, &left);
-                getCornerPoints(cornersRight, &right);*/
 
                 float costLeft = n1 * getArea(cornersLeft), costRight = n2 * getArea(cornersRight);
                 if (costLeft+costRight < bestCost)
@@ -182,6 +182,7 @@ BVH::build(Objects * objs, int depth)
                 //We also know that the side that we are reducing must have decreasing or equal max corners, and increasing or equal min corners.
                 //Vica versa for the area we are increasing.
                 //Also, we know that the existing objects in the area we are increasing won't ever be needed to be checked again.
+                bool canShrink = false; //Indicates if it's possible that one of the boxes can be shrunk
                 if (costLeft > costRight)
                 {
                     end = current;
@@ -190,7 +191,6 @@ BVH::build(Objects * objs, int depth)
                     //"Mark" the right array so that the items in there at the moment won't be checked again.
                     //We already determined that the area is too small, so that is certain.
                     nocheckBoundaryRight = right.size();
-
                     //Move the objects from left to right
                     for (int i = left.size() - 1; i >= nocheckBoundaryLeft; i--)
                     {
@@ -210,14 +210,25 @@ BVH::build(Objects * objs, int depth)
                                 {
                                     cornersRight[0][j] = cmin[j];
                                 }
+                                
+                                if (!canShrink)
+                                {
+                                    //Check if it's possible that the left side can be shrunk
+                                    if (cmax[j] < cornersRight[1][j] || cmin[j] > cornersRight[0][j])
+                                    {
+                                        canShrink = true;
+                                    }
+                                }
                             }
+
 
                             right.push_back(left[i]);
                             left.erase(left.begin()+i);
                         }
                     }
                     //The left side must be rechecked for boundaries because it might have shrunk
-                    getCornerPoints(cornersLeft, &left);
+                    if (canShrink)
+                        getCornerPoints(cornersLeft, &left);
                 }
                 else
                 {
@@ -245,13 +256,30 @@ BVH::build(Objects * objs, int depth)
                                 {
                                     cornersLeft[0][j] = cmin[j];
                                 }
+                                if (!canShrink)
+                                {
+                                    //Check if it's possible that the left side can be shrunk
+                                    if (cmax[j] < cornersLeft[1][j] || cmin[j] > cornersLeft[0][j])
+                                    {
+                                        canShrink = true;
+                                    }
+                                }
                             }
 
                             left.push_back(right[i]);
                             right.erase(right.begin()+i);
                         }
                     }
-                    getCornerPoints(cornersRight, &right);
+                    if (canShrink)
+                        getCornerPoints(cornersRight, &right);
+                }
+            }
+            if (dim == bestDim)
+            {
+                for (int i = 0; i < 2; i++)
+                {
+                    bestCorners[0][i] = cornersLeft[i];
+                    bestCorners[1][i] = cornersRight[i];
                 }
             }
         }    
@@ -274,6 +302,8 @@ BVH::build(Objects * objs, int depth)
         {
             Objects* current = (i == 0 ? left : right);
             m_children->push_back(new BVH);
+            m_children->back()->m_corners[0] = bestCorners[i][0];
+            m_children->back()->m_corners[1] = bestCorners[i][1];
             (*m_children)[i]->build(current, depth+1);
 
             // If the new node is an internal one, free the object list since it wasn't used.

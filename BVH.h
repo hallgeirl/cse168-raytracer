@@ -28,6 +28,7 @@ struct SSETriangleCache
 class BVH
 {
 public:
+    BVH() { m_corners[0].x = infinity; } 
     void build(Objects * objs, int depth = 0);
 
     bool intersect(HitInfo& result, const Ray& ray,

@@ -362,7 +362,7 @@ makeSponzaScene()
 
     Material* material = new Lambert(Vector3(1.0f));
     TriangleMesh * mesh = new TriangleMesh;
-    mesh->load("sponza.obj");
+    mesh->load("models/sponza.obj");
     addMeshTrianglesToScene(mesh, material);
     
     // let objects do pre-calculations if needed
