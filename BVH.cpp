@@ -12,7 +12,7 @@ void getCornerPoints(Vector3 (&outCorners)[2], Objects * objs)
     //Find the bounds of the root node
     outCorners[0].set(infinity, infinity, infinity),
     outCorners[1].set(-infinity, -infinity, -infinity);
-
+//    cout << objs->size() << endl;
     for (size_t i = 0; i < objs->size(); ++i)
     {
         //Ignore infinitely spanning objects like planes
@@ -42,6 +42,13 @@ float getArea(const Vector3 (&corners)[2])
     }
     
     return 2*area;
+}
+
+inline float getCost(const Vector3 (&corners)[2], Objects &objects)
+{
+    //If the number of objects is 0, corners might have funny values.
+    if (objects.size() == 0) return 0;
+    return ((float)objects.size()) * getArea(corners);
 }
 
 void
@@ -140,9 +147,9 @@ BVH::build(Objects * objs, int depth)
     {
         //Split the node
         //and recurse into children
-        float bestCost = infinity, bestPosition = infinity;
+        float bestCost = infinity, bestPosition;
         int bestDim = 0; Vector3 bestCorners[2][2];
-        const int maxSearchDepth = 16; //Max search depth for binary search.
+        const int maxSearchDepth = 32; //Max search depth for binary search.
         m_isLeaf = false;
 
         //Do a binary search for the best splitting position for each dimension. Pick the dimension with the best split.
@@ -150,138 +157,122 @@ BVH::build(Objects * objs, int depth)
         {
             float current = (m_corners[1][dim] + m_corners[0][dim])/2.0f, beg = m_corners[0][dim], end = m_corners[1][dim];
             bool done = false;
-            int nocheckBoundaryLeft = 0, nocheckBoundaryRight = 0; //
-            Objects left, right;
-            Vector3 cornersLeft[2], cornersRight[2];
+            int nocheckBoundary[2] = {0, 0};
+            Objects children[2];
+            Vector3 corners[2][2];
 
-            //Put objects into the "left" and "right" node respectively
+            //Put objects into the "left" and "right" node respectively, based on their position in the current dimension
             for (int i = 0; i < objs->size(); i++)
             {
                 if ((*objs)[i]->center()[dim] < current)
-                    left.push_back((*objs)[i]);
+                    children[0].push_back((*objs)[i]);
                 else
-                    right.push_back((*objs)[i]);
+                    children[1].push_back((*objs)[i]);
             }
 
-            getCornerPoints(cornersLeft, &left);
-            getCornerPoints(cornersRight, &right);
-            
+            getCornerPoints(corners[0], &children[0]);
+            getCornerPoints(corners[1], &children[1]);
+
             for (int searchDepth = 0; searchDepth < maxSearchDepth; searchDepth++)
             {
-                int n1 = left.size(), n2 = right.size();
-
-                float costLeft = n1 * getArea(cornersLeft), costRight = n2 * getArea(cornersRight);
+                //Get the cost for both sides, to determine which side to reduce
+                float costLeft = getCost(corners[0], children[0]), costRight = getCost(corners[1], children[1]);
+            
+                //Is this the best cost so far? If so, store it.
                 if (costLeft+costRight < bestCost)
                 {
                     bestCost = costLeft+costRight;
                     bestDim = dim;
                     bestPosition = current;
+                    for (int i = 0; i < 2; i++)
+                    {
+                        bestCorners[0][i] = corners[0][i];
+                        bestCorners[1][i] = corners[1][i];
+                    }
                 }
-                
                 //If the left node has a higher cost, we want to reduce that area. If not, we want to reduce the right area.
                 //We also know that the side that we are reducing must have decreasing or equal max corners, and increasing or equal min corners.
                 //Vica versa for the area we are increasing.
                 //Also, we know that the existing objects in the area we are increasing won't ever be needed to be checked again.
                 bool canShrink = false; //Indicates if it's possible that one of the boxes can be shrunk
-                if (costLeft > costRight)
-                {
+                int largest = (costLeft > costRight ? 0 : 1);
+                int smallest = (largest+1)%2;
+
+                //If the largest element is the "left" one, we have found an upper bound for our plane, which is "current".
+                if (largest == 0)
                     end = current;
-                    current = (beg+end)/2;
-
-                    //"Mark" the right array so that the items in there at the moment won't be checked again.
-                    //We already determined that the area is too small, so that is certain.
-                    nocheckBoundaryRight = right.size();
-                    //Move the objects from left to right
-                    for (int i = left.size() - 1; i >= nocheckBoundaryLeft; i--)
-                    {
-                        if (left[i]->center()[dim] > current) 
-                        {
-                            Vector3 cmax = left[i]->coordsMax();
-                            Vector3 cmin = left[i]->coordsMin();
-
-                            //Check if we need to increase the bounds of the right side 
-                            for (int j = 0; j < 3; j++)
-                            {
-                                if (cmax[j] > cornersRight[1][j])
-                                {
-                                    cornersRight[1][j] = cmax[j];
-                                }
-                                if (cmin[j] < cornersRight[0][j])
-                                {
-                                    cornersRight[0][j] = cmin[j];
-                                }
-                                
-                                if (!canShrink)
-                                {
-                                    //Check if it's possible that the left side can be shrunk
-                                    if (cmax[j] < cornersRight[1][j] || cmin[j] > cornersRight[0][j])
-                                    {
-                                        canShrink = true;
-                                    }
-                                }
-                            }
-
-
-                            right.push_back(left[i]);
-                            left.erase(left.begin()+i);
-                        }
-                    }
-                    //The left side must be rechecked for boundaries because it might have shrunk
-                    if (canShrink)
-                        getCornerPoints(cornersLeft, &left);
-                }
+                //Otherwise, we've found a lower bound for the plane.
                 else
-                {
                     beg = current;
-                    current = (beg+end)/2;
+                current = (beg+end)/2;
 
-                    nocheckBoundaryLeft = left.size();
+                //"Mark" the smaller array so that the items in there at the moment won't be checked again.
+                //We already determined that the area is too small, so that is certain.
+                nocheckBoundary[smallest] = children[smallest].size();
 
-                    //Move the objects from right to left
-                    for (int i = right.size() - 1; i >= nocheckBoundaryRight; i--)
+                int moveCount = 0;
+                //Move the objects from the more costly child to the other one 
+                for (int i = children[largest].size() - 1; i >=  nocheckBoundary[largest]; i--)
+                {
+                    //Need two conditions here because if the more costly child is the "left" side,
+                    //we want to check if the object's center is larger than the current boundary.
+                    //Otherwise we want to check if it's smaller.
+                    if ((largest == 0 && children[largest][i]->center()[dim] > current) || 
+                        (largest == 1 && children[largest][i]->center()[dim] < current)) 
                     {
-                        if (right[i]->center()[dim] < current) 
-                        {
-                            Vector3 cmax = right[i]->coordsMax();
-                            Vector3 cmin = right[i]->coordsMin();
+                        moveCount++;
+                        //Get the bounds of the object being moved
+                        Vector3 cmax = children[largest][i]->coordsMax();
+                        Vector3 cmin = children[largest][i]->coordsMin();
 
-                            //Check if we need to increase the bounds of the left side 
-                            for (int j = 0; j < 3; j++)
+                        //Check if we need to increase the bounds of the right side after inserting the object
+                        for (int j = 0; j < 3; j++)
+                        {
+                            if (cmax[j] > corners[smallest][1][j])
                             {
-                                if (cmax[j] > cornersLeft[1][j])
-                                {
-                                    cornersLeft[1][j] = cmax[j];
-                                }
-                                if (cmin[j] < cornersLeft[0][j])
-                                {
-                                    cornersLeft[0][j] = cmin[j];
-                                }
-                                if (!canShrink)
-                                {
-                                    //Check if it's possible that the left side can be shrunk
-                                    if (cmax[j] < cornersLeft[1][j] || cmin[j] > cornersLeft[0][j])
-                                    {
-                                        canShrink = true;
-                                    }
-                                }
+                                corners[smallest][1][j] = cmax[j];
+                            }
+                            if (cmin[j] < corners[smallest][0][j])
+                            {
+                                corners[smallest][0][j] = cmin[j];
                             }
 
-                            left.push_back(right[i]);
-                            right.erase(right.begin()+i);
+                            if (!canShrink)
+                            {
+                                //Check if it's possible that the left side can be shrunk, that is, if the object we're moving was on the border
+                                if (cmax[j] >= corners[largest][1][j]-epsilon || cmin[j] <= corners[largest][0][j]+epsilon)
+                                {
+                                    canShrink = true;
+                                }
+                            }
                         }
+
+                        children[smallest].push_back(children[largest][i]);
+                        std::swap(children[largest][i], children[largest][children[largest].size()-1]);
+                        children[largest].pop_back();
                     }
-                    if (canShrink)
-                        getCornerPoints(cornersRight, &right);
+                }
+
+                //The large side must be rechecked for boundaries because it might have shrunk
+                if (canShrink)
+                {
+                    getCornerPoints(corners[largest], &children[largest]);
                 }
             }
-            if (dim == bestDim)
+            
+            float costLeft = getCost(corners[0], children[0]), costRight = getCost(corners[1], children[1]);
+            if (costLeft+costRight < bestCost)
             {
+                bestCost = costLeft+costRight;
+                bestDim = dim;
+                bestPosition = current;
                 for (int i = 0; i < 2; i++)
                 {
-                    bestCorners[0][i] = cornersLeft[i];
-                    bestCorners[1][i] = cornersRight[i];
+                    bestCorners[0][i] = corners[0][i];
+                    bestCorners[1][i] = corners[1][i];
                 }
             }
+
         }    
 
         //Add child nodes

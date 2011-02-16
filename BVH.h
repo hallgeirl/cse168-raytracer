@@ -45,7 +45,7 @@ protected:
     static const int MAX_TREE_DEPTH = 32;
     #ifdef __SSE4_1__
     std::vector<SSETriangleCache> * m_triangleCache;
-    static const int OBJECTS_PER_LEAF = 12; //For SSE, it is beneficial to have more objects in each leaf.
+    static const int OBJECTS_PER_LEAF = 8; //For SSE, it is beneficial to have more objects in each leaf.
     #else
     static const int OBJECTS_PER_LEAF = 4;
     #endif
