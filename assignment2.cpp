@@ -126,7 +126,7 @@ makeBunny20Scene()
     g_scene = new Scene;
     g_image = new Image;
 
-    g_image->resize(128, 128);
+    g_image->resize(512, 512);
     const char * bunnyModel = "models/bunny.obj";
 
     // set up the camera
@@ -344,7 +344,7 @@ makeSponzaScene()
     g_scene = new Scene;
     g_image = new Image;
 
-    g_image->resize(512, 512);
+    g_image->resize(1024, 1024);
     
     // set up the camera
     g_camera->setBGColor(Vector3(0.0f, 0.0f, 0.2f));

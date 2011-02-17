@@ -6,6 +6,7 @@
 #include "Camera.h"
 #include "Image.h"
 #include "Console.h"
+#include <omp.h>
 
 using namespace std;
 
@@ -65,7 +66,7 @@ Scene::raytraceImage(Camera *cam, Image *img)
 
     // loop over all pixels in the image
     #ifdef OPENMP
-    #pragma omp parallel for private(ray, shadeResult) schedule(dynamic, 4)
+    #pragma omp parallel for private(ray, shadeResult) schedule(dynamic, 2)
     #endif
     for (int i = 0; i < img->height(); ++i)
     {

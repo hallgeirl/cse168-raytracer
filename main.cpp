@@ -1,5 +1,8 @@
 #include <math.h>
 #include <string>
+#ifdef OPENMP
+#include <omp.h>
+#endif
 #include "assignment1.h"
 #include "assignment2.h"
 #include "Miro.h"
@@ -354,7 +357,7 @@ makeTestScene()
     g_scene = new Scene;
     g_image = new Image;
 
-    g_image->resize(512, 512);
+    g_image->resize(4096, 4096);
 
     // set up the camera
     g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
@@ -399,6 +402,9 @@ main(int argc, char*argv[])
 #ifdef __SSE4_1__
     cout << "Using SSE" << endl;
 #endif
+#ifdef OPENMP
+    cout << "Using OpenMP with up to " << omp_get_max_threads() << " threads." << endl;
+#endif
     //makeTestScene();
     //makeSpiralScene();
 
@@ -412,6 +418,8 @@ main(int argc, char*argv[])
 
     // create a scene
     //makeBunny20Scene();
+    //makeSponzaScene();
+
     MiroWindow miro(&argc, argv);
 #ifndef NO_GFX
     miro.mainLoop();
