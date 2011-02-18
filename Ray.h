@@ -1,6 +1,7 @@
 #ifndef CSE168_RAY_H_INCLUDED
 #define CSE168_RAY_H_INCLUDED
 
+#include <stdlib.h>
 #include "Vector3.h"
 #include "Material.h"
 
@@ -71,6 +72,26 @@ public:
         #endif
     }
 
+	Ray Random(const HitInfo & hitInfo) const
+	{
+	   /* float theta = asin(sqrt((float) rand() / (float)RAND_MAX));
+		float phi = 2.0f * PI * ((float) rand() / (float)RAND_MAX);
+
+		Vector3 random_d(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));*/
+		Vector3 random_d;
+		do 
+		{ 
+			float x = 1 - 2.0f * ((float) rand() / (float)RAND_MAX);
+			float y = 1 - 2.0f * ((float) rand() / (float)RAND_MAX);
+			float z = 1 - 2.0f * ((float) rand() / (float)RAND_MAX);
+			random_d = Vector3(x, y, z);
+			random_d.normalize();
+		} while (dot(random_d, hitInfo.N) < 0);
+
+		Ray random(hitInfo.P + random_d * epsilon, random_d);
+		return random;
+	}
+
 	Ray Reflect(const HitInfo & hitInfo) const
 	{
 	    Vector3 d_r = d - 2 * dot(hitInfo.N, d) * hitInfo.N;
@@ -83,7 +104,6 @@ public:
 	{
 		float n1, n2;
 		Vector3 n;
-		
 
 		// if ray enters object, else ray exits object
 		if ( dot(d, hitInfo.N) < 0)

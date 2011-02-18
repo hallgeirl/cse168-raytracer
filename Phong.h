@@ -18,7 +18,8 @@ public:
 	
 	virtual bool IsReflective() const;
 	virtual bool IsRefractive() const;
-
+	virtual bool IsAbsorptive() const;
+	
 	//For other materials, we might return different values based on the texture coordinates given.
     virtual Vector3 diffuse2D(const tex_coord2d_t & texcoords) const {return m_kd;}
     virtual Vector3 diffuse3D(const tex_coord3d_t & texcoords) const { return m_kd; }
@@ -26,7 +27,7 @@ public:
 	const float a() const {return m_a;}
 	virtual Vector3 GetReflection() const {return m_ks;}
 	virtual Vector3 GetRefraction() const {return m_kt;}
-	virtual Vector3 GetAbsorption() const {return Vector3(1.f) - m_ks - m_kt;}
+	virtual Vector3 GetAbsorption() const {return m_absorb;}
 	virtual float GetRefractionIndex() const {return m_refractIndex;}
 
 	void setKd(const Vector3 & kd) {m_kd = kd;}

@@ -6,7 +6,10 @@
 #include "Camera.h"
 #include "Image.h"
 #include "Console.h"
+
+#ifdef OPENMP
 #include <omp.h>
+#endif 
 
 using namespace std;
 
@@ -30,7 +33,7 @@ void
 Scene::preCalc()
 {
     debug("Precalcing objects\n");
-    double t1 = -getTime();
+//    double t1 = -getTime();
     Objects::iterator it;
     for (it = m_objects.begin(); it != m_objects.end(); it++)
     {
@@ -43,14 +46,14 @@ Scene::preCalc()
         PointLight* pLight = *lit;
         pLight->preCalc();
     }
-    t1 += getTime();
-    printf("Time spent preprocessing objects and lights: %lf\n", t1);
+//    t1 += getTime();
+//    printf("Time spent preprocessing objects and lights: %lf\n", t1);
     debug("Building BVH...\n");
-    t1 = -getTime();
+//    t1 = -getTime();
     m_bvh.build(&m_objects);
-    t1 += getTime();
+//    t1 += getTime();
     debug("Done building BVH.\n");
-    printf("Time spent building BVH: %lf\n", t1);
+//    printf("Time spent building BVH: %lf\n", t1);
 }
 
 void
@@ -58,11 +61,12 @@ Scene::raytraceImage(Camera *cam, Image *img)
 {
     Ray ray;
     Vector3 shadeResult;
+    Vector3 accShadeResult;
 	int depth = 0;
     printf("Rendering Progress: %.3f%%\r", 0.0f);
     fflush(stdout);
 
-    double t1 = -getTime();
+ //   double t1 = -getTime();
 
     // loop over all pixels in the image
     #ifdef OPENMP
@@ -73,10 +77,15 @@ Scene::raytraceImage(Camera *cam, Image *img)
         for (int j = 0; j < img->width(); ++j)
         {
             ray = cam->eyeRay(j, i, img->width(), img->height());
-            if (traceScene(ray, shadeResult, depth))
-            {
-				img->setPixel(j, i, shadeResult);
-            }
+			for (int k = 0; k < TRACE_SAMPLES; ++k)
+			{
+				if (traceScene(ray, shadeResult, depth))
+				{
+					accShadeResult += shadeResult;
+				}
+			}
+			accShadeResult /= TRACE_SAMPLES;
+			img->setPixel(j, i, accShadeResult);
         }
         #ifndef NO_GFX //If not rendering graphics to screen, don't draw scan lines (it will segfault in multithreading mode)
         img->drawScanline(i);
@@ -89,11 +98,11 @@ Scene::raytraceImage(Camera *cam, Image *img)
     }
 
 
-    t1 += getTime();
+//    t1 += getTime();
 
     printf("Rendering Progress: 100.000%%\n");
     debug("Done raytracing!\n");
-    printf("Time spent raytracing image: %lf seconds.\n", t1);
+//    printf("Time spent raytracing image: %lf seconds.\n", t1);
 }
 
 bool
@@ -170,6 +179,18 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 			++depth;
 			
 			shadeResult = hitInfo.material->shade(ray, hitInfo, *this);
+
+			//if diffuse material, send trace with RandomRay generate by Monte Carlo
+			if (hitInfo.material->IsAbsorptive())
+			{
+				Vector3 diffuseResult;
+				Ray diffuseRay = ray.Random(hitInfo);
+
+				if (traceScene(diffuseRay, diffuseResult, depth))
+				{
+					shadeResult += hitInfo.material->GetAbsorption()* diffuseResult * dot(diffuseRay.d, hitInfo.N);
+				}
+			}
 			
 			//if reflective material, send trace with ReflectRay
 			if (hitInfo.material->IsReflective())
@@ -220,7 +241,7 @@ Scene::getEnvironmentMap(const Ray & ray)
 	}
 	else
 	{
-		envResult.x = 0.5; envResult.y = 0.5; envResult.z = 0.5;
+		envResult.x = 0.0; envResult.y = 0.0; envResult.z = 0.0;
 	}
 	return envResult;
 }
