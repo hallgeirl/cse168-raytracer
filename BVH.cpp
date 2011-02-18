@@ -421,9 +421,9 @@ BVH::build(Objects * objs, int depth)
             {
                 if ((*m_objects)[i]->intersect(tempMinHit, ray, tMin, minHit.t))
                 {
-                    hit = true;
                     if (tempMinHit.t < minHit.t)
                     {
+						hit = true;
                         minHit = tempMinHit;
 
                         //Update object reference
