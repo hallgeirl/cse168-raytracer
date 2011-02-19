@@ -74,20 +74,21 @@ public:
 
 	Ray Random(const HitInfo & hitInfo) const
 	{
-	   /* float theta = asin(sqrt((float) rand() / (float)RAND_MAX));
+	    /*float theta = asin(sqrt((float) rand() / (float)RAND_MAX));
 		float phi = 2.0f * PI * ((float) rand() / (float)RAND_MAX);
 
 		Vector3 random_d(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));*/
 		Vector3 random_d;
+		float x,y,z;
 		do 
 		{ 
-			float x = 1 - 2.0f * ((float) rand() / (float)RAND_MAX);
-			float y = 1 - 2.0f * ((float) rand() / (float)RAND_MAX);
-			float z = 1 - 2.0f * ((float) rand() / (float)RAND_MAX);
+			x = 1 - 2.0f * ((float) rand() / (float)RAND_MAX);
+			y = 1 - 2.0f * ((float) rand() / (float)RAND_MAX);
+			z = 1 - 2.0f * ((float) rand() / (float)RAND_MAX);
 			random_d = Vector3(x, y, z);
-			random_d.normalize();
-		} while (dot(random_d, hitInfo.N) < 0);
+		} while (( pow(x, 2) + pow(y, 2), + pow(z, 2)) > 1 || dot(random_d, hitInfo.N) < 0);
 
+		random_d.normalize();
 		Ray random(hitInfo.P + random_d * epsilon, random_d);
 		return random;
 	}
