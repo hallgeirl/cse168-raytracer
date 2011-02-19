@@ -33,7 +33,7 @@ void
 Scene::preCalc()
 {
     debug("Precalcing objects\n");
-//    double t1 = -getTime();
+    double t1 = -getTime();
     Objects::iterator it;
     for (it = m_objects.begin(); it != m_objects.end(); it++)
     {
