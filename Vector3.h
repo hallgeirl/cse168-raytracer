@@ -15,7 +15,9 @@ class Vector3
 
 public:
     float x, y, z;      // The x & y & z coordinates.
-
+    #ifdef __SSE4_1__
+    float __pad; //so that we can load all coordinates with one _mm_loadu_ps
+    #endif
     Vector3() :
         x(0), y(1), z(2) { }
 

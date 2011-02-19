@@ -1,59 +1,66 @@
 #ifndef CSE168_RAY_H_INCLUDED
 #define CSE168_RAY_H_INCLUDED
-
+    
 #include "Vector3.h"
 #include "Material.h"
-
+    
 #include "SSE.h"
-
-//! Contains information about a ray hit with a surface.
-/*!
-    HitInfos are used by object intersection routines. They are useful in
-    order to return more than just the hit distance.
-*/
-class HitInfo
-{
-public:
-    float t;                            //!< The hit distance
-    Vector3 P;                          //!< The hit point
-    Vector3 N;                          //!< Shading normal vector
-    const Material* material;           //!< Material of the intersected object
-    const Object  * object;             //!< Material of the intersected object
-
-    //! Default constructor.
-    explicit HitInfo(float t = 0.0f,
-                     const Vector3& P = Vector3(),
-                     const Vector3& N = Vector3(0.0f, 1.0f, 0.0f)) :
-        t(t), P(P), N(N), material (0)
+    
+    //! Contains information about a ray hit with a surface.
+    /*!
+        HitInfos are used by object intersection routines. They are useful in
+        order to return more than just the hit distance.
+    */
+    class HitInfo
     {
-        // empty
-    }
-};
-
-class Ray
-{
-
-public:
-    Vector3 o,      //!< Origin of ray
-            d;      //!< Direction of ray
-
-
-    #ifdef __SSE4_1__
-    SSEVectorTuple3 o_SSE, d_SSE;
-
-    void setupSSE()
+    public:
+        float t;                            //!< The hit distance
+        Vector3 P;                          //!< The hit point
+        Vector3 N;                          //!< Shading normal vector
+        const Material* material;           //!< Material of the intersected object
+        const Object  * object;             //!< Material of the intersected object
+    
+        //! Default constructor.
+        explicit HitInfo(float t = 0.0f,
+                         const Vector3& P = Vector3(),
+                         const Vector3& N = Vector3(0.0f, 1.0f, 0.0f)) :
+            t(t), P(P), N(N), material (0)
+        {
+            // empty
+        }
+    };
+    
+    class Ray
     {
-        static const __m128 _zero = _mm_setzero_ps();
-        float _o[4] = {o.x, o.y, o.z, 0};
-        float _d[4] = {d.x, d.y, d.z, 0};
-        __m128 _d_sse = _mm_loadu_ps(_d);
+    
+    public:
+        Vector3 o,      //!< Origin of ray
+                d;      //!< Direction of ray
+    
+    
+        #ifdef __SSE4_1__
+        __m128 d_SSE, o_SSE, d_SSE_rcp;
+    //    SSEVectorTuple3 o_SSE, d_SSE;
+    
+        void setupSSE()
+        {
+            static const __m128 _zero = _mm_setzero_ps();
+            float _o[4] = {o.x, o.y, o.z, o.x};
+            float _d[4] = {d.x, d.y, d.z, d.x};
+
+            d_SSE = _mm_sub_ps(_zero, _mm_loadu_ps(_d));
+            d_SSE_rcp = _mm_rcp_ps(_mm_loadu_ps(_d));
+        o_SSE = _mm_loadu_ps(_o);
+
+
+        /*__m128 _d_sse = _mm_loadu_ps(_d);
         __m128 _o_sse = _mm_loadu_ps(_o);
         #pragma unroll(3)
         for (int i = 0; i < 3; i++)
         {
             o_SSE.v[i] = _mm_shuffle_ps(_o_sse, _o_sse, _MM_SHUFFLE(i,i,i,i));
             d_SSE.v[i] = _mm_sub_ps(_zero, _mm_shuffle_ps(_d_sse, _d_sse, _MM_SHUFFLE(i,i,i,i)));
-        }
+        }*/
     }
     #endif
 
