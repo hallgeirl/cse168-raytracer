@@ -1,5 +1,7 @@
 #ifndef WIN32
 #include <sys/time.h>
+#else
+#include <windows.h>
 #endif
 #include <stdio.h>
 
@@ -18,9 +20,7 @@ double getTime()
     return t;
 
     #else
-    printf("getTime() not implemented for this platform.\n");
-    //TODO: Implement a Windows version of this.
-    return 0;
-    #endif
+	return GetTickCount()/1000.f;
+	#endif
 }
 

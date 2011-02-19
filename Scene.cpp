@@ -6,7 +6,10 @@
 #include "Camera.h"
 #include "Image.h"
 #include "Console.h"
+
+#ifdef OPENMP
 #include <omp.h>
+#endif 
 
 using namespace std;
 
@@ -58,11 +61,12 @@ Scene::raytraceImage(Camera *cam, Image *img)
 {
     Ray ray;
     Vector3 shadeResult;
+    Vector3 accShadeResult;
 	int depth = 0;
     printf("Rendering Progress: %.3f%%\r", 0.0f);
     fflush(stdout);
 
-    double t1 = -getTime();
+   double t1 = -getTime();
 
     // loop over all pixels in the image
     #ifdef OPENMP
@@ -73,10 +77,23 @@ Scene::raytraceImage(Camera *cam, Image *img)
         for (int j = 0; j < img->width(); ++j)
         {
             ray = cam->eyeRay(j, i, img->width(), img->height());
-            if (traceScene(ray, shadeResult, depth))
-            {
+
+			#ifdef PATH_TRACING
+			for (int k = 0; k < TRACE_SAMPLES; ++k)
+			{
+				if (traceScene(ray, shadeResult, depth))
+				{
+					accShadeResult += shadeResult;
+				}
+			}
+			accShadeResult /= TRACE_SAMPLES;
+			img->setPixel(j, i, accShadeResult);
+			#else
+			if (traceScene(ray, shadeResult, depth))
+			{
 				img->setPixel(j, i, shadeResult);
-            }
+			}
+			#endif // PATH_TRACING
         }
         #ifndef NO_GFX //If not rendering graphics to screen, don't draw scan lines (it will segfault in multithreading mode)
         img->drawScanline(i);
@@ -170,6 +187,20 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 			++depth;
 			
 			shadeResult = hitInfo.material->shade(ray, hitInfo, *this);
+
+			#ifdef PATH_TRACING
+			//if diffuse material, send trace with RandomRay generate by Monte Carlo
+			if (hitInfo.material->IsAbsorptive())
+			{
+				Vector3 diffuseResult;
+				Ray diffuseRay = ray.Random(hitInfo);
+
+				if (traceScene(diffuseRay, diffuseResult, depth))
+				{
+					shadeResult += hitInfo.material->GetAbsorption()* diffuseResult * dot(diffuseRay.d, hitInfo.N);
+				}
+			}
+			#endif
 			
 			//if reflective material, send trace with ReflectRay
 			if (hitInfo.material->IsReflective())
@@ -220,7 +251,7 @@ Scene::getEnvironmentMap(const Ray & ray)
 	}
 	else
 	{
-		envResult.x = 0.5; envResult.y = 0.5; envResult.z = 0.5;
+		envResult.x = 0.0; envResult.y = 0.0; envResult.z = 0.0;
 	}
 	return envResult;
 }

@@ -27,6 +27,11 @@ Phong::~Phong()
 
 }
 
+bool Phong::IsAbsorptive() const
+{
+	return (m_absorb.x > 0.f || m_absorb.y > 0.f || m_absorb.z > 0.f);
+}
+
 bool Phong::IsReflective() const
 {
 	return (m_ks.x > 0.f || m_ks.y > 0.f || m_ks.z > 0.f);

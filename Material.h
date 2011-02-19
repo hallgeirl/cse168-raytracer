@@ -28,10 +28,11 @@ public:
 
 	virtual bool IsReflective() const {return false;}
 	virtual bool IsRefractive() const {return false;}
+	virtual bool IsAbsorptive() const {return true;}
 
 	virtual Vector3 GetReflection() const {return Vector3(0.f);}
 	virtual Vector3 GetRefraction() const {return Vector3(0.f);}
-	virtual Vector3 GetAbsorbtion() const {return Vector3(1.f);}
+	virtual Vector3 GetAbsorption() const {return Vector3(1.f);}
 	virtual float GetRefractionIndex() const {return 1.0f;}
 
 	virtual void SetReflection(const Vector3 reflect){};
