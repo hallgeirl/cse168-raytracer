@@ -418,7 +418,7 @@ BVH::intersect(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
     bool hit = false;
     HitInfo tempMinHit;
     minHit.t = tMax;
-
+    
     // intersect with root node bounding box
     float minOverlap = -infinity, maxOverlap = infinity;
     float t[2];
@@ -447,7 +447,6 @@ BVH::intersectChildren(HitInfo& minHit, const Ray& ray, float tMin, float tMax) 
     bool hit = false;
     HitInfo tempMinHit;
     minHit.t = tMax;
-
     if (m_isLeaf)
     {
         //For SSE, we have already put a lot of stuff in our cache datastructure, so just call the triangle list intersection        
@@ -463,9 +462,9 @@ BVH::intersectChildren(HitInfo& minHit, const Ray& ray, float tMin, float tMax) 
         {
             if ((*m_objects)[i]->intersect(tempMinHit, ray, tMin, minHit.t))
             {
-                hit = true;
                 if (tempMinHit.t < minHit.t)
                 {
+                    hit = true;
                     minHit = tempMinHit;
 
                     //Update object reference
@@ -550,6 +549,7 @@ BVH::intersectChildren(HitInfo& minHit, const Ray& ray, float tMin, float tMax) 
     }
 
 #else
+    
     //Check intersection with children
     for (int i = 0; i < 2; i++)
     {
@@ -569,7 +569,7 @@ BVH::intersectChildren(HitInfo& minHit, const Ray& ray, float tMin, float tMax) 
         }
         if (minOverlap > maxOverlap || minOverlap > tMax || maxOverlap < tMin)
             continue;
-
+        
         // References do not seem to conflict
         if (child->intersectChildren(tempMinHit, ray, tMin, minHit.t))
         {

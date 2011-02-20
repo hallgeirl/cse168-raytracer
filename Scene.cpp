@@ -135,6 +135,8 @@ Scene::trace(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
     {
         //Bump mapping
         float delta = 0.0001;
+//        printf("object %p, material from %p\n", minHit.object, minHit.material);
+
         if (minHit.material->GetLookupCoordinates() == UV)
         {
             //Take a few samples to calculate the derivative
