@@ -74,11 +74,31 @@ public:
 
 	Ray Random(const HitInfo & hitInfo) const
 	{
-	    /*float theta = asin(sqrt((float) rand() / (float)RAND_MAX));
+		//bias to the surface normal
+	    float theta = asin(sqrt((float) rand() / (float)RAND_MAX));
 		float phi = 2.0f * PI * ((float) rand() / (float)RAND_MAX);
 
-		Vector3 random_d(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));*/
-		Vector3 random_d;
+		//convert spherical coords to cartesian coords
+		float u1 = sin(theta) * cos(phi);
+		float u2 = sin(theta) * sin(phi);
+		float u3 = cos(theta);
+
+		//pick random vector
+		float n[3] = {hitInfo.N.x, hitInfo.N.y, hitInfo.N.z};
+		int maxDimIndex = 0;
+		if (n[1] > n[0]) 
+			maxDimIndex = 1;
+		if (n[2] > n[maxDimIndex])
+			maxDimIndex = 2;
+		
+		//determine one surface tangent from cross of normal and random vec
+		Vector3 randomVec(maxDimIndex == 2 ? -n[2] : 0, maxDimIndex == 0 ? -n[0] : 0, maxDimIndex == 1 ? -n[1] : 0);
+		Vector3 t1 = cross(randomVec, hitInfo.N);
+		//Random direction determined by combination of random values by surface axes
+		Vector3 random_d(u1*t1 + u2*cross(t1, hitInfo.N) + u3*hitInfo.N);
+		
+		//naive implementation -- slightly faster though
+		/*Vector3 random_d;
 		float x,y,z;
 		do 
 		{ 
@@ -86,7 +106,7 @@ public:
 			y = 1 - 2.0f * ((float) rand() / (float)RAND_MAX);
 			z = 1 - 2.0f * ((float) rand() / (float)RAND_MAX);
 			random_d = Vector3(x, y, z);
-		} while (( pow(x, 2) + pow(y, 2), + pow(z, 2)) > 1 || dot(random_d, hitInfo.N) < 0);
+		} while (( pow(x, 2) + pow(y, 2), + pow(z, 2)) > 1 || dot(random_d, hitInfo.N) < 0);*/
 
 		random_d.normalize();
 		Ray random(hitInfo.P + random_d * epsilon, random_d);

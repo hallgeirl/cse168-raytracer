@@ -17,9 +17,9 @@ Phong::Phong(const Vector3 &kd, const Vector3 &ka, const Vector3 &ks, const Vect
 	m_kt.z = std::max(std::min(m_kt.z, 1.0f-m_ks.z), 0.f);
 
 	//absorption is between 0.f and 1.f - reflection - refraction
-	m_absorb.x = std::max(1.0f-m_ks.x-m_kt.x, 0.f);
-	m_absorb.y = std::max(1.0f-m_ks.y-m_kt.y, 0.f);
-	m_absorb.z = std::max(1.0f-m_ks.z-m_kt.z, 0.f);
+	m_diffuse.x = std::max(1.0f-m_ks.x-m_kt.x, 0.f);
+	m_diffuse.y = std::max(1.0f-m_ks.y-m_kt.y, 0.f);
+	m_diffuse.z = std::max(1.0f-m_ks.z-m_kt.z, 0.f);
 }
 
 Phong::~Phong()
@@ -27,9 +27,9 @@ Phong::~Phong()
 
 }
 
-bool Phong::IsAbsorptive() const
+bool Phong::IsDiffuse() const
 {
-	return (m_absorb.x > 0.f || m_absorb.y > 0.f || m_absorb.z > 0.f);
+	return (m_diffuse.x > 0.f || m_diffuse.y > 0.f || m_diffuse.z > 0.f);
 }
 
 bool Phong::IsReflective() const
@@ -93,11 +93,11 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 
 		//removed m_ks from specular highlight 
 		//specular highlight should be dependent on shinyness rather than reflective component
-		L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / (4 * PI)) * diffuseColor * m_absorb + (pow(std::max(0.0f, eDotr/falloff * pLight->wattage() / (4 * PI)), m_a)));
+		L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / (4 * PI)) * diffuseColor * m_diffuse + (pow(std::max(0.0f, eDotr/falloff * pLight->wattage() / (4 * PI)), m_a)));
     }
 
     // add the ambient component
-    L += ka(hit.object->toUVCoordinates(hit.P)) * diffuseColor * m_absorb;
+    L += ka(hit.object->toUVCoordinates(hit.P)) * diffuseColor * m_diffuse;
 
     return L;
 }

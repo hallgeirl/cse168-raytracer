@@ -61,7 +61,7 @@ Scene::raytraceImage(Camera *cam, Image *img)
 {
     Ray ray;
     Vector3 shadeResult;
-    Vector3 accShadeResult;
+    Vector3 accShadeResult(0.f);
 	int depth = 0;
     printf("Rendering Progress: %.3f%%\r", 0.0f);
     fflush(stdout);
@@ -190,14 +190,14 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 
 			#ifdef PATH_TRACING
 			//if diffuse material, send trace with RandomRay generate by Monte Carlo
-			if (hitInfo.material->IsAbsorptive())
+			if (hitInfo.material->IsDiffuse())
 			{
 				Vector3 diffuseResult;
 				Ray diffuseRay = ray.Random(hitInfo);
 
 				if (traceScene(diffuseRay, diffuseResult, depth))
 				{
-					shadeResult += hitInfo.material->GetAbsorption()* diffuseResult * dot(diffuseRay.d, hitInfo.N);
+					shadeResult += hitInfo.material->GetDiffuse()* diffuseResult * dot(diffuseRay.d, hitInfo.N);
 				}
 			}
 			#endif
