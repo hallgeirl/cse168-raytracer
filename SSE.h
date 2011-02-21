@@ -38,7 +38,12 @@ inline void SSEprintVecTuple(const SSEVectorTuple3 &v)
     std::cout << ")" << std::endl;
 }
 
-inline __m128 SSEmultiDot(const SSEVectorTuple3 &a, const SSEVectorTuple3 &b)
+inline __m128 SSEmultiDot13(const __m128 &a, const SSEVectorTuple3 &b)
+{
+    return _mm_add_ps(_mm_mul_ps(_mm_shuffle_ps(a, a, _MM_SHUFFLE(0, 0, 0, 0)), b.v[0]) ,_mm_add_ps(_mm_mul_ps(_mm_shuffle_ps(a, a, _MM_SHUFFLE(1, 1, 1, 1)), b.v[1]), _mm_mul_ps(_mm_shuffle_ps(a, a, _MM_SHUFFLE(2, 2, 2, 2)), b.v[2])));
+}
+
+inline __m128 SSEmultiDot33(const SSEVectorTuple3 &a, const SSEVectorTuple3 &b)
 {
     return _mm_add_ps(_mm_mul_ps(a.v[0], b.v[0]) ,_mm_add_ps(_mm_mul_ps(a.v[1], b.v[1]), _mm_mul_ps(a.v[2], b.v[2])));
 }
