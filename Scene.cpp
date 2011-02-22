@@ -61,7 +61,6 @@ Scene::raytraceImage(Camera *cam, Image *img)
 {
     Ray ray;
     Vector3 shadeResult;
-    Vector3 accShadeResult(0.f);
 	int depth = 0;
     printf("Rendering Progress: %.3f%%\r", 0.0f);
     fflush(stdout);
@@ -76,6 +75,7 @@ Scene::raytraceImage(Camera *cam, Image *img)
     {
         for (int j = 0; j < img->width(); ++j)
         {
+            Vector3 accShadeResult(0.f);
             ray = cam->eyeRay(j, i, img->width(), img->height());
 
 			#ifdef PATH_TRACING
@@ -86,7 +86,7 @@ Scene::raytraceImage(Camera *cam, Image *img)
 					accShadeResult += shadeResult;
 				}
 			}
-			accShadeResult /= TRACE_SAMPLES;
+			accShadeResult /= TRACE_SAMPLES; 
 			img->setPixel(j, i, accShadeResult);
 			#else
 			if (traceScene(ray, shadeResult, depth))
@@ -189,8 +189,8 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 			++depth;
 			
 			shadeResult = hitInfo.material->shade(ray, hitInfo, *this);
-
-			#ifdef PATH_TRACING
+			
+            #ifdef PATH_TRACING
 			//if diffuse material, send trace with RandomRay generate by Monte Carlo
 			if (hitInfo.material->IsDiffuse())
 			{
@@ -199,10 +199,11 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 
 				if (traceScene(diffuseRay, diffuseResult, depth))
 				{
-					shadeResult += hitInfo.material->GetDiffuse()* diffuseResult * dot(diffuseRay.d, hitInfo.N);
+					shadeResult = (hitInfo.material->GetDiffuse()* diffuseResult);
 				}
 			}
 			#endif
+
 			
 			//if reflective material, send trace with ReflectRay
 			if (hitInfo.material->IsReflective())
@@ -227,12 +228,16 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 					shadeResult += hitInfo.material->GetRefraction()* refractResult;
 				}
 			}
+            return true;
 		}
 		else
 		{
-			shadeResult = getEnvironmentMap(ray);
+            if (m_environment != 0)
+            {
+			    shadeResult = getEnvironmentMap(ray);
+                return true;
+            }
 		}
-		return true;
 	}
 	return false;
 }
