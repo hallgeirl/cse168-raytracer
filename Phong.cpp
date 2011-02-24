@@ -5,9 +5,9 @@
 
 using namespace std;
 
-Phong::Phong(const Vector3 &kd, const Vector3 &ka, const Vector3 &ks, const Vector3 &kt,
+Phong::Phong(const Vector3 &kd, const Vector3 &ks, const Vector3 &kt,
 				const float shinyness, const float refractIndex)
-	: m_kd(kd), m_ka(ka), m_ks(ks), m_kt(kt), m_a(shinyness), m_refractIndex(refractIndex)
+	: m_kd(kd), m_ks(ks), m_kt(kt), m_a(shinyness), m_refractIndex(refractIndex)
 {
 	//Keep the energy equation balanced (that is, don't refract+reflect+absorb more than 100% of the ray)
 
@@ -56,6 +56,7 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 	else
 		diffuseColor = diffuse3D(tex_coord3d_t(hit.P.x, hit.P.y, hit.P.z));
 
+
 	const Lights *lightlist = scene.lights();
 
 	// loop over all of the lights
@@ -76,12 +77,14 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
         l /= sqrt(falloff);
 
 		// No light contribution if Ray hits an object 
+#ifndef DISABLE_SHADOWS
 		Ray Shadow(hit.P+(l*epsilon), l);
 		HitInfo hitInfo;
 		if (scene.trace(hitInfo, Shadow, 0.f, sqrt(falloff)))
 		{
 			continue;
 		}
+#endif
 
         // get the diffuse component
         float nDotL = dot(hit.N, l);
@@ -97,7 +100,7 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
     }
 
     // add the ambient component
-    L += ka(hit.object->toUVCoordinates(hit.P)) * diffuseColor * m_diffuse;
+    L += getEmittance();
 
     return L;
 }

@@ -2,6 +2,7 @@
 
 Material::Material()
 {
+    m_emittance = Vector3(0);
 }
 
 Material::~Material()

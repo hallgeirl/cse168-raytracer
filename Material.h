@@ -40,8 +40,13 @@ public:
 
     virtual void preCalc() {}
 
-    virtual Vector3 shade(const Ray& ray, const HitInfo& hit,
-                          const Scene& scene) const;
+    virtual Vector3 shade(const Ray& ray, const HitInfo& hit, const Scene& scene) const;
+    
+    void setEmittance(Vector3 v) { m_emittance = v; }
+    const Vector3& getEmittance() const { return m_emittance; } 
+
+private:
+    Vector3 m_emittance;
 };
 
 #endif // CSE168_MATERIAL_H_INCLUDED

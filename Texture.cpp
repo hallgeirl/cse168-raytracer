@@ -360,8 +360,8 @@ class TexturedPhong
 Material that looks up diffuse colors from a texture (2D or 3D)
 ***************************************************************/
 //set Phong m_kd default to 1.f in order for the balance equation to work out properly
-TexturedPhong::TexturedPhong(Texture * texture, const Vector3 & ka, const Vector3 & ks, const Vector3 & kt, const float shinyness, const float refractIndex)
- : Phong(Vector3(1.f), ka, ks, kt, shinyness, refractIndex), m_texture(texture)
+TexturedPhong::TexturedPhong(Texture * texture, const Vector3 & ks, const Vector3 & kt, const float shinyness, const float refractIndex)
+ : Phong(Vector3(1.f), ks, kt, shinyness, refractIndex), m_texture(texture)
 {
 
 }

@@ -32,7 +32,7 @@ public:
     inline void setLookAt(const Vector3& look);
     inline void setBGColor(float x, float y, float z);
     inline void setBGColor(const Vector3& color);
-    inline void setFOV(float fov) {m_fov = fov;}
+    inline void setFOV(float fov) {m_fov = fov; m_initialized = false;}
 
     inline float fov() const                {return m_fov;}
     inline const Vector3 & viewDir() const  {return m_viewDir;}
@@ -41,14 +41,14 @@ public:
     inline const Vector3 & eye() const      {return m_eye;}
     inline const Vector3 & bgColor() const  {return m_bgColor;}
 
-    Ray eyeRay(int x, int y, int imageWidth, int imageHeight);
+    Ray eyeRay(int x, int y, int imageWidth, int imageHeight, bool randomize);
     
     void drawGL();
 
 private:
 
     void calcLookAt();
-
+    bool m_initialized;
     Vector3 m_bgColor;
     int m_renderer;
 
@@ -67,44 +67,52 @@ extern Camera * g_camera;
 inline void Camera::setEye(float x, float y, float z)
 {
     m_eye.set(x, y, z);
+    m_initialized = false;
 }
 
 inline void Camera::setEye(const Vector3& eye)
 {
     setEye(eye.x, eye.y, eye.z);
+    m_initialized = false;
 }
 
 inline void Camera::setUp(float x, float y, float z)
 {
     m_up.set(x, y, z);
     m_up.normalize();
+    m_initialized = false;
 }
 
 inline void Camera::setUp(const Vector3& up)
 {
     setUp(up.x, up.y, up.z);
+    m_initialized = false;
 }
 
 inline void Camera::setViewDir(float x, float y, float z)
 {
     m_viewDir.set(x, y, z);
     m_viewDir.normalize();
+    m_initialized = false;
 }
 
 inline void Camera::setViewDir(const Vector3& vd)
 {
     setViewDir(vd.x, vd.y, vd.z);
+    m_initialized = false;
 }
 
 inline void Camera::setLookAt(float x, float y, float z)
 {
     Vector3 dir = Vector3(x, y, z) - m_eye;
     setViewDir(dir);
+    m_initialized = false;
 }
 
 inline void Camera::setLookAt(const Vector3& vd)
 {
     setLookAt(vd.x, vd.y, vd.z);
+    m_initialized = false;
 }
 
 inline void Camera::setBGColor(float x, float y, float z)

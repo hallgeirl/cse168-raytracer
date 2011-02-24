@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "Utility.h"
 #include "Miro.h"
 #include "Camera.h"
 #include "Image.h"
@@ -22,6 +23,7 @@ Camera::Camera() :
     m_lookAt(FLT_MAX, FLT_MAX, FLT_MAX),
     m_fov((45.)*(PI/180.))
 {
+    m_initialized = false;
     calcLookAt();
 }
 
@@ -99,37 +101,40 @@ Camera::drawGL()
 
 
 Ray
-Camera::eyeRay(int x, int y, int imageWidth, int imageHeight)
+Camera::eyeRay(int x, int y, int imageWidth, int imageHeight, bool randomize)
 {
-    // first compute the camera coordinate system
-    // ------------------------------------------
+    static bool initialized = false;
+    static Vector3 wDir, uDir, vDir;
+    static float top, left, bottom, right, aspectRatio;
+    if (!initialized)
+    {
+        initialized = true;
+        // first compute the camera coordinate system
+        // wDir = e - (e+m_viewDir) = -m_vView
+        wDir = Vector3(-m_viewDir).normalize();
+        uDir = cross(m_up, wDir).normalize();
+        vDir = cross(wDir, uDir);
 
-    // wDir = e - (e+m_viewDir) = -m_vView
-    const Vector3 wDir = Vector3(-m_viewDir).normalize();
-    const Vector3 uDir = cross(m_up, wDir).normalize();
-    const Vector3 vDir = cross(wDir, uDir);
-
-
-
-    // next find the corners of the image plane in camera space
-    // --------------------------------------------------------
-
-    const float aspectRatio = (float)imageWidth/(float)imageHeight;
-
-
-    const float top     = tan(m_fov*HalfDegToRad);
-    const float right   = aspectRatio*top;
-
-    const float bottom  = -top;
-    const float left    = -right;
-
+        // next find the corners of the image plane in camera space
+        aspectRatio = (float)imageWidth/(float)imageHeight;
+        top     = tan(m_fov*HalfDegToRad);
+        right   = aspectRatio*top;
+        bottom  = -top;
+        left    = -right;
+    }
 
 
     // transform x and y into camera space
     // -----------------------------------
+    float dx = 0.5, dy = 0.5;
+    if (randomize)
+    {
+        dx = frand();
+        dy = frand();
+    }
 
-    const float imPlaneUPos = left   + (right - left)*(((float)x+0.5f)/(float)imageWidth);
-    const float imPlaneVPos = bottom + (top - bottom)*(((float)y+0.5f)/(float)imageHeight);
+    const float imPlaneUPos = left   + (right - left)*(((float)x+dx)/(float)imageWidth);
+    const float imPlaneVPos = bottom + (top - bottom)*(((float)y+dy)/(float)imageHeight);
 
     return Ray(m_eye, (imPlaneUPos*uDir + imPlaneVPos*vDir - wDir).normalize());
 }
