@@ -128,14 +128,22 @@
 
 		random_d.normalize();
 		Ray random(hitInfo.P + random_d * epsilon, random_d);
+
+#ifdef STATS
+		Stats::Secondary_Rays++;
+#endif
 		return random;
 	}
-
+	
 	Ray Reflect(const HitInfo & hitInfo) const
 	{
 	    Vector3 d_r = d - 2 * dot(hitInfo.N, d) * hitInfo.N;
 		Ray reflect(hitInfo.P + d_r * epsilon, d_r);
-        
+
+#ifdef STATS
+		Stats::Secondary_Rays++;
+#endif
+
 		return reflect;
 	}
 
@@ -166,6 +174,10 @@
 
         Vector3 d_r = n1 * (d - n * dot(d, n)) / n2 - n * sqrt(energy);
 		Ray refract(hitInfo.P + d_r * epsilon, d_r);
+
+#ifdef STATS
+		Stats::Secondary_Rays++;
+#endif
 
 		return refract;
 	}
