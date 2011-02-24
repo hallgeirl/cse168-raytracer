@@ -7,6 +7,11 @@
 #include "Image.h"
 #include "Console.h"
 
+
+#ifdef STATS
+#include "Stats.h"
+#endif
+
 #ifdef OPENMP
 #include <omp.h>
 #endif 
@@ -111,6 +116,11 @@ Scene::raytraceImage(Camera *cam, Image *img)
     printf("Rendering Progress: 100.000%%\n");
     debug("Done raytracing!\n");
     printf("Time spent raytracing image: %lf seconds.\n", t1);
+
+#ifdef STATS
+	Stats tracerStats;
+	tracerStats.PrintStats();
+#endif
 }
 
 bool

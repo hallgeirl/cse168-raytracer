@@ -4,7 +4,11 @@
 #include <stdlib.h>
 #include "Vector3.h"
 #include "Material.h"
-    
+
+#ifdef STATS
+#include "Stats.h"
+#endif
+
 #include "SSE.h"
     
     //! Contains information about a ray hit with a surface.
@@ -67,6 +71,10 @@
 
     Ray() : o(), d(Vector3(0.0f,0.0f,1.0f))
     {
+#ifdef STATS
+		Stats::Rays++;
+#endif
+
         #ifdef __SSE4_1__
         setupSSE();
         #endif
@@ -74,6 +82,9 @@
 
     Ray(const Vector3& o, const Vector3& d) : o(o), d(d)
     {
+#ifdef STATS
+		Stats::Rays++;
+#endif
         #ifdef __SSE4_1__
         setupSSE();
         #endif

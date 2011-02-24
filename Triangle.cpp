@@ -3,6 +3,9 @@
 #include "TriangleMesh.h"
 #include "Ray.h"
 
+#ifdef STATS
+#include "Stats.h"
+#endif
 
 using namespace std;
 
@@ -76,6 +79,10 @@ Triangle::renderGL()
 bool
 Triangle::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
 {
+#ifdef STATS
+	Stats::Ray_Tri_Intersect++;
+#endif
+
 #ifdef __SSE4_1__
 
 /*    const __m128 _A = m_mesh->SSEvertices()[ti3.v[0]];

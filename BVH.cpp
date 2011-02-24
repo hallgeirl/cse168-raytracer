@@ -5,6 +5,10 @@
 #include "Ray.h"
 #include "Console.h"
 
+#ifdef STATS
+#include "Stats.h"
+#endif
+
 using namespace std;
 
 void getCornerPoints(Corner (&outCorners)[2], Objects * objs)
@@ -67,6 +71,10 @@ BVH::build(Objects * objs, int depth)
     {
         m_objects = objs;
         m_isLeaf = true;
+
+#ifdef STATS
+		Stats::BVH_LeafNodes++;
+#endif 
 
         #ifdef __SSE4_1__
         //Build the triangle cache for SSE
@@ -288,7 +296,11 @@ BVH::build(Objects * objs, int depth)
         Objects* left, * right;
         left = new Objects; right = new Objects;
 
-        //Split the object array according to the best splitting plane we found
+#ifdef STATS
+		Stats::BVH_Nodes += 2;
+#endif
+
+		//Split the object array according to the best splitting plane we found
         for (int i = 0; i < objs->size(); i++)
         {
             if ((*objs)[i]->center()[bestDim] < bestPosition)
@@ -418,7 +430,7 @@ BVH::intersect(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
     bool hit = false;
     HitInfo tempMinHit;
     minHit.t = tMax;
-    
+
     // intersect with root node bounding box
     float minOverlap = -infinity, maxOverlap = infinity;
     float t[2];
@@ -432,6 +444,10 @@ BVH::intersect(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
         if (t[m] > minOverlap) minOverlap = t[m];
         if (t[m^1] < maxOverlap) maxOverlap = t[m^1];
     }
+
+#ifdef STATS
+	Stats::Ray_Box_Intersect++;
+#endif
 
     // return false if there is no overlap
     if (minOverlap > maxOverlap || minOverlap > tMax || maxOverlap < tMin)
@@ -577,6 +593,10 @@ BVH::intersectChildren(HitInfo& minHit, const Ray& ray, float tMin, float tMax) 
             hit = true;
         }
     }
+#endif
+
+#ifdef STATS
+	Stats::Ray_Box_Intersect += 2;
 #endif
 
     return hit;
