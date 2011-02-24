@@ -93,12 +93,13 @@ makeSpiralScene()
     g_scene->preCalc();
 }
 
-void addModel(const char* filename, Material *mat, Scene* scene, Vector3 position, float rotY=0)
+void addModel(const char* filename, Material *mat, Scene* scene, Vector3 position, float rotY=0, Vector3 scale=Vector3(1,1,1))
 {
 	TriangleMesh * mesh = new TriangleMesh();
     Matrix4x4 m_rot(Vector4(cos(rotY),0,-sin(rotY),0), Vector4(0,1,0,0), Vector4(sin(rotY),0,cos(rotY),0), Vector4(0, 0, 0, 1));
     Matrix4x4 m_trans(Vector4(1,0,0,0), Vector4(0,1,0,0), Vector4(0,0,1,0), Vector4(position.x, position.y, position.z, 1));
-	mesh->load(filename, m_trans*m_rot);
+    Matrix4x4 m_scale(Vector4(scale.x,0,0,0), Vector4(0,scale.y,0,0), Vector4(0,0,scale.z,0), Vector4(0, 0, 0, 1));
+	mesh->load(filename, m_trans*m_rot*m_scale);
     for (int i = 0; i < mesh->numTris(); i++)
     {
 		Triangle *tri = new Triangle();
@@ -118,7 +119,8 @@ void makeScene1()
     g_scene = new Scene;
     g_image = new Image;
 
-    g_image->resize(512, 512);
+    g_image->resize(256, 256);
+    Material *mat;
 
     // set up the camera
     float viewAngleXZ = -PI;
@@ -126,7 +128,7 @@ void makeScene1()
     Vector3 dir(std::sin(viewAngleXZ),sin(pitch),std::cos(viewAngleXZ));
     Vector3 eye(0, 3, 2);
     
-    g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
+    g_scene->setBgColor(Vector3(.0f));
     g_camera->setEye(eye);
     g_camera->setLookAt(eye+dir);
     //g_camera->setEye(Vector3(-5, 20, 7));
@@ -159,40 +161,40 @@ void makeScene1()
     light->setWattage(30);
     g_scene->addLight(light);
 
-    //Material* bunnyMat = new Phong(Vector3(0.25f, 0.5f, 0.75f), Vector3(0.1, 0.1, 0.1), Vector3(0, 0, 0));
-//	bunnyMat->SetReflection(0.25f);
-	//addModel("models/bunny.obj", bunnyMat, g_scene, Vector3(0,0,-5));
-
-    Sphere *sphere = new Sphere;
+    Sphere  *sphere = new Sphere;
     sphere->setCenter(Vector3(-2,2.5,-9));
     sphere->setRadius(1.5);
-    //sphere->setMaterial(new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(1, 1, 1), 10, 0.2, 0.8, 1.5));
-    sphere->setMaterial(new TexturedPhong(new StoneTexture(20), Vector3(0.1,0.1,0.1), Vector3(0,0,0), Vector3(0), 3));
+    sphere->setMaterial(new Phong(Vector3(0.0f, 1.0f, 0.0f)));
+    //sphere->setMaterial(new TexturedPhong(new StoneTexture(20), Vector3(0.1,0.1,0.1), Vector3(0,0,0), Vector3(0), 3));
     g_scene->addObject(sphere);
 
     sphere = new Sphere;
     sphere->setCenter(Vector3(2,2.5,-9));
     sphere->setRadius(1.5);
-    sphere->setMaterial(new Phong(Vector3(1.0f, 0.5f, 0.25f), Vector3(0.1, 0.1, 0.1), Vector3(0.5), Vector3(0.0), 3, 1.5));
+    sphere->setMaterial(new Phong(Vector3(1.0f, 0.0f, 0.f), Vector3(0.0), Vector3(0.0), 3, 1.5));
     g_scene->addObject(sphere);
     
     sphere = new Sphere;
     sphere->setCenter(Vector3(0,4.5,-10));
     sphere->setRadius(1.5);
-    sphere->setMaterial(new Phong(Vector3(0,0,1.0), Vector3(0.1, 0.1, 0.1), Vector3(0.1), Vector3(0.0, 0, 0.9), 3, 1.5));
+    sphere->setMaterial(new Phong(Vector3(0,0,1.0), Vector3(0), Vector3(0.0, 0, 0.0), 3, 1.5));
     g_scene->addObject(sphere);
 
-    Material* teapotMat = new Phong(Vector3(1, 1, 1), Vector3(0.1, 0.1, 0.1), Vector3(1), Vector3(0), 3, 1.5);
+    Material* teapotMat = new Phong(Vector3(1, 1, 1), Vector3(0), Vector3(0), 3, 1.5);
     addModel("models/teapot.obj", teapotMat, g_scene, Vector3(0,0,-5));
 
-	g_scene->setEnvironment(autumnHDR);
+	//g_scene->setEnvironment(autumnHDR);
 
-	Plane * plane = new Plane();
+	/*Plane * plane = new Plane();
     plane->setNormal(Vector3(0, 1, 0));
     plane->setOrigin(Vector3(0, -0.5, 0));
-    plane->setMaterial(new TexturedPhong(new StoneTexture(3), Vector3(0.1,0.1,0.1), Vector3(0, 0, 0)));
-    g_scene->addObject(plane);
-    
+
+    //plane->setMaterial(new TexturedPhong(new StoneTexture(3), Vector3(0.1,0.1,0.1), Vector3(0, 0, 0)));
+    plane->
+    plane->setMaterial(new Phong(Vector3(1, 0, 0)));
+    g_scene->addObject(plane);*/
+    addModel("models/square.obj", new Phong(Vector3(1,0,0)), g_scene, Vector3(0, 0, -8), 0, Vector3(6,6,6));
+
     // let objects do pre-calculations if needed
     g_scene->preCalc();
 }
@@ -251,7 +253,7 @@ void makeScene2()
             Sphere *sphere = new Sphere;
             sphere->setCenter(Vector3(3*(x-1), 3*y+1.5,-9));
             sphere->setRadius(1.5);
-            sphere->setMaterial(new Phong(Vector3(), Vector3(0.1, 0.1, 0.1), Vector3(0), Vector3(1), 10, 1.0+((float)y*3.0+(float)x*2.0)/20));
+            sphere->setMaterial(new Phong(Vector3(), Vector3(0), Vector3(1), 10, 1.0+((float)y*3.0+(float)x*2.0)/20));
             g_scene->addObject(sphere);
         }
     }
@@ -261,7 +263,7 @@ void makeScene2()
     Plane * plane = new Plane();
     plane->setNormal(Vector3(0, 1, 0));
     plane->setOrigin(Vector3(0, -0.5, 0));
-    plane->setMaterial(new TexturedPhong(new StoneTexture(3), Vector3(0.1,0.1,0.1), Vector3(0, 0, 0)));
+    plane->setMaterial(new TexturedPhong(new StoneTexture(3), Vector3(0, 0, 0)));
     g_scene->addObject(plane);
 
     // let objects do pre-calculations if needed
@@ -280,7 +282,7 @@ void makeBUNNIZ()
 
     // set up the camera
     float viewAngleXZ = -PI-0.1;
-    float pitch = -0.2;
+    float pitch = -0.3;
     Vector3 dir(std::sin(viewAngleXZ),sin(pitch),std::cos(viewAngleXZ));
     Vector3 eye(0, 4, 3);
     
@@ -322,15 +324,15 @@ void makeBUNNIZ()
         switch (x)
         {
             case 0:
-                bunnyMat = new Phong(Vector3(0.25, 0.5, 0.75), Vector3(0.1), Vector3(0), Vector3(1), 3, 1.5);
+                bunnyMat = new Phong(Vector3(0.25, 0.5, 0.75), Vector3(0), Vector3(1), 3, 1.5);
                 z += 2;
                 break;
             case 1:
-                bunnyMat = new Phong(Vector3(0.25, 0.5, 0.75), Vector3(0.1), Vector3(0.7), Vector3(0.3), 3, 1.5);
+                bunnyMat = new Phong(Vector3(0.25, 0.5, 0.75), Vector3(0.7), Vector3(0.3), 3, 1.5);
                 z -= 1;
                 break;
             case 2:
-                bunnyMat = new Phong(Vector3(0.25, 0.5, 0.75), Vector3(0.1), Vector3(0), Vector3(0), 3, 1.5);
+                bunnyMat = new Phong(Vector3(0.25, 0.5, 0.75), Vector3(0), Vector3(0), 3, 1.5);
                 z += 4;
                 break;
         }
@@ -342,7 +344,7 @@ void makeBUNNIZ()
     Plane * plane = new Plane();
     plane->setNormal(Vector3(0, 1, 0));
     plane->setOrigin(Vector3(0, -0.5, 0));
-    plane->setMaterial(new TexturedPhong(new StoneTexture(3), Vector3(0.1,0.1,0.1), Vector3(0, 0, 0)));
+    plane->setMaterial(new TexturedPhong(new StoneTexture(3), Vector3(0, 0, 0)));
     g_scene->addObject(plane);
 
     // let objects do pre-calculations if needed
@@ -374,7 +376,7 @@ makeTestScene()
     light->setWattage(1000);
     g_scene->addLight(light);
 
-    /*TriangleMesh *mesh = new TriangleMesh();
+    TriangleMesh *mesh = new TriangleMesh();
     mesh->createSingleTriangle();
 
     mesh->setV1(Vector3(0,0,0));
@@ -383,12 +385,12 @@ makeTestScene()
     mesh->setN1(Vector3(0,0,-1));
     mesh->setN2(Vector3(0.1,0.1,-1).normalize());
     mesh->setN3(Vector3(-0.1,-0.2,-1).normalize());
-*/
-  /*  Triangle * triangle = new Triangle();
+
+    Triangle * triangle = new Triangle();
     triangle->setMesh(mesh);
     triangle->setIndex(0);
     triangle->setMaterial(new Lambert(Vector3(0,1,0)));
-    g_scene->addObject(triangle);*/
+    g_scene->addObject(triangle);
     addModel("models/testobj.obj", new Lambert(Vector3(0,1,0)), g_scene, Vector3(0), 0);
 
     g_scene->preCalc();
@@ -409,16 +411,19 @@ main(int argc, char*argv[])
     //makeSpiralScene();
 
     //Assignment 1 scenes
-    //A1makeTeapotScene();
-    //A1makeSphereScene();
     //makeScene1();
     //makeScene2();
     //makeBUNNIZ();
-    A1makeBunnyScene();
+    //A1makeTeapotScene();
+    //A1makeSphereScene();
+    //A1makeBunnyScene();
 
-    // create a scene
+    //Assignment 2 scenes
+    //makeBunny1Scene();
     //makeBunny20Scene();
     //makeSponzaScene();
+    makeCornellScene();
+
 
     MiroWindow miro(&argc, argv);
 #ifndef NO_GFX

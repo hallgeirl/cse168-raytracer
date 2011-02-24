@@ -64,7 +64,7 @@ Scene::preCalc()
 
 inline float tonemapValue(float value, float maxIntensity)
 {
-    return std::min(pow(value / maxIntensity, 0.85f)*2.0f, 1.0f);
+    return std::min(pow(value / maxIntensity, 0.85f)*1.5f, 1.0f);
 
 }
 
@@ -129,7 +129,8 @@ Scene::raytraceImage(Camera *cam, Image *img)
                 if (localMaxIntensity > maxIntensity) maxIntensity = localMaxIntensity;
             }
             #else
-            minIntensity = localMinIntensity
+            minIntensity = localMinIntensity;
+            maxIntensity = localMaxIntensity;
             #endif
         }
         #ifdef OPENMP
