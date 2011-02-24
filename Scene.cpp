@@ -105,6 +105,9 @@ Scene::raytraceImage(Camera *cam, Image *img)
 				{
 					shadeResult += tempShadeResult;
 				}
+#ifdef STATS
+				Stats::Primary_Rays++;
+#endif
 			}
 			shadeResult /= TRACE_SAMPLES; 
             tempImage[i*width+j] = shadeResult;
@@ -114,6 +117,9 @@ Scene::raytraceImage(Camera *cam, Image *img)
 			{
 				tempImage[i*width+j] = shadeResult;
 			}
+#ifdef STATS
+			Stats::Primary_Rays++;
+#endif
 			#endif // PATH_TRACING
             for (int k = 0; k < 3; k++)
             {

@@ -2,6 +2,10 @@
 #include "Ray.h"
 #include "Scene.h"
 
+#ifdef STATS
+#include "Stats.h"
+#endif
+
 Lambert::Lambert(const Vector3 & kd) :
     m_kd(kd)
 {
@@ -37,6 +41,9 @@ Lambert::shade(const Ray& ray, const HitInfo& hit, const Scene& scene) const
 #ifndef DISABLE_SHADOWS
 		Ray Shadow(hit.P+(l*epsilon), l);
 		HitInfo hitInfo;
+#ifdef STATS 
+		Stats::Shadow_Rays++;
+#endif
 		if (scene.trace(hitInfo, Shadow, 0.f, sqrt(falloff)))
 		{
 			continue;

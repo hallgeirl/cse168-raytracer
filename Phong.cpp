@@ -3,6 +3,10 @@
 #include "Ray.h"
 #include "Scene.h"
 
+#ifdef STATS
+#include "Stats.h"
+#endif
+
 using namespace std;
 
 Phong::Phong(const Vector3 &kd, const Vector3 &ks, const Vector3 &kt,
@@ -80,6 +84,9 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 #ifndef DISABLE_SHADOWS
 		Ray Shadow(hit.P+(l*epsilon), l);
 		HitInfo hitInfo;
+#ifdef STATS 
+		Stats::Shadow_Rays++;
+#endif
 		if (scene.trace(hitInfo, Shadow, 0.f, sqrt(falloff)))
 		{
 			continue;
