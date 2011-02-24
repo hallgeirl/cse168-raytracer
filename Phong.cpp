@@ -77,12 +77,14 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
         l /= sqrt(falloff);
 
 		// No light contribution if Ray hits an object 
+#ifndef DISABLE_SHADOWS
 		Ray Shadow(hit.P+(l*epsilon), l);
 		HitInfo hitInfo;
 		if (scene.trace(hitInfo, Shadow, 0.f, sqrt(falloff)))
 		{
 			continue;
 		}
+#endif
 
         // get the diffuse component
         float nDotL = dot(hit.N, l);
