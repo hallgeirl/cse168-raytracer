@@ -15,7 +15,7 @@ void Stats::PrintStats()
 	printf("\n~~Ray Tracer Stats~~\n\n");
 	printf("BVH Nodes: %d\n", BVH_Nodes);
 	printf("BVH Leaf Nodes: %d\n", BVH_LeafNodes);
-	printf("Rays: %d\n", Rays);
+	printf("Total Rays: %d\n", Primary_Rays + Secondary_Rays + Shadow_Rays);
 	printf("Primary Rays: %d\n", Primary_Rays);
 	printf("Secondary Rays: %d\n", Secondary_Rays);
 	printf("Shadow Rays: %d\n", Shadow_Rays);
