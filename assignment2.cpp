@@ -4,7 +4,7 @@
 #include "Scene.h"
 #include "Camera.h"
 #include "Image.h"
-
+#include "Sphere.h"
 #include "PointLight.h"
 #include "TriangleMesh.h"
 #include "Triangle.h"
@@ -365,6 +365,56 @@ makeSponzaScene()
     mesh->load("models/sponza.obj");
     addMeshTrianglesToScene(mesh, material);
     
+    // let objects do pre-calculations if needed
+    g_scene->preCalc();
+}
+
+void
+makeCornellScene()
+{
+    g_camera = new Camera;
+    g_scene = new Scene;
+    g_image = new Image;
+
+    g_image->resize(1024, 1024);
+    
+    // set up the camera
+    g_camera->setBGColor(Vector3(0.0f, 0.0f, 0.2f));
+    g_camera->setEye(Vector3(2.5, 3, 3));
+    g_camera->setLookAt(Vector3(2.5, 2.5, 0));
+    g_camera->setUp(Vector3(0, 1, 0));
+    g_camera->setFOV(90);
+
+/*    Sphere *sp = new Sphere;
+    sp->setCenter(Vector3(3, 5.4, -3));
+    sp->setRadius(0.2);
+    sp->setMaterial(new Phong(Vector3(1,1,1)));
+    g_scene->addObject(sp);*/
+
+    // create and place a point light source
+    PointLight * light = new PointLight;
+    light->setPosition(Vector3(2.5, 4.9, -1));
+    light->setColor(Vector3(1, 1, 1));
+    light->setWattage(40);
+    g_scene->addLight(light);
+
+    Material* material = new Phong(Vector3(1.0f));
+    TriangleMesh * mesh = new TriangleMesh;
+    mesh->load("models/cornell_box_1.obj");
+    addMeshTrianglesToScene(mesh, new Phong(Vector3(1,1,1)));
+
+    mesh = new TriangleMesh;
+    mesh->load("models/cornell_box_2.obj");
+    addMeshTrianglesToScene(mesh, new Phong(Vector3(1,0,0)));
+
+    mesh = new TriangleMesh;
+    mesh->load("models/cornell_box_3.obj");
+    addMeshTrianglesToScene(mesh, new Phong(Vector3(0,1,0)));
+    
+    mesh = new TriangleMesh;
+    mesh->load("models/cornell_box_4.obj");
+    addMeshTrianglesToScene(mesh, new Phong(Vector3(1)));
+
     // let objects do pre-calculations if needed
     g_scene->preCalc();
 }
