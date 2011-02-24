@@ -34,13 +34,14 @@ Lambert::shade(const Ray& ray, const HitInfo& hit, const Scene& scene) const
         // normalize the light direction
         l /= sqrt(falloff);
 
+#ifndef DISABLE_SHADOWS
 		Ray Shadow(hit.P+(l*epsilon), l);
 		HitInfo hitInfo;
 		if (scene.trace(hitInfo, Shadow, 0.f, sqrt(falloff)))
 		{
 			continue;
 		}
-
+#endif
         // get the diffuse component
         float nDotL = dot(hit.N, l);
         Vector3 result = pLight->color();
