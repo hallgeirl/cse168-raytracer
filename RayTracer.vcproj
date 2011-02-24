@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="lib/lib;lib/include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;__SSE4_1__"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;STATS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -119,8 +119,8 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="lib/include;lib/src;lib/lib;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;__SSE4_1__"
+				AdditionalIncludeDirectories="lib/include;lib/src;lib/lib;lib/tnt"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;STATS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -222,7 +222,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Stats.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Texture.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Utility.cpp"
 				>
 			</File>
 			<File
@@ -320,7 +328,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Stats.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Texture.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Utility.h"
 				>
 			</File>
 			<File
