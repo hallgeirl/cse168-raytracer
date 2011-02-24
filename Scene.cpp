@@ -124,7 +124,8 @@ Scene::raytraceImage(Camera *cam, Image *img)
                 if (localMaxIntensity > maxIntensity) maxIntensity = localMaxIntensity;
             }
             #else
-            minIntensity = localMinIntensity
+            minIntensity = localMinIntensity;
+            maxIntensity = localMaxIntensity;
             #endif
         }
         #ifdef OPENMP
