@@ -56,56 +56,106 @@ Scene::preCalc()
     printf("Time spent building BVH: %lf\n", t1);
 }
 
+
+inline float tonemapValue(float value, float maxIntensity)
+{
+    return std::min(pow(value / maxIntensity, 0.85f)*2.0f, 1.0f);
+
+}
+
 void
 Scene::raytraceImage(Camera *cam, Image *img)
 {
-    Ray ray;
-    Vector3 shadeResult;
-	int depth = 0;
+	int depth = TRACE_DEPTH;
+    float minIntensity = infinity, maxIntensity = -infinity;
     printf("Rendering Progress: %.3f%%\r", 0.0f);
     fflush(stdout);
 
-   double t1 = -getTime();
+    //For tone mapping. The Image class stores the pixels internally as 1 byte integers. We want to store the actual values first.
+    int width = img->width(), height = img->height();
+    Vector3 *tempImage = new Vector3[height*width];
+
+    double t1 = -getTime();
 
     // loop over all pixels in the image
     #ifdef OPENMP
-    #pragma omp parallel for private(ray, shadeResult) schedule(dynamic, 2)
+    #pragma omp parallel for schedule(dynamic, 2)
     #endif
-    for (int i = 0; i < img->height(); ++i)
+    for (int i = 0; i < height; ++i)
     {
-        for (int j = 0; j < img->width(); ++j)
+        float localMaxIntensity = -infinity,
+              localMinIntensity = infinity;
+
+        for (int j = 0; j < width; ++j)
         {
-            Vector3 accShadeResult(0.f);
-            ray = cam->eyeRay(j, i, img->width(), img->height());
+            Ray ray;
+            Vector3 tempShadeResult;
+            Vector3 shadeResult(0.f);
 
 			#ifdef PATH_TRACING
 			for (int k = 0; k < TRACE_SAMPLES; ++k)
 			{
-				if (traceScene(ray, shadeResult, depth))
+                ray = cam->eyeRay(j, i, width, height, true);
+				if (traceScene(ray, tempShadeResult, depth))
 				{
-					accShadeResult += shadeResult;
+					shadeResult += tempShadeResult;
 				}
 			}
-			accShadeResult /= TRACE_SAMPLES; 
-			img->setPixel(j, i, accShadeResult);
+			shadeResult /= TRACE_SAMPLES; 
+            tempImage[i*width+j] = shadeResult;
 			#else
+            ray = cam->eyeRay(j, i, width, height, false);
 			if (traceScene(ray, shadeResult, depth))
 			{
-				img->setPixel(j, i, shadeResult);
+				tempImage[i*width+j] = shadeResult;
 			}
 			#endif // PATH_TRACING
+            for (int k = 0; k < 3; k++)
+            {
+                if (shadeResult[k] > localMaxIntensity)
+                    localMaxIntensity = shadeResult[k];
+                if (shadeResult[k] < localMinIntensity)
+                    localMinIntensity = shadeResult[k];
+            }
+            #ifdef OPENMP
+            #pragma omp critical
+            {
+                if (localMinIntensity < minIntensity) minIntensity = localMinIntensity;
+                if (localMaxIntensity > maxIntensity) maxIntensity = localMaxIntensity;
+            }
+            #else
+            minIntensity = localMinIntensity
+            #endif
         }
-        #ifndef NO_GFX //If not rendering graphics to screen, don't draw scan lines (it will segfault in multithreading mode)
-        img->drawScanline(i);
+        #ifdef OPENMP
+        #pragma omp master
         #endif
-        if (i % 10 == 0)
         {
             printf("Rendering Progress: %.3f%%\r", i/float(img->height())*100.0f);
             fflush(stdout);
         }
     }
+    debug("Performing tone mapping...");
 
+    #ifdef OPENMP
+    #pragma omp parallel for
+    #endif
+    for (int i = 0; i < height; ++i)
+    {
+        for (int j = 0; j < width; ++j)
+        {
+            Vector3 finalColor = tempImage[i*width+j];
 
+            #pragma unroll(3)
+            for (int k = 0; k < 3; k++)
+                finalColor[k] = tonemapValue(finalColor[k], maxIntensity);
+
+            img->setPixel(j, i, finalColor);
+        }
+        #ifndef NO_GFX //If not rendering graphics to screen, don't draw scan lines (it will segfault in multithreading mode)
+        img->drawScanline(i);
+        #endif
+    }
     t1 += getTime();
 
     printf("Rendering Progress: 100.000%%\n");
@@ -151,10 +201,9 @@ Scene::trace(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
             float dx = (u2-u1)/(2*delta),
                   dy = (v2-v1)/(2*delta);
             
-            //minHit.N += dx*(cross(minHit.N, Vector3(0,0,1)))-dy*(cross(minHit.N, Vector3(1,0,0)));
             //Find two tangents
             float n[3] = { minHit.N.x, minHit.N.y, minHit.N.z };
-            //float m = std::max(minHit.N.x, std::max(minHit.N.y, minHit.N.z));
+
             int m = 0;
             if (n[1] > n[0]) m = 1;
             if (n[2] > n[m]) m = 2;
@@ -162,11 +211,7 @@ Scene::trace(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
            
             Vector3 t1 = cross(minHit.N, randomVec);
             minHit.N += dx*(cross(minHit.N, t1))-dy*(cross(minHit.N, cross(minHit.N, t1)));
-
-            //cout << "t1=" << t1 << ", t2=" << cross(t1,minHit.N) << endl;
-
             minHit.N.normalize();
-          //cout << minHit.N << endl;
         }   
         //Todo: implement for 3D
         //bumpHeight = minHit.material->bumpHeight3D(tex_coord3d_t(minHit.P.x, minHit.P.y, minHit.P.z));
@@ -176,17 +221,19 @@ Scene::trace(HitInfo& minHit, const Ray& ray, float tMin, float tMax) const
     return result;
 }
 
-bool
-Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
+bool Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 {
     HitInfo hitInfo;
 	shadeResult = Vector3(0.f);
-
-    if (depth < TRACE_DEPTH)
+    bool hit = false;
+    
+    if (depth >= 0)
     {
 		if (trace(hitInfo, ray))
 		{
-			++depth;
+            hit = true;
+
+			--depth;
 			
 			shadeResult = hitInfo.material->shade(ray, hitInfo, *this);
 			
@@ -199,7 +246,7 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 
 				if (traceScene(diffuseRay, diffuseResult, depth))
 				{
-					shadeResult = (hitInfo.material->GetDiffuse()* diffuseResult);
+					shadeResult += (hitInfo.material->GetDiffuse() * diffuseResult);
 				}
 			}
 			#endif
@@ -228,18 +275,15 @@ Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 					shadeResult += hitInfo.material->GetRefraction()* refractResult;
 				}
 			}
-            return true;
 		}
 		else
 		{
-            if (m_environment != 0)
-            {
-			    shadeResult = getEnvironmentMap(ray);
-                return true;
-            }
+            shadeResult = getEnvironmentMap(ray);
+            hit = true;
 		}
 	}
-	return false;
+    
+    return hit;
 }
 
 Vector3
@@ -258,7 +302,7 @@ Scene::getEnvironmentMap(const Ray & ray)
 	}
 	else
 	{
-		envResult.x = 0.0; envResult.y = 0.0; envResult.z = 0.0;
+		envResult = m_bgColor; 
 	}
 	return envResult;
 }

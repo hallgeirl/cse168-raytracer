@@ -2,8 +2,8 @@
 #include "Ray.h"
 #include "Scene.h"
 
-Lambert::Lambert(const Vector3 & kd, const Vector3 & ka) :
-    m_kd(kd), m_ka(ka)
+Lambert::Lambert(const Vector3 & kd) :
+    m_kd(kd)
 {
 }
 
@@ -48,9 +48,6 @@ Lambert::shade(const Ray& ray, const HitInfo& hit, const Scene& scene) const
 
         L += std::max(0.0f, nDotL/falloff * pLight->wattage() / PI) * result;
     }
-
-    // add the ambient component
-    L += m_ka;
 
     return L;
 }

@@ -13,7 +13,7 @@ class Image;
 class Scene
 {
 public:
-	Scene() { m_environment = 0; }
+	Scene() { m_environment = 0; m_bgColor = Vector3(0.0f); }
     void addObject(Object* pObj)        
     { 
         if (pObj->isBounded()) m_objects.push_back(pObj);
@@ -35,6 +35,8 @@ public:
 	void setEnvironment(Texture* environment) { m_environment = environment; }
 	Vector3 getEnvironmentMap(const Ray & ray);
 
+    void setBgColor(Vector3 color) { m_bgColor = color; }
+
 
 protected:
     Objects m_objects;
@@ -42,6 +44,7 @@ protected:
     BVH m_bvh;
     Lights m_lights;
     Texture * m_environment; //Environment map
+    Vector3 m_bgColor;       //Background color (for when environment map is not available)
 };
 
 extern Scene * g_scene;
