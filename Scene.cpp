@@ -64,7 +64,7 @@ Scene::preCalc()
 
 inline float tonemapValue(float value, float maxIntensity)
 {
-    return std::min(pow(value / maxIntensity, 0.85f)*1.5f, 1.0f);
+    return std::min(pow(value / maxIntensity, 0.85f)*1.0f, 1.0f);
 
 }
 
@@ -142,6 +142,7 @@ Scene::raytraceImage(Camera *cam, Image *img)
         }
     }
     debug("Performing tone mapping...");
+    t1 += getTime();
 
     #ifdef OPENMP
     #pragma omp parallel for
@@ -162,7 +163,6 @@ Scene::raytraceImage(Camera *cam, Image *img)
         img->drawScanline(i);
         #endif
     }
-    t1 += getTime();
 
     printf("Rendering Progress: 100.000%%\n");
     debug("Done raytracing!\n");
