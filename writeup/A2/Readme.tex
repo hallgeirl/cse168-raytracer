@@ -77,9 +77,11 @@ Here is our statistics for the scenes. All statistics are for 512x512 resolution
 \begin{tabular}{cccc}
 {\bf Scene} & {\bf Shadows} & {\bf Rendering time} & {\bf Tree building time}\\
 \hline
+Teapot      & Yes & 0.091089 & 0.004455\\
 1 bunny     & Yes & 0.084176 & 0.848294\\
 20 bunnies  & Yes & 0.115115 & 22.918213\\
 Sponza      & Yes & 0.166750 & 0.747193\\
+Teapot      & No  & 0.089995 & 0.004455\\
 1 bunny     & No  & 0.054840 & 0.848294\\
 20 bunnies  & No  & 0.065035 & 22.918213\\
 Sponza      & No  & 0.162505 & 0.747193\\
@@ -90,9 +92,11 @@ Sponza      & No  & 0.162505 & 0.747193\\
 {\bf Scene} & {\bf Shadows}       & {\bf Ray-box}    & {\bf Ray-triangle}  & {\bf Total} & {\bf Ray-triangle}       & {\bf Total} & {\bf Leaf}\\
             &                     & {\bf intersects} & {\bf intersects}    & {\bf rays}  & {\bf intersects per ray} & {\bf nodes} & {\bf nodes}\\
 \hline
+Teapot      & Yes                 & 484534           & 1817141             & 484534      & 3.75                     & 199         & 100\\
 1 bunny     & Yes                 & 1375045          & 566626              & 483840      & 1.17                     & 42881       & 21441\\
 20 bunnies  & Yes                 & 12457832         & 3198190             & 495502      & 6.45                     & 876137      & 438069\\
 Sponza      & Yes                 & 26828350         & 5415385             & 524288      & 10.33                    & 42645       & 21323\\
+Teapot      & No                  & 262144           & 892848              & 262144      & 3.41                     & 199         & 100\\
 1 bunny     & No                  & 640985           & 256133              & 262144      & 0.98                     & 42881       & 21441\\
 20 bunnies  & No                  & 5237842          & 979273              & 262144      & 3.74                     & 876137      & 438069\\
 Sponza      & No                  & 14356648         & 2603678             & 262144      & 9.93                     & 42645       & 21323\\
