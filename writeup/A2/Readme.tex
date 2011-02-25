@@ -1,7 +1,7 @@
 \documentclass{article} % Change to the appropriate document class, i.e. report, book, article...
 \usepackage{style}
 
-\title{CSE168 assignment 1}
+\title{CSE168 assignment 2}
 \author{Alisha Lawson, Hallgeir Lien}
 \date{} %Uncomment to remove date from title
 
@@ -9,45 +9,99 @@
 
 \maketitle
 
-\section{Implementation of task 1-4}
-Task 1 and 2, the triangle intersection with barycentric interpolation, was implemented in Triangle.cpp.
+\section{Bounding-box intersection}
+We do intersections with axis-aligned boxes. We check the planes that bounds the box in each dimension. So we find $t_{min_x}$, $t_{max_x}$ and similar for y and z-dimensions. We then check the maximum of the minimum hit times (that is, $\max_{i\in x,y,z}\{t_{min_i}\}$, and the minimum of the maximum hit times. If the first is larger than the second, we don't have any intersections.
 
-Task 3, the shading model, was in part implemented in Phong.cpp (for the highlight and shadow rays), and part in Scene.cpp in Scene::traceScene(), where we do the actual recursion to account for reflection and refraction. Point lights and diffuse shading was already implemented.
+\section{Building the BVH}
+We implemented a fairly efficient BVH building algorithm. When we call root.build(), we first find the corner points for the box by checking all the vertices in the object list. We then try to find the best plane to split the box with. We go through each of the three dimensions. For each dimension, we start by trying to put the splitting plane in the middle of the root node and then put the objects in one of two lists (call them "left" and "right"). We then initially go through these lists to find the corner points of these. 
 
-Task 4, the texture, was implemented in Texture.h and Texture.cpp. Before we was given the source code for the Worley noise generator, we made our own (Because we didn't realize we were given one), which is quite fast. This is also included in that source file, but it's not used any more. The stone texture is implemented in the StoneTexture class - the interesting parts are in lookup2D() and bumpHeight2D().
+Now, we start a binary search to improve our plane. We check the cost using the cost function
 
-\section{Images}
-We included 6 images in the archive. All image filenames start with "lawson\_alisha-lien\_hallgeir-" as according to the assignment text - this is not included in the filenames listed here, but is implicit.
+$$
+C=N_1\cdot SA_1+N_2\cdot SA_2
+$$
 
-\subsection{teapot.png, sphere.png, bunny.png}
-These are the images generated from the makeBunnyScene(), makeSphereScene() and makeTeapotScene() functions. The material is 100\% diffuse.
+where $SA_i$ is the surface area of the child boxes, and $N_i$ is the number of triangles in them. Note that we actually use the real surface area of the boxes in order to get an accurate estimate of the cost. We observe that one term is always increasing and the other is always decreasing. So if there is a better splitting plane, it's in the part with the largest cost, so we try setting our splitting plane in the middle there. Next we check the objects' positions and move the objects that are on the wrong side of the plane to the other child node.
 
-\subsection{reflections.png}
-This image includes 5 objects; the teapot is fully reflective, the plane and one of the spheres are texture mapped with the bump mapped stone texture, a partially reflective with a yellowish diffuse color, and finally a refractive blue sphere where we used a refractive component of (0, 0, 1).
+An observation that increased the efficiency of our algorithm is that all the triangles in the lower cost box doesn't need to be checked again ever, because we know that if there's a better splitting plane, it's in the other child box. So, we record this index. In the future, NO objects that come before that index in the child node's object list will be checked again when we find a new splitting plane. So in best case, we cut the number of objects we check each iteration in half. 
 
-\subsection{refractions.png}
-This image shows nine fully refractive spheres with increasing refractive indices. Starting at 1.0, which appears to be invisible because there's no refraction, it increases in steps of $.05$ from left to right, ending at 1.4 in the top right corner.
+Also, instead of iterating through all the objects every search step to get the corner points, we check the position of the vertices of the triangles we move between the child nodes to see if we need to update the corner points we found initially.
 
-\subsection{bunniez.ppm}
-Here we have three bunnies facing in different directions. We built a transformation matrix to achieve the positioning and rotation. The one to the far left is fully refractive, the middle one is fully reflective and the right one is diffuse. 
+Bottom line is, this search algorithm should be about as precise as having $n=2^d$ splitting planes and checking each individually, but with far lower time complexity.
 
-\section{Textures}
-We created a shading class that inherits from the phong shader that looks up the diffuse color in a texture instead of a constant color. That shading class looks up that diffuse color from a Texture object that it receives when it's constructed. There are two lookup functions - one for 2D and one for 3D textures.
+\section{BVH intersection}
+The bounding box intersection was explained above. Other than that, the BVH intersection is a pretty straight forward recursive algorithm. First see if we intersect the root node. If yes, intersect with the children of that node (that might be triangles or child nodes). If it's child nodes, check intersection with those, and recurse.
 
-\section{Hacker points}
-\subsection{SSE}
-We implemented the triangle intersection in SSE. We store the vertices in an array in the TriangleMesh class so that we don't need to do load operations for every test. Performance wise, we saw about 10\% improvement in rendering speed when rendering one bunny. 
+\section{Path tracing}
+We send a predetermined number of rays through random position in the pixels in raytraceImage. If the ray hits the diffuse surface, it sends out a random ray, biased towards the surface normal. We add all the contributions from surface shading and diffuse rays, averaged per pixel. We then apply tone mapping to the resulting color to get values between 0 and 1. The tone mapping we use is basically dividing the pixel values by the maximum intensity, and raising it to the power of some number less than one. There is an additional image of the cornell box rendered with 5k samples / pixel.
 
-We ran the rendering 5 times with SSE and 5 times without on 16 threads and took the fastest time from both tests. The fastest with SSE was 5 minutes, 38.34 seconds and the fastest without was 6 minutes, 14.72 seconds, which gives a speedup of 1.11.
+\section{SSE box intersection}
+We implemented SSE box intersection. We intersect the root node with regular code. If there's an intersection, we call a second function intersectChildren(), which intersects the child objects (triangles) if it's a leaf node, or the child nodes if it's an internal node. For the intersections itself, we decided to implement a single ray-single box intersection where we intersect three planes in one operation. Then we do some inline assembly acrobatics to find the overlapping interval, by doing shifts and maxs.
 
-\subsection{Environment mapping}
-We use a sphere mapped HDRI envionment map. We created a global tone mapping function, where $c$ is the input intensity from the HDRI image and $I$ is the maximum intensity in the image, $f(c)=min\{1, 4\cdot(c/I)^{0.3}\}$. The number $0.3$ and $4$ were found by experimentation to work well with the image.
+\section{SSE triangle intersection}
+In our BVH::build() function, in addition to building the tree, we store information about triangles in packets of four in a triangle cache in the leaf nodes. Basically, we find the vertex $A$, $B-A$, $C-A$, etc., and transpose them so each 128-bit vector has one component of each of these vertices, one component per triangle in the packet. So for instance, $A$ is stored as
+$$
+\left(
+\begin{array}{cccc}
+A_{x_1} A_{x_2} A_{x_3} A_{x_4}\\
+A_{y_1} A_{y_2} A_{y_3} A_{y_4}\\
+A_{z_1} A_{z_2} A_{z_3} A_{z_4}\\
+\end{array}
+\right)
+$$
+where the numerical subscript indicates which triangle it belongs to. We made our own cross product and dot product functions that calculates the dot and cross of two of these arrays. We calculate all the t's, betas and gamma values at once, then use SSE comparisons together with \_mm\_movemask\_ps to get the intersection results (intersection or no intersection) for each triangle. We then calculate P and N. Unfortunately, we had to calculate ALL the Ps and Ns because of the organization of our vectors, because transposing the vectors would be too expensive. 
 
-\section{Extras}
-In addition to this, we implemented bump mapping. Tangents are calculated by taking the largest component from the normal, inverting it, shifting it one position and zeroing the other components. The cross product is then taken to get tangent 1, and the cross product between the normal and tangent 1 is taken to find tangent 2.
+Our tests indicate speedup in total rendering time using this SSE intersection code, but that includes all the serial parts of the program as well so the intersections alone might have a larger speedup. One thing to note is that we observed better results with more than 4 triangles in the leaf nodes, because we lower the chance of getting half-empty vectors. We found about 8 or 12 to be optimal.
 
-Second, we implemented multithreading using OpenMP. To run with multithreading, compile it with the compile time define OPENMP defined (in GCC, compile with -DOPENMP). Note that OpenMP doesn't work on Visual Studio Express.
+\section{Non-axis aligned bounding boxes}
+We researched non-axis aligned, or oriented, bounding boxes and found that the principal component analysis would be required to find the defining axes created by the triangle vertices. Building a covariance matrix of the points minus the center of the triangle yields a symmetric matrix that has real eigenvalues. The eigenvectors of this matrix are the axes of the oriented bounding box. We find the eigenvalues by taking the determinant of the matrix
+$$
+M=
+\left(
+\begin{array}{ccc}
+a-\lambda & d & e\\ 
+d & f-\lambda & f\\
+e & f & c-\lambda\\
+\end{array}
+\right)
+$$
 
-We also implemented normal averaging. The averaging is done as the model loads, by building a neighbor list containing the normals for each vertex and finally averaging them once everything has been loaded.
+This gives a cubic equation $\alpha \lambda^3 + \beta \lambda^2 + \gamma \lambda + \delta = 0$ where $\alpha =-3$, $\beta=3(a + b + c)$, $\gamma=3(e^2 + f^2 + d^2 - (a\cdot b + b\cdot c + a\cdot c)$ and $\delta=3(a\cdot b\cdot c - b\cdot e^2 -a\cdot f^2 - c\cdot d^2 + 2\cdot d\cdot e\cdot f)$.
+
+We made a solver that finds the eigen vectors given the eigenvalues. This is implemented in Utility.cpp. It solves $Mv=\lambda v$ using gaussian elimination to reduce the matrix to reduced echelon form and outputs the normalized eigenvector. This can be found in Utility.cpp. Unfortunately, this is a far as we got since we did not have time to implement the cubic formula. The plan was to project the eigen vectors onto all the vertices to get the minimum and maximum points of the box. With the preceding information, we could change the optimized fast axis aligned slab to the regular plane intersection in the BVH tree traversal. 
+
+\section{Statistics}
+Here is our statistics for the scenes. All statistics are for 512x512 resolution unless otherwise stated. Also, the times are for our SSE implementation and are specified in seconds. For the ray/intersection statistics, we used 4 triangles per leaf node. The SSE implementation uses 8 triangles per leaf, as that seems to be more efficient.
+
+\subsection{Rendering times}
+\begin{tabular}{cccc}
+{\bf Scene} & {\bf Shadows} & {\bf Rendering time} & {\bf Tree building time}\\
+\hline
+1 bunny     & Yes & 0.084176 & 0.848294\\
+20 bunnies  & Yes & 0.115115 & 22.918213\\
+Sponza      & Yes & 0.166750 & 0.747193\\
+1 bunny     & No  & 0.054840 & 0.848294\\
+20 bunnies  & No  & 0.065035 & 22.918213\\
+Sponza      & No  & 0.162505 & 0.747193\\
+\end{tabular}
+
+\subsection{Ray, BVH and intersection statistics}
+\begin{tabular}{cccccccc}
+{\bf Scene} & {\bf Shadows}       & {\bf Ray-box}    & {\bf Ray-triangle}  & {\bf Total} & {\bf Ray-triangle}       & {\bf Total} & {\bf Leaf}\\
+            &                     & {\bf intersects} & {\bf intersects}    & {\bf rays}  & {\bf intersects per ray} & {\bf nodes} & {\bf nodes}\\
+\hline
+1 bunny     & Yes                 & 1375045          & 566626              & 483840      & 1.17                     & 42881       & 21441\\
+20 bunnies  & Yes                 & 12457832         & 3198190             & 495502      & 6.45                     & 876137      & 438069\\
+Sponza      & Yes                 & 26828350         & 5415385             & 524288      & 10.33                    & 42645       & 21323\\
+1 bunny     & No                  & 640985           & 256133              & 262144      & 0.98                     & 42881       & 21441\\
+20 bunnies  & No                  & 5237842          & 979273              & 262144      & 3.74                     & 876137      & 438069\\
+Sponza      & No                  & 14356648         & 2603678             & 262144      & 9.93                     & 42645       & 21323\\
+Cornell\\
+(16 samples)& Yes                 & 77354058         & 39393561            & 13319660    & 2.96                     & 21          & 11\\ 
+Cornell\\
+(100 samples)& Yes                & 386549458        & 214162592           & 81398851    & 2.63                     & 21          & 11\\ 
+\end{tabular}
+
+Note that the Cornell box images were rendered using multithreading, so the numbers are likely to be a bit off.
 
 \end{document}

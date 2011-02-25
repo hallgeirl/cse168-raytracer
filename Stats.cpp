@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdio>
 #include "Stats.h"
 
 int Stats::BVH_Nodes = 0;

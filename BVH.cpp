@@ -60,12 +60,24 @@ inline float getCost(const Corner (&corners)[2], Objects &objects)
 void
 BVH::build(Objects * objs, int depth)
 {
+#ifdef STATS
+    Stats::BVH_Nodes += 1;
+#endif
+
     // construct the bounding volume hierarchy
     //Find the bounds of this node 
     if (m_corners[0][0] == infinity)
     {
         getCornerPoints(m_corners, objs); 
-    }   
+    }
+
+    //Expand the box by a small epsilon in case it's bounding a flat triangle or similar.
+    for (int i = 0; i < 3; i++)
+    {
+        m_corners[0][i] -= epsilon;
+        m_corners[1][i] += epsilon;
+    }
+
     //Check if we're done
     if (objs->size() <= OBJECTS_PER_LEAF || depth >= MAX_TREE_DEPTH)
     {
@@ -296,9 +308,6 @@ BVH::build(Objects * objs, int depth)
         Objects* left, * right;
         left = new Objects; right = new Objects;
 
-#ifdef STATS
-		Stats::BVH_Nodes += 2;
-#endif
 
 		//Split the object array according to the best splitting plane we found
         for (int i = 0; i < objs->size(); i++)
@@ -321,7 +330,10 @@ BVH::build(Objects * objs, int depth)
             (*m_children)[i]->build(current, depth+1);
 
             // If the new node is an internal one, free the object list since it wasn't used.
-            if (!(*m_children)[i]->m_isLeaf) delete current;
+            if (!(*m_children)[i]->m_isLeaf) 
+            {
+                delete current;
+           }
         }
     }
 }
@@ -471,11 +483,18 @@ BVH::intersectChildren(HitInfo& minHit, const Ray& ray, float tMin, float tMax) 
         {
             if (intersectTriangleList((*m_triangleCache)[i], minHit, ray, tMin))
                 hit = true;
+#ifdef STATS
+            Stats::Ray_Tri_Intersect += m_triangleCache->at(i).nTriangles;
+#endif
+
         }
 #endif
 
         for (size_t i = 0; i < m_objects->size(); ++i)
         {
+#ifdef STATS
+            if (dynamic_cast<Triangle*>((*m_objects)[i]) != 0) Stats::Ray_Tri_Intersect++;
+#endif
             if ((*m_objects)[i]->intersect(tempMinHit, ray, tMin, minHit.t))
             {
                 if (tempMinHit.t < minHit.t)
@@ -565,7 +584,10 @@ BVH::intersectChildren(HitInfo& minHit, const Ray& ray, float tMin, float tMax) 
     }
 
 #else
-    
+    float minT = infinity;
+    int minIndex = -1;
+    int otherIndex = -1;
+
     //Check intersection with children
     for (int i = 0; i < 2; i++)
     {
@@ -585,19 +607,41 @@ BVH::intersectChildren(HitInfo& minHit, const Ray& ray, float tMin, float tMax) 
         }
         if (minOverlap > maxOverlap || minOverlap > tMax || maxOverlap < tMin)
             continue;
-        
-        // References do not seem to conflict
-        if (child->intersectChildren(tempMinHit, ray, tMin, minHit.t))
+
+        if (minT > minOverlap)
+        {
+            otherIndex = minIndex;
+            minIndex = i;
+        }
+    }
+
+    //Intersect in order from closest to furthest away, to eliminate some box intersection tests
+    if (minIndex != -1)
+    {
+#ifdef STATS
+        Stats::Ray_Box_Intersect += 1;
+#endif
+        if (m_children->at(minIndex)->intersectChildren(tempMinHit, ray, tMin, minHit.t))
         {
             minHit = tempMinHit;
             hit = true;
-        }
+        } 
     }
+    if (otherIndex != -1)
+    {
+#ifdef STATS
+        Stats::Ray_Box_Intersect += 1;
+#endif
+        if (m_children->at(otherIndex)->intersectChildren(tempMinHit, ray, tMin, minHit.t))
+        {
+            minHit = tempMinHit;
+            hit = true;
+        } 
+    }
+
+    
 #endif
 
-#ifdef STATS
-	Stats::Ray_Box_Intersect += 2;
-#endif
 
     return hit;
 }
