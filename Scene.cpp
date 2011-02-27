@@ -130,14 +130,12 @@ Scene::raytraceImage(Camera *cam, Image *img)
             }
             #ifdef OPENMP
             #pragma omp critical
+			#endif
             {
                 if (localMinIntensity < minIntensity) minIntensity = localMinIntensity;
                 if (localMaxIntensity > maxIntensity) maxIntensity = localMaxIntensity;
             }
-            #else
-            minIntensity = localMinIntensity;
-            maxIntensity = localMaxIntensity;
-            #endif
+
         }
         #ifdef OPENMP
         #pragma omp master
