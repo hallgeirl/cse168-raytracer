@@ -615,8 +615,11 @@ BVH::intersectChildren(HitInfo& minHit, const Ray& ray, float tMin, float tMax) 
         }
     }
 
+	if (minIndex == -1)
+		return false;
+
     //Intersect in order from closest to furthest away, to eliminate some box intersection tests
-    if (minIndex != -1)
+   // if (minIndex != -1)
     {
 #ifdef STATS
         Stats::Ray_Box_Intersect += 1;
@@ -627,12 +630,12 @@ BVH::intersectChildren(HitInfo& minHit, const Ray& ray, float tMin, float tMax) 
             hit = true;
         } 
     }
-    if (otherIndex != -1)
+    //if (otherIndex != -1)
     {
 #ifdef STATS
         Stats::Ray_Box_Intersect += 1;
 #endif
-        if (m_children->at(otherIndex)->intersectChildren(tempMinHit, ray, tMin, minHit.t))
+        if (m_children->at(minIndex^1)->intersectChildren(tempMinHit, ray, tMin, minHit.t))
         {
             minHit = tempMinHit;
             hit = true;

@@ -53,7 +53,7 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 
 	Vector3 e = -ray.d;
 
-		//Look up the diffuse color
+	//Look up the diffuse color -- 3D coords are HitPosition
 	Vector3 diffuseColor;
 	if (GetLookupCoordinates() == UV)
 		diffuseColor = diffuse2D(hit.object->toUVCoordinates(hit.P));

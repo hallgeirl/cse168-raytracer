@@ -354,6 +354,56 @@ Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
     return Vector3(red, green, blue);
 }
 
+float PetalTexture::bumpHeight3D(const tex_coord3d_t & coords) const
+{
+	return 1.0f;
+}
+
+Vector3 PetalTexture::lookup3D(const tex_coord3d_t & coords)
+{
+//	Vector3 baseColor(0.6f, 0.25f, 0.33f);
+//	Vector3 tipColor(0.92f, 0.57f, 0.62f);
+
+	Vector3 baseHighlight(1,0,0.5);
+	Vector3 tipHighlight(1, 0.5, 0);
+	Vector3 baseDepression(0.5, 0.15, 0.3);
+	Vector3 tipDepression(0.75, 0.15, 0.15);
+
+	Vector3 baseColor(0.8, 0.1, 0.3);
+	Vector3 tipColor(1.0, 0.2, 0.1);
+
+	Vector3 position(coords.u-m_pivot.x, coords.v-m_pivot.y, coords.w-m_pivot.z);
+	float radius = position.length();
+	float dist = radius/m_radius;
+
+	Vector3 north(0,1,0);
+	Vector3 equator(1,0,0);
+
+	Vector3 diffuseColor = (1-dist)*baseColor + dist*tipColor;
+	Vector3 interpHighlight = (1-dist)*baseHighlight + dist*tipHighlight;
+	Vector3 interpDepression = (1-dist)*baseDepression + dist*tipDepression;
+	float phi = acos(-dot(north, position));
+	float v = phi/PI;
+	float u;
+	float theta = ( acos( dot( position, equator ) / sin( phi )) ) / ( 2 * PI);
+	if ( dot(cross(north, equator), position) > 0 )
+		u = theta;
+	else
+		u = 1 - theta;
+	
+
+	//float turb = abs(generateNoise(u, u, 0, 3, 2, 0.9, 10));
+	float turb = abs(generateNoise(u, v*0.25, 0, 4, 2, 0.9, 10));
+	float highTurb = std::min(pow(turb / 0.1f, 0.85f)*1.5f, 1.0f);
+
+	turb = abs(generateNoise(u, v, 0, 4, 3, 0.9, 25));
+	float lowTurb = std::min(pow(turb / 0.1f, 0.85f)*1.5f, 1.0f);
+
+	return 0.5*(highTurb*diffuseColor + (1-highTurb)*interpHighlight) + 0.5*(lowTurb*diffuseColor + (1-lowTurb)*interpDepression);
+	//return lowTurb*diffuseColor + (1-lowTurb)*interpDepression;
+	
+}
+
 
 /**************************************************************
 class TexturedPhong
