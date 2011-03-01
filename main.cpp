@@ -5,6 +5,7 @@
 #endif
 #include "assignment1.h"
 #include "assignment2.h"
+#include "assignment3.h"
 #include "Miro.h"
 #include "Scene.h"
 #include "Camera.h"
@@ -422,8 +423,9 @@ main(int argc, char*argv[])
     //makeBunny1Scene();
     //makeBunny20Scene();
     //makeSponzaScene();
-    makeCornellScene();
-
+    //makeCornellScene();
+    //makeTeapotScene();
+    makeTestPetalScene(); 
 
     MiroWindow miro(&argc, argv);
 #ifndef NO_GFX
