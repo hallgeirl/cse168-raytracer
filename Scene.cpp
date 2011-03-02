@@ -312,7 +312,10 @@ Scene::getEnvironmentMap(const Ray & ray)
 		coords.u = (atan2(ray.d.x, ray.d.z)) / (2.0f * PI) + 0.5;
 		coords.v = (asin(ray.d.y)) / PI + 0.5;
 		//And just look up the shading value in the texture.
-		envResult = m_environment->lookup2D(coords);
+        if (!ray.diffuse)
+    		envResult = m_environment->lookup2D(coords);
+        else
+            envResult = m_environment->lowresLookup2D(coords);
 	}
 	else
 	{

@@ -4,7 +4,7 @@ Material::Material()
 {
     setReflection(Vector3(0));
     setRefraction(Vector3(0), 1);
-    setShininess(5000);
+    setShininess(infinity); //Default to a perfectly reflective surface if the specular component is non-zero
 }
 
 Material::~Material()

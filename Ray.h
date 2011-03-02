@@ -40,6 +40,7 @@
     {
     
     public:
+        bool diffuse;
         Vector3 o,      //!< Origin of ray
                 d;      //!< Direction of ray
     
@@ -72,6 +73,7 @@
 
     Ray() : o(), d(Vector3(0.0f,0.0f,1.0f))
     {
+        diffuse = false;
 #ifdef STATS
 		Stats::Rays++;
 #endif
@@ -83,6 +85,7 @@
 
     Ray(const Vector3& o, const Vector3& d) : o(o), d(d)
     {
+        diffuse = false;
 #ifdef STATS
 		Stats::Rays++;
 #endif
@@ -119,7 +122,7 @@
 
 		random_d.normalize();
 		Ray random(hitInfo.P + random_d * epsilon, random_d);
-
+        random.diffuse = true;
 #ifdef STATS
 		Stats::Secondary_Rays++;
 #endif

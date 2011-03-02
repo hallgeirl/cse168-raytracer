@@ -22,7 +22,7 @@ Texture loaded from a image file.
 //Tonemaps to (0,1)
 float LoadedTexture::tonemapValue(float value)
 {
-    return std::min(pow(value / m_maxIntensity, 0.3f)*4, 1.0f); //This seems to give a fairly good image. +2ev, gamma ~3
+    return std::min(pow(value / m_maxIntensity, 0.2f)*1.7f, 1.0f); //This seems to give a fairly good image. +2ev, gamma ~3
 }
 
 LoadedTexture::LoadedTexture(std::string filename)
@@ -36,51 +36,101 @@ LoadedTexture::LoadedTexture(std::string filename)
     {
         for (int j = 0; j < w; j++)
         {
-            FIRGBF p = getFloatPixel(j, i);
+            FIRGBF p = getRawPixel(m_bitmap, j, i);
             //Figure out the maximum intensity in the image for tone mapping
             if (m_maxIntensity < p.red) m_maxIntensity = p.red;
             if (m_maxIntensity < p.green) m_maxIntensity = p.green;
             if (m_maxIntensity < p.blue) m_maxIntensity = p.blue;
         }
     }
-    m_toneMappedValues = new float[h*w];
     
+    //Initialize lowres version of the bitmap
+    m_lowres = FreeImage_AllocateT(FIT_RGBF, LOWRES_WIDTH, (int)((float)LOWRES_WIDTH*((float)h/(float)w)));
+   // m_lowres = FreeImage_Rescale(FreeImage_Copy(m_bitmap, 0, 0, w-1, h-1);
+
+    int lrw = FreeImage_GetWidth(m_lowres), lrh = FreeImage_GetHeight(m_lowres);
+    int pixelSize = (h/lrh)*(w/lrw); 
+
+    lrw = FreeImage_GetWidth(m_lowres); lrh = FreeImage_GetHeight(m_lowres);
+    for (int i = 0; i < lrh; i++)
+    {
+        for (int j = 0; j < lrw; j++)
+        {
+            //Calculate average of the pixels covered by this lowres pixel
+            long double acc[3] = {0.0,0.0,0.0};
+            Vector3 color;
+            int midX =(w/lrw)*j + (w/lrw)/2;
+            int midY =(h/lrh)*i + (h/lrh)/2;
+            for (int ii = (h/lrh)*i; ii < (h/lrh)*i+(h/lrh) && ii < h; ii++)
+            {
+                for (int jj = (w/lrw)*j; jj < (w/lrw)*j+(w/lrw) && jj < w; jj++)
+                {
+                    FIRGBF p = getRawPixel(m_bitmap, jj, ii);
+                    //Calculate gaussian
+                    float x = jj-midX, y = ii-midY;
+                    float sigma = 1;
+                    long double g = 1.0/(2.0*PI*sigma)*exp(-(x*x+y*y)/(2*sigma));
+                    acc[0] += g*p.red;
+                    acc[1] += g*p.green;
+                    acc[2] += g*p.blue;
+                }
+            }
+            color.x = acc[0];
+            color.y = acc[1];
+            color.z = acc[2];
+       /*     color.x = acc[0]/pixelSize;
+            color.y = acc[1]/pixelSize;
+            color.z = acc[2]/pixelSize;*/
+            setPixel(m_lowres, color, j, i); 
+        }
+    }
 }
+
 LoadedTexture::~LoadedTexture()
 {
 	free(m_bitmap->data);
 	free(m_bitmap);
-	
-	delete[] m_toneMappedValues;
+    free(m_lowres->data);
+    free(m_lowres);
 }
 
-FIRGBF LoadedTexture::getFloatPixel(int x, int y)
+FIRGBF LoadedTexture::getRawPixel(FIBITMAP* bm, int x, int y)
 {
-    return ((FIRGBF*)(m_bitmap->data))[y*FreeImage_GetWidth(m_bitmap)+x];
+
+    FIRGBF* row = (FIRGBF*)FreeImage_GetScanLine(bm, y);
+    return row[x];
 }
 
+void LoadedTexture::setPixel(FIBITMAP* bm, Vector3& value, int x, int y)
+{
+    FIRGBF* row = (FIRGBF*)FreeImage_GetScanLine(bm, y); 
+    row[x].red = value[0];
+    row[x].green = value[1];
+    row[x].blue = value[2];
+}
 
 //Aux. function to retrieve pixel values from a freeimage bitmap, tonemap them and put them in a vector.
-Vector3 LoadedTexture::getPixel(int x, int y)
+Vector3 LoadedTexture::getPixel(FIBITMAP* bm, int x, int y)
 {
 	FIRGBF color;
-	
-	color = getFloatPixel(x, y);
-	
+	color = getRawPixel(bm, x, y);
+
+    
 	//Blue and Green are somehow reversed on Win32 machines
 #ifdef WIN32
-	return Vector3(tonemapValue(color.red), tonemapValue(color.blue), tonemapValue(color.green));
+	return Vector3(color.red, color.blue, color.green);
 #else
-	return Vector3(tonemapValue(color.red), tonemapValue(color.green), tonemapValue(color.blue));
+	return Vector3(color.red, color.blue, color.green);
 #endif
 }
 
-Vector3 LoadedTexture::lookup2D(const tex_coord2d_t & texture_coords)
+Vector3 LoadedTexture::lookup(const tex_coord2d_t & texture_coords, bool lowres)
 {
 	float u = texture_coords.u, v = texture_coords.v;
+    FIBITMAP* bm = (lowres ? m_lowres : m_bitmap);
 
 	//Image dimensions
-	int w = FreeImage_GetWidth(m_bitmap), h = FreeImage_GetHeight(m_bitmap);
+	int w = FreeImage_GetWidth(bm), h = FreeImage_GetHeight(bm);
 
 	//Do bilinear filtering
 	float px_real = (float)w*u, py_real = (float)h*v; //Point in image we really want
@@ -94,9 +144,10 @@ Vector3 LoadedTexture::lookup2D(const tex_coord2d_t & texture_coords)
 	float y1_error = py_real - (float)y1;
 
 	//Get pixel values and average them
-	Vector3 f = (getPixel(x1, y1) * (1-x1_error) + getPixel(x2, y1) * x1_error) * (1 - y1_error) + (getPixel(x1, y2) * (1-x1_error) + getPixel(x2, y2) * x1_error) * y1_error;
+	Vector3 f = (getPixel(bm, x1, y1) * (1-x1_error) + getPixel(bm, x2, y1) * x1_error) * (1 - y1_error) + (getPixel(bm, x1, y2) * (1-x1_error) + getPixel(bm, x2, y2) * x1_error) * y1_error;
 
-	return f;
+//    return f;
+    return Vector3(tonemapValue(f.x), tonemapValue(f.z), tonemapValue(f.y));
 }
 
 /***********************************

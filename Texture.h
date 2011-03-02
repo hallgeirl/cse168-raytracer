@@ -64,6 +64,8 @@ public:
 	virtual LookupCoordinates GetLookupCoordinates() const = 0;
     virtual Vector3 lookup2D(const tex_coord2d_t & coords) { return Vector3(0,0,0); } // Look up the color value for a specified position
     virtual Vector3 lookup3D(const tex_coord3d_t & coords) { return Vector3(0,0,0); } // For 3D textures
+    virtual Vector3 lowresLookup2D(const tex_coord2d_t & coords) { return lookup2D(coords); }
+    virtual Vector3 lowresLookup3D(const tex_coord2d_t & coords) { return lookup2D(coords); }
 };
 
 class Texture2D : public Texture
@@ -148,18 +150,19 @@ public:
     LoadedTexture(std::string filename);
 	~LoadedTexture();
 
-    virtual Vector3 lookup2D(const tex_coord2d_t & coords);
+    Vector3 lookup(const tex_coord2d_t & coords, bool lowres);
+    Vector3 lookup2D(const tex_coord2d_t & coords) { return lookup(coords, false); }
+    Vector3 lowresLookup2D(const tex_coord2d_t & coords) { return lookup(coords, true); }
     
 protected:
-    Vector3 getPixel(int x, int y);     //Get the tonemapped pixel
-    FIRGBF getFloatPixel(int x, int y); //Get a pixel from the HDR
+    static Vector3 getPixel(FIBITMAP* bm, int x, int y);     //Get the tonemapped pixel
+    static void setPixel(FIBITMAP* bm, Vector3& value, int x, int y);
+    static FIRGBF getRawPixel(FIBITMAP* bm, int x, int y); //Get a pixel from the HDR
     float tonemapValue(float val);
 
 	FIBITMAP* m_bitmap; 
-	FIBITMAP* m_toneMapped;
-	
-	float* m_toneMappedValues;
-	
+    FIBITMAP* m_lowres;
+    static const int LOWRES_WIDTH = 24;	
 	float m_maxIntensity;
 };
 
