@@ -621,6 +621,9 @@ BVH::intersectChildren(HitInfo& minHit, const Ray& ray, float tMin, float tMax) 
     }
     if (minIndex == -1) return false;
 
+	if (minIndex == -1)
+		return false;
+
     //Intersect in order from closest to furthest away, to eliminate some box intersection tests
 #ifdef STATS
     Stats::Ray_Box_Intersect += 1;
@@ -636,7 +639,7 @@ BVH::intersectChildren(HitInfo& minHit, const Ray& ray, float tMin, float tMax) 
 #ifdef STATS
         Stats::Ray_Box_Intersect += 1;
 #endif
-        if (m_children->at(otherIndex)->intersectChildren(tempMinHit, ray, tMin, minHit.t))
+        if (m_children->at(otherIndex^1)->intersectChildren(tempMinHit, ray, tMin, minHit.t))
         {
             minHit = tempMinHit;
             hit = true;

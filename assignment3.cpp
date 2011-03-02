@@ -10,12 +10,22 @@
 #include "Triangle.h"
 #include "Lambert.h"
 
-// local helper function declarations
-namespace
+void addFlowerModel(const char* filename, Material *mat, Scene* scene, Vector3 position, float rotY, Vector3 scale)
 {
-void addMeshTrianglesToScene(TriangleMesh * mesh, Material * material);
+	TriangleMesh * mesh = new TriangleMesh();
+    Matrix4x4 m_rot(Vector4(cos(rotY),0,-sin(rotY),0), Vector4(0,1,0,0), Vector4(sin(rotY),0,cos(rotY),0), Vector4(0, 0, 0, 1));
+    Matrix4x4 m_trans(Vector4(1,0,0,0), Vector4(0,1,0,0), Vector4(0,0,1,0), Vector4(position.x, position.y, position.z, 1));
+    Matrix4x4 m_scale(Vector4(scale.x,0,0,0), Vector4(0,scale.y,0,0), Vector4(0,0,scale.z,0), Vector4(0, 0, 0, 1));
+	mesh->load(filename, m_trans*m_rot*m_scale);
+    for (int i = 0; i < mesh->numTris(); i++)
+    {
+		Triangle *tri = new Triangle();
+		tri->setMesh(mesh);
+		tri->setIndex(i);
+		tri->setMaterial(mat);
+		g_scene->addObject(tri);
+    }
 }
-
 
 void
 makeTestPetalScene()
@@ -28,7 +38,7 @@ makeTestPetalScene()
     
     // set up the camera
     g_camera->setBGColor(Vector3(0.0f, 0.0f, 0.2f));
-    g_camera->setEye(Vector3(2, 3, -2));
+    g_camera->setEye(Vector3(2, 4, 0));
     g_camera->setLookAt(Vector3(0, 0, 6));
     g_camera->setUp(Vector3(0, 1, 0));
     g_camera->setFOV(45);
@@ -37,7 +47,7 @@ makeTestPetalScene()
     PointLight * light = new PointLight;
     light->setPosition(Vector3(10, 10, 10));
     light->setColor(Vector3(1, 1, 1));
-    light->setWattage(700);
+    light->setWattage(400);
     g_scene->addLight(light);
 
 	 // create and place a point light source
@@ -47,10 +57,12 @@ makeTestPetalScene()
     amlight->setWattage(300);
     g_scene->addLight(amlight);
 
-	Material* material = new Lambert(Vector3(1.0f, 0.3f, 0.3f));
-    TriangleMesh * teapot = new TriangleMesh;
-    teapot->load("models/petal.obj");
-	addMeshTrianglesToScene(teapot, material);
+	//Material* material = new Lambert(Vector3(1.0f, 0.3f, 0.3f));
+	Material* material = new TexturedPhong(new PetalTexture(Vector3(0.f), 10), Vector3(0), Vector3(0), 5);
+	addFlowerModel("models/petal.obj", material, g_scene, Vector3(0.f));
+
+	Material* water = new Phong(Vector3(1.f), Vector3(0), Vector3(1.0f), 5, 1.33);
+	addFlowerModel("models/WaterDrops.obj", water, g_scene, Vector3(0.f));
     
     // create the floor triangle
     TriangleMesh * floor = new TriangleMesh;
@@ -73,21 +85,4 @@ makeTestPetalScene()
     g_scene->preCalc();
 }
 
-// local helper function definitions
-namespace
-{
 
-void
-addMeshTrianglesToScene(TriangleMesh * mesh, Material * material)
-{
-    // create all the triangles in the bunny mesh and add to the scene
-    for (int i = 0; i < mesh->numTris(); ++i)
-    {
-        Triangle* t = new Triangle;
-        t->setIndex(i);
-        t->setMesh(mesh);
-        t->setMaterial(material); 
-        g_scene->addObject(t);
-    }
-}
-}

@@ -129,6 +129,17 @@ public:
     }
 };
 
+class PetalTexture : public Texture3D
+{
+protected:
+    float m_scale;
+	float m_radius;
+	Vector3 m_pivot;
+public:
+    PetalTexture(const Vector3 & Pivot, float Radius=1, float scale=1) { m_scale = scale; m_pivot = Pivot; m_radius = Radius; }
+    virtual float bumpHeight3D(const tex_coord3d_t & coords) const;
+    virtual Vector3 lookup3D(const tex_coord3d_t & coords);
+};
 
 //Texture loaded from a file
 class LoadedTexture : public Texture2D
