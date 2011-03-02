@@ -25,9 +25,9 @@ Phong::Phong(const Vector3 &kd, const Vector3 &ks, const Vector3 &kt,
 	m_transmission.z = std::max(std::min(m_transmission.z, 1.0f-m_specular.z), 0.f);
 
 	//absorption is between 0.f and 1.f - reflection - refraction
-	m_diffuse.x = std::max(1.0f-m_specular.x-m_transmission.x, 0.f);
-	m_diffuse.y = std::max(1.0f-m_specular.y-m_transmission.y, 0.f);
-	m_diffuse.z = std::max(1.0f-m_specular.z-m_transmission.z, 0.f);
+	m_diffuse.x = std::max(std::min(m_diffuse.x, 1.0f-m_specular.x-m_transmission.x), 0.f);
+	m_diffuse.y = std::max(std::min(m_diffuse.y, 1.0f-m_specular.y-m_transmission.y), 0.f);
+	m_diffuse.z = std::max(std::min(m_diffuse.z, 1.0f-m_specular.z-m_transmission.z), 0.f);
 }
 
 Phong::~Phong()
