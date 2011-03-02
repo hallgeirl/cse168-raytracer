@@ -9,6 +9,7 @@
 #include <list>
 #include <FreeImage.h>
 #include <Worley.h>
+#include <cmath>
 
 //Generate turbulent perlin noise at (x,y,z).
 //The returned number is between -1 and 1.
@@ -100,9 +101,32 @@ protected:
     float m_scale;
 public:
     StoneTexture(float scale=1) { m_scale = scale; }
-    //StoneTexture(int points, int gridWidth, int gridHeight) : CellularTexture2D(points, gridWidth, gridHeight) {}
+    
     virtual float bumpHeight2D(const tex_coord2d_t & coords) const;
     virtual Vector3 lookup2D(const tex_coord2d_t & coords);
+};
+
+class CheckerBoardTexture : public Texture2D
+{
+protected:
+    float m_scale;
+    Vector3 m_color1, m_color2;
+public:
+    CheckerBoardTexture(Vector3 color1 = Vector3(1), Vector3 color2 = Vector3(0), float scale=1) 
+    { 
+        m_color1 = color1; 
+        m_color2 = color2; 
+        m_scale = scale; 
+    }
+
+    virtual Vector3 lookup2D(const tex_coord2d_t & coords) 
+    {
+        float u = std::abs(m_scale*(coords.u));
+        float v = std::abs(m_scale*(coords.v));
+        if (coords.u < 0) u += m_scale;
+        if (coords.v < 0) v += m_scale;
+        return ((int)((int)u+(int)v) % 2 == 0 ? m_color1 : m_color2); 
+    }
 };
 
 

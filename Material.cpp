@@ -2,7 +2,9 @@
 
 Material::Material()
 {
-    m_emittance = Vector3(0);
+    setReflection(Vector3(0));
+    setRefraction(Vector3(0), 1);
+    setShininess(5000);
 }
 
 Material::~Material()

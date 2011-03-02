@@ -64,8 +64,8 @@ Scene::preCalc()
 
 inline float tonemapValue(float value, float maxIntensity)
 {
-    return std::min(pow(value / maxIntensity, 0.85f)*1.5f, 1.0f);
-
+    return sigmoid(7*value-4);
+    //return std::min(pow(value / maxIntensity, 0.35f)*1.1f, 1.0f);
 }
 
 void
@@ -160,7 +160,6 @@ Scene::raytraceImage(Camera *cam, Image *img)
             #pragma unroll(3)
             for (int k = 0; k < 3; k++)
                 finalColor[k] = tonemapValue(finalColor[k], maxIntensity);
-
             img->setPixel(j, i, finalColor);
         }
         #ifndef NO_GFX //If not rendering graphics to screen, don't draw scan lines (it will segfault in multithreading mode)
@@ -254,40 +253,40 @@ bool Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 			
             #ifdef PATH_TRACING
 			//if diffuse material, send trace with RandomRay generate by Monte Carlo
-			if (hitInfo.material->IsDiffuse())
+			if (hitInfo.material->isDiffuse())
 			{
 				Vector3 diffuseResult;
 				Ray diffuseRay = ray.Random(hitInfo);
 
 				if (traceScene(diffuseRay, diffuseResult, depth))
 				{
-					shadeResult += (hitInfo.material->GetDiffuse() * diffuseResult);
+					shadeResult += (hitInfo.material->getDiffuse() * diffuseResult);
 				}
 			}
 			#endif
 
 			
 			//if reflective material, send trace with ReflectRay
-			if (hitInfo.material->IsReflective())
+			if (hitInfo.material->isReflective())
 			{
 				Vector3 reflectResult;
 				Ray reflectRay = ray.Reflect(hitInfo);
 
 				if (traceScene(reflectRay, reflectResult, depth))
 				{
-					shadeResult += hitInfo.material->GetReflection()* reflectResult;
+					shadeResult += hitInfo.material->getReflection()* reflectResult;
 				}
 			}
 
 			//if refractive material, send trace with RefractRay
-			if (hitInfo.material->IsRefractive())
+			if (hitInfo.material->isRefractive())
 			{
 				Vector3 refractResult;
 				Ray	refractRay = ray.Refract(hitInfo);
 
 				if (traceScene(refractRay, refractResult, depth))
 				{
-					shadeResult += hitInfo.material->GetRefraction()* refractResult;
+					shadeResult += hitInfo.material->getRefraction()* refractResult;
 				}
 			}
 		}

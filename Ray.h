@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "Vector3.h"
 #include "Material.h"
+#include "Utility.h"
 
 #ifdef STATS
 #include "Stats.h"
@@ -55,7 +56,7 @@
 
             d_SSE = _mm_sub_ps(_zero, _mm_loadu_ps(_d));
             d_SSE_rcp = _mm_rcp_ps(_mm_loadu_ps(_d));
-        o_SSE = _mm_loadu_ps(_o);
+            o_SSE = _mm_loadu_ps(_o);
 
 
         /*__m128 _d_sse = _mm_loadu_ps(_d);
@@ -112,19 +113,9 @@
 		//determine one surface tangent from cross of normal and random vec
 		Vector3 randomVec(maxDimIndex == 2 ? -n[2] : 0, maxDimIndex == 0 ? -n[0] : 0, maxDimIndex == 1 ? -n[1] : 0);
 		Vector3 t1 = cross(randomVec, hitInfo.N);
+
 		//Random direction determined by combination of random values by surface axes
 		Vector3 random_d(u1*t1 + u2*cross(t1, hitInfo.N) + u3*hitInfo.N);
-		
-		//naive implementation -- slightly faster though
-		/*Vector3 random_d;
-		float x,y,z;
-		do 
-		{ 
-			x = 1 - 2.0f * ((float) rand() / (float)RAND_MAX);
-			y = 1 - 2.0f * ((float) rand() / (float)RAND_MAX);
-			z = 1 - 2.0f * ((float) rand() / (float)RAND_MAX);
-			random_d = Vector3(x, y, z);
-		} while (( pow(x, 2) + pow(y, 2), + pow(z, 2)) > 1 || dot(random_d, hitInfo.N) < 0);*/
 
 		random_d.normalize();
 		Ray random(hitInfo.P + random_d * epsilon, random_d);
@@ -135,10 +126,37 @@
 		return random;
 	}
 	
+    //Shoots a reflection ray. If path tracing is enabled, shoot a random ray according to the glossyness of the material.
 	Ray Reflect(const HitInfo & hitInfo) const
 	{
+#ifdef PATH_TRACING
+        //Generate randomized reflection ray based on glossyness
+        //bias to the perfectly reflected ray
+	    float phi = acos(pow(frand(), 1/(1+hitInfo.material->getShininess())));
+		float theta = 2.0f * PI * frand();
+
+        //Direction of perfect reflection
+	    Vector3 d_reflect = d - 2 * dot(hitInfo.N, d) * hitInfo.N;
+
+		//convert spherical coords to cartesian coords
+		float u1 = sin(phi) * cos(theta);
+		float u2 = sin(phi) * sin(theta);
+		float u3 = cos(phi); 
+
+		//determine one surface tangent from cross of normal and one of the unit vectors 
+		Vector3 t1 = cross(Vector3(0,0,1), d_reflect);
+        if (t1.length2() < 1e-6) t1 = cross(Vector3(0, 1, 0), d_reflect);
+
+		//Random direction determined by combination of random values by surface axes
+		Vector3 random_d(u1*t1 + u2*cross(t1, d_reflect) + u3*d_reflect);
+
+		random_d.normalize();
+		Ray reflect(hitInfo.P + random_d * epsilon, random_d);
+#else
 	    Vector3 d_r = d - 2 * dot(hitInfo.N, d) * hitInfo.N;
 		Ray reflect(hitInfo.P + d_r * epsilon, d_r);
+#endif
+        
 
 #ifdef STATS
 		Stats::Secondary_Rays++;
@@ -156,12 +174,12 @@
 		if ( dot(d, hitInfo.N) < 0)
 		{
 			n1 = 1.0f;
-			n2 = hitInfo.material->GetRefractionIndex();
+			n2 = hitInfo.material->getRefractionIndex();
 			n = hitInfo.N;
 		}
 		else 
 		{
-			n1 = hitInfo.material->GetRefractionIndex();
+			n1 = hitInfo.material->getRefractionIndex();
 			n2 = 1.0f;
 			n = -hitInfo.N;
 		}
@@ -170,7 +188,9 @@
 
 		// Total internal reflection: all of the energy is reflected
 		if (energy < 0)
-			return Reflect(hitInfo);
+        {
+            return Reflect(hitInfo);
+        }
 
         Vector3 d_r = n1 * (d - n * dot(d, n)) / n2 - n * sqrt(energy);
 		Ray refract(hitInfo.P + d_r * epsilon, d_r);

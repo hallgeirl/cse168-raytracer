@@ -353,8 +353,60 @@ void makeBUNNIZ()
 }
  
 void
+makeTestSphereScene()
+{
+	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"));
+    Material *m;
+    cout << "Test scene" << endl;
+    g_camera = new Camera;
+    g_scene = new Scene;
+    g_image = new Image;
+
+    g_image->resize(400, 300);
+
+    // set up the camera
+    g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
+    //g_camera->setEye(Vector3(-5, 2, 3));
+    g_camera->setEye(Vector3(0, 1, -9));
+    g_camera->setLookAt(Vector3(0, 0, 0));
+    g_camera->setUp(Vector3(0, 1, 0));
+    g_camera->setFOV(45);
+
+    
+
+    // create and place a point light source
+    PointLight * light = new PointLight;
+    light->setPosition(Vector3(0, 25, 0));
+    light->setColor(Vector3(1, 1, 1));
+    light->setWattage(8000);
+ //   g_scene->addLight(light);
+
+    light = new PointLight;
+    light->setPosition(Vector3(0, 25, -25));
+    light->setColor(Vector3(1, 1, 1));
+    light->setWattage(15000);
+    g_scene->addLight(light);
+
+    Sphere  *sphere = new Sphere;
+    sphere->setCenter(Vector3(0,0.5,-4));
+    sphere->setRadius(1.5);
+    sphere->setMaterial(m = new Phong(Vector3(0.0f, 1.0f, 0.0f), Vector3(1.0f)));
+    m->setShininess(100);
+    g_scene->addObject(sphere);
+
+    Plane *plane = new Plane;
+    plane->setMaterial(m = new TexturedPhong(new CheckerBoardTexture(Vector3(1), Vector3(0), 1)));
+    plane->setOrigin(Vector3(0,-1,0));
+    g_scene->addObject(plane);
+
+    g_scene->setEnvironment(autumnHDR);
+    g_scene->preCalc();
+}
+
+void
 makeTestScene()
 {
+	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"));
     cout << "Test scene" << endl;
     g_camera = new Camera;
     g_scene = new Scene;
@@ -425,7 +477,7 @@ main(int argc, char*argv[])
     //makeSponzaScene();
     //makeCornellScene();
     //makeTeapotScene();
-    makeTestPetalScene(); 
+    makeTestSphereScene(); 
 
     MiroWindow miro(&argc, argv);
 #ifndef NO_GFX

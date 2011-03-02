@@ -399,13 +399,14 @@ makeCornellScene()
     g_scene->addLight(light);
 
     Material* material = new Phong(Vector3(1.0f));
+    Material *mat;
     TriangleMesh * mesh = new TriangleMesh;
     mesh->load("models/cornell_box_1.obj");
-    addMeshTrianglesToScene(mesh, new Phong(Vector3(1,1,1)));
-
+    addMeshTrianglesToScene(mesh, mat = new Phong(Vector3(1,1,1)));
+    
     mesh = new TriangleMesh;
     mesh->load("models/cornell_box_2.obj");
-    addMeshTrianglesToScene(mesh, new Phong(Vector3(1,0,0)));
+    addMeshTrianglesToScene(mesh, mat = new Phong(Vector3(1), Vector3(1)));
 
     mesh = new TriangleMesh;
     mesh->load("models/cornell_box_3.obj");

@@ -10,20 +10,24 @@
 using namespace std;
 
 Phong::Phong(const Vector3 &kd, const Vector3 &ks, const Vector3 &kt,
-				const float shinyness, const float refractIndex)
-	: m_kd(kd), m_ks(ks), m_kt(kt), m_a(shinyness), m_refractIndex(refractIndex)
+				const float shininess, const float refractIndex)
 {
 	//Keep the energy equation balanced (that is, don't refract+reflect+absorb more than 100% of the ray)
+    m_diffuse = kd;
+    m_specular = ks; 
+    m_transmission = kt;
+    m_shininess = shininess;
+    m_refractIndex = refractIndex;
 
 	//refraction is between 0.f and 1.f - reflection 
-	m_kt.x = std::max(std::min(m_kt.x, 1.0f-m_ks.x), 0.f);
-	m_kt.y = std::max(std::min(m_kt.y, 1.0f-m_ks.y), 0.f);
-	m_kt.z = std::max(std::min(m_kt.z, 1.0f-m_ks.z), 0.f);
+	m_transmission.x = std::max(std::min(m_transmission.x, 1.0f-m_specular.x), 0.f);
+	m_transmission.y = std::max(std::min(m_transmission.y, 1.0f-m_specular.y), 0.f);
+	m_transmission.z = std::max(std::min(m_transmission.z, 1.0f-m_specular.z), 0.f);
 
 	//absorption is between 0.f and 1.f - reflection - refraction
-	m_diffuse.x = std::max(1.0f-m_ks.x-m_kt.x, 0.f);
-	m_diffuse.y = std::max(1.0f-m_ks.y-m_kt.y, 0.f);
-	m_diffuse.z = std::max(1.0f-m_ks.z-m_kt.z, 0.f);
+	m_diffuse.x = std::max(1.0f-m_specular.x-m_transmission.x, 0.f);
+	m_diffuse.y = std::max(1.0f-m_specular.y-m_transmission.y, 0.f);
+	m_diffuse.z = std::max(1.0f-m_specular.z-m_transmission.z, 0.f);
 }
 
 Phong::~Phong()
@@ -31,19 +35,9 @@ Phong::~Phong()
 
 }
 
-bool Phong::IsDiffuse() const
+bool Phong::isDiffuse() const
 {
 	return (m_diffuse.x > 0.f || m_diffuse.y > 0.f || m_diffuse.z > 0.f);
-}
-
-bool Phong::IsReflective() const
-{
-	return (m_ks.x > 0.f || m_ks.y > 0.f || m_ks.z > 0.f);
-}
-
-bool Phong::IsRefractive() const
-{
-	return (m_kt.x > 0.f || m_kt.y > 0.f || m_kt.z > 0.f);
 }
 
 Vector3
@@ -101,13 +95,11 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 
 		Vector3 result = pLight->color();
 
-		//removed m_ks from specular highlight 
+		//removed m_specular from specular highlight 
 		//specular highlight should be dependent on shinyness rather than reflective component
-		L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / (4 * PI)) * diffuseColor * m_diffuse + (pow(std::max(0.0f, eDotr/falloff * pLight->wattage() / (4 * PI)), m_a)));
+		L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / (4 * PI)) * diffuseColor * m_diffuse);
+        //Old specular highlights component. /*+ (pow(std::max(0.0f, eDotr/falloff * pLight->wattage() / (4 * PI)), m_a))*/
     }
-
-    // add the ambient component
-    L += getEmittance();
 
     return L;
 }

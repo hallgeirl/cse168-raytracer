@@ -26,27 +26,32 @@ public:
     virtual float   bumpHeight2D(const tex_coord2d_t & texture_coords) const { return 0; }
     virtual float   bumpHeight3D(const tex_coord3d_t & texture_coords) const { return 0; }
 
-	virtual bool IsReflective() const {return false;}
-	virtual bool IsRefractive() const {return false;}
-	virtual bool IsDiffuse() const {return true;}
+	bool         isReflective() const { return (m_specular.x > 0.f || m_specular.y > 0.f || m_specular.z > 0.f); }
+	bool         isRefractive() const { return (m_transmission.x > 0.f || m_transmission.y > 0.f || m_transmission.z > 0.f);}
+	virtual bool isDiffuse() const    { return true; }
 
-	virtual Vector3 GetReflection() const {return Vector3(0.f);}
-	virtual Vector3 GetRefraction() const {return Vector3(0.f);}
-	virtual Vector3 GetDiffuse() const {return Vector3(1.f);}
-	virtual float GetRefractionIndex() const {return 1.0f;}
+	Vector3         getReflection() const       {return m_specular;}
+	Vector3         getRefraction() const       {return m_transmission;}
+	virtual Vector3 getDiffuse() const          {return Vector3(1.f);}
+	float           getRefractionIndex() const  {return m_refractIndex;}
 
-	virtual void SetReflection(const Vector3 reflect){};
-	virtual void SetRefraction(const Vector3 refract, const float refractIndex){};
+	void setReflection(const Vector3 reflect) { m_specular = reflect; }
+	void setRefraction(const Vector3 refract, const float refractIndex) { m_refractIndex = refractIndex; m_transmission = refract; }
+	void setRefractionIndex(const float refractIndex) {m_refractIndex = refractIndex;}
+
+	void  setShininess(const float shininess) {m_shininess = shininess;}
+    float getShininess() const { return m_shininess; }	
 
     virtual void preCalc() {}
 
     virtual Vector3 shade(const Ray& ray, const HitInfo& hit, const Scene& scene) const;
-    
-    void setEmittance(Vector3 v) { m_emittance = v; }
-    const Vector3& getEmittance() const { return m_emittance; } 
 
-private:
-    Vector3 m_emittance;
+protected:
+	Vector3 m_specular;     //Reflection
+	Vector3 m_transmission; //Refraction
+	float m_refractIndex;
+    float m_gloss;
+	float m_shininess;
 };
 
 #endif // CSE168_MATERIAL_H_INCLUDED

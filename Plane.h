@@ -17,10 +17,10 @@ public:
     //Object boundaries used with bounding box creation
     virtual Vector3 coordsMin() const { return -Vector3(infinity); }
     virtual Vector3 coordsMax() const { return Vector3(infinity); }
-    virtual Vector3 center() const { return this->origin; } 
+    virtual Vector3 center() const { return this->m_origin; } 
 
-    void setNormal(Vector3 normal) { this->normal = normal; }
-    void setOrigin(Vector3 origin) { this->origin = origin; }
+    void setNormal(Vector3 normal) { this->m_normal = normal; }
+    void setOrigin(Vector3 origin) { this->m_origin = origin; }
 	virtual tex_coord2d_t toUVCoordinates(const Vector3 & xyz) const;
 
     virtual void renderGL();
@@ -30,7 +30,7 @@ public:
                            float tMin = 0.0f, float tMax = MIRO_TMAX);
 
 protected:
-    Vector3 normal, origin;
+    Vector3 m_normal, m_origin;
 };
 
 #endif // CSE168_Plane_H_INCLUDED

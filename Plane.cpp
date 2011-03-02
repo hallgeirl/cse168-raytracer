@@ -6,6 +6,8 @@ using namespace std;
 
 Plane::Plane()
 {
+    m_normal = Vector3(0,1,0);
+    m_origin = Vector3(0,0,0);
 }
 
 
@@ -30,16 +32,16 @@ Plane::renderGL()
 bool
 Plane::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
 {
-    float ndotd = dot(normal, r.d);
+    float ndotd = dot(m_normal, r.d);
     if (fabs(ndotd) < 1e-6) return false;
     
-    float t = dot(normal, (origin-r.o)) / ndotd;
+    float t = dot(m_normal, (m_origin-r.o)) / ndotd;
     if (t < tMin || t > tMax)
         return false;
 
     result.P = r.o + t*r.d;
     result.t = t;
-    result.N = normal;
+    result.N = m_normal;
     result.material = m_material;
 
     return true;
