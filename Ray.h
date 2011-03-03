@@ -40,7 +40,7 @@ class HitInfo
 class Ray
 {
     public:
-        bool diffuse;
+        bool isDiffuse;
         Vector3 o,      //!< Origin of ray
                 d;      //!< Direction of ray
 
@@ -62,7 +62,7 @@ class Ray
 
     Ray() : o(), d(Vector3(0.0f,0.0f,1.0f))
     {
-        diffuse = false;
+        isDiffuse = false;
 #ifdef STATS
         Stats::Rays++;
 #endif
@@ -74,7 +74,7 @@ class Ray
 
     Ray(const Vector3& o, const Vector3& d) : o(o), d(d)
     {
-        diffuse = false;
+        isDiffuse = false;
 #ifdef STATS
         Stats::Rays++;
 #endif
@@ -102,7 +102,7 @@ class Ray
             return Ray(origin + aligned_d * epsilon, aligned_d);
         }
 
-        Ray Random(const HitInfo & hitInfo) const
+        Ray diffuse(const HitInfo & hitInfo) const
         {
 #ifdef STATS
             Stats::Secondary_Rays++;
@@ -112,13 +112,13 @@ class Ray
             float theta = 2.0f * PI * ((float) rand() / (float)RAND_MAX);
 
             Ray random = alignToVector(hitInfo.N, hitInfo.P, theta, phi);
-            random.diffuse = true;
+            random.isDiffuse = true;
 
             return random;
         }
 
         //Shoots a reflection ray. If path tracing is enabled, shoot a random ray according to the glossyness of the material.
-        Ray Reflect(const HitInfo & hitInfo) const
+        Ray reflect(const HitInfo & hitInfo) const
         {
 #ifdef STATS
             Stats::Secondary_Rays++;
@@ -141,7 +141,7 @@ class Ray
 #endif
         }
 
-        Ray Refract(const HitInfo & hitInfo) const
+        Ray refract(const HitInfo & hitInfo) const
         {
             float n1, n2;
             Vector3 n;
@@ -165,7 +165,7 @@ class Ray
             // Total internal reflection: all of the energy is reflected
             if (energy < 0)
             {
-                return Reflect(hitInfo);
+                return reflect(hitInfo);
             }
 
 #ifdef STATS

@@ -75,7 +75,7 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
         l /= sqrt(falloff);
 
 		// No light contribution if Ray hits an object 
-#ifndef DISABLE_SHADOWS
+#ifndef DISABLE_SHADOWS && ifndef VISUALIZE_PHOTON_MAP
 		Ray Shadow(hit.P+(l*epsilon), l);
 		HitInfo hitInfo;
 #ifdef STATS 
@@ -83,7 +83,7 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 #endif
 		if (scene.trace(hitInfo, Shadow, 0.f, sqrt(falloff)))
 		{
-			continue;
+//			continue;
 		}
 #endif
 

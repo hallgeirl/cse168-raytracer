@@ -6,7 +6,7 @@
 #include "Camera.h"
 #include "Image.h"
 #include "Console.h"
-
+#include "Sphere.h"
 
 #ifdef STATS
 #include "Stats.h"
@@ -52,19 +52,27 @@ Scene::preCalc()
         pLight->preCalc();
     }
     t1 += getTime();
-    printf("Time spent preprocessing objects and lights: %lf\n", t1);
+    debug("Time spent preprocessing objects and lights: %lf\n", t1);
+    
     debug("Building BVH...\n");
     t1 = -getTime();
     m_bvh.build(&m_objects);
     t1 += getTime();
-    debug("Done building BVH.\n");
-    printf("Time spent building BVH: %lf\n", t1);
+    debug("Done building BVH. Time spent: %lf\n", t1);
+
+    debug("Generating photon map... Number of photons: %d\n", PhotonsPerLightSource);
+    t1 = -getTime();
+    //Generate photon map
+    tracePhotons();
+    t1 += getTime();
+    debug("Done generating photon map. Time spent: %f\n", t1);
+
 }
 
 
 inline float tonemapValue(float value, float maxIntensity)
 {
-    return sigmoid(7*value-4);
+    return sigmoid(6*value-3);
     //return std::min(pow(value / maxIntensity, 0.35f)*1.1f, 1.0f);
 }
 
@@ -73,6 +81,9 @@ Scene::raytraceImage(Camera *cam, Image *img)
 {
 	int depth = TRACE_DEPTH;
     float minIntensity = infinity, maxIntensity = -infinity;
+
+
+
     printf("Rendering Progress: %.3f%%\r", 0.0f);
     fflush(stdout);
 
@@ -81,6 +92,7 @@ Scene::raytraceImage(Camera *cam, Image *img)
     Vector3 *tempImage = new Vector3[height*width];
 
     double t1 = -getTime();
+
 
     // loop over all pixels in the image
     #ifdef OPENMP
@@ -138,7 +150,7 @@ Scene::raytraceImage(Camera *cam, Image *img)
 
         }
         #ifdef OPENMP
-        #pragma omp master
+        if (omp_get_thread_num() == 0)
         #endif
         {
             printf("Rendering Progress: %.3f%%\r", i/float(img->height())*100.0f);
@@ -256,7 +268,7 @@ bool Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 			if (hitInfo.material->isDiffuse())
 			{
 				Vector3 diffuseResult;
-				Ray diffuseRay = ray.Random(hitInfo);
+				Ray diffuseRay = ray.diffuse(hitInfo);
 
 				if (traceScene(diffuseRay, diffuseResult, depth))
 				{
@@ -270,7 +282,7 @@ bool Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 			if (hitInfo.material->isReflective())
 			{
 				Vector3 reflectResult;
-				Ray reflectRay = ray.Reflect(hitInfo);
+				Ray reflectRay = ray.reflect(hitInfo);
 
 				if (traceScene(reflectRay, reflectResult, depth))
 				{
@@ -282,7 +294,7 @@ bool Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 			if (hitInfo.material->isRefractive())
 			{
 				Vector3 refractResult;
-				Ray	refractRay = ray.Refract(hitInfo);
+				Ray	refractRay = ray.refract(hitInfo);
 
 				if (traceScene(refractRay, refractResult, depth))
 				{
@@ -300,6 +312,95 @@ bool Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
     return hit;
 }
 
+//Shoot out all photons and trace them
+void Scene::tracePhotons()
+{
+    printf("Photon Map Progress: %.3f%%\r", 0.0f);
+    for (int l = 0; l < m_lights.size(); l++)
+    {
+        PointLight *light = m_lights[l];
+        #ifdef OPENMP
+        #pragma omp parallel for schedule(static, 1000)
+        #endif
+        for (int i = 0; i < PhotonsPerLightSource; i++)
+        {
+            //Create a new photon
+            Photon p;
+            Vector3 power = light->color() / (light->wattage()/PhotonsPerLightSource);
+            Vector3 dir = light->samplePhotonDirection();
+            Vector3 pos = light->samplePhotonOrigin();
+            tracePhoton(pos, dir, power);
+            if (i % 1000 == 0)
+                printf("Photon Map Progress: %.3f%%\r", 100.0f*(float)i/(float)PhotonsPerLightSource);
+            
+        }
+    }
+    m_photonMap.balance();
+    #ifdef VISUALIZE_PHOTON_MAP
+    debug("Rebuilding BVH for visualization. Number of objects: %d\n", m_objects.size());
+    m_bvh.build(&m_objects);
+
+    #endif
+}
+
+//Trace a single photon through the scene
+void Scene::tracePhoton(const Vector3& position, const Vector3& direction, const Vector3& power)
+{
+    //Create a ray to trace the scene with
+    Ray ray(position+epsilon*direction, direction);
+    HitInfo hit;
+
+    if (m_bvh.intersect(hit, ray, 0.0f, MIRO_TMAX))
+    {
+        //Do "russian roulette but not really"
+        //Choose a random kind of ray - transmission, diffuse or reflective. Or absorb.
+        //[ --diffuse-- | --specular (refl.)-- | --transmission-- | --absorb-- ]
+        float prob[3], rnd = frand();
+        prob[0] = hit.material->getDiffuse().average();
+        prob[1] = prob[0] + hit.material->getReflection().average();
+        prob[2] = prob[1] + hit.material->getRefraction().average();
+
+        if (rnd > prob[2])
+        {
+            //Absorb. Do nothing.
+            return;
+        }
+
+        if (rnd < prob[0])
+        {
+            //Diffuse.
+            float pos[3] = {hit.P.x, hit.P.y, hit.P.z}, dir[3] = {direction.x, direction.y, direction.z}, pwr[3] = {power.x, power.y, power.z};
+            #ifdef OPENMP
+            #pragma omp critical
+            #endif
+            {
+                m_photonMap.store(pwr, pos, dir);
+
+                #ifdef VISUALIZE_PHOTON_MAP
+                Sphere* sp = new Sphere;
+                sp->setCenter(hit.P);
+                sp->setRadius(0.02f);
+                sp->setMaterial(new Phong(Vector3(1)));
+                addObject(sp);
+                #endif
+            }
+        }
+        else if (rnd < prob[1])
+        {
+            //Reflect.
+            Ray refl = ray.reflect(hit);
+            tracePhoton(hit.P, refl.d, power);
+        }
+        else if (rnd < prob[2])
+        {
+            //Transmit (refract)
+            Ray refr = ray.refract(hit);
+            tracePhoton(hit.P, refr.d, power);
+        }
+    }
+}
+
+
 Vector3
 Scene::getEnvironmentMap(const Ray & ray)
 {
@@ -312,7 +413,7 @@ Scene::getEnvironmentMap(const Ray & ray)
 		coords.u = (atan2(ray.d.x, ray.d.z)) / (2.0f * PI) + 0.5;
 		coords.v = (asin(ray.d.y)) / PI + 0.5;
 		//And just look up the shading value in the texture.
-        if (!ray.diffuse)
+        if (!ray.isDiffuse)
     		envResult = m_environment->lookup2D(coords);
         else
             envResult = m_environment->lowresLookup2D(coords);

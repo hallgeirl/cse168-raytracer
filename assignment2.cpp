@@ -393,20 +393,26 @@ makeCornellScene()
 
     // create and place a point light source
     PointLight * light = new PointLight;
-    light->setPosition(Vector3(2.5, 4.9, -1));
+    light->setPosition(Vector3(2.5, 4.0, -1));
     light->setColor(Vector3(1, 1, 1));
-    light->setWattage(40);
+    light->setWattage(110);
     g_scene->addLight(light);
+    
+    Sphere *sp = new Sphere;
+    sp->setRadius(0.5);
+    sp->setCenter(Vector3(2.5f, 3.0f, -1.0f));
+    sp->setMaterial(new Phong(Vector3(1), Vector3(0), Vector3(1), infinity, 1.5));
+    g_scene->addObject(sp);
 
-    Material* material = new Phong(Vector3(1.0f));
     Material *mat;
-    TriangleMesh * mesh = new TriangleMesh;
+    TriangleMesh * mesh;
+    mesh = new TriangleMesh;
     mesh->load("models/cornell_box_1.obj");
     addMeshTrianglesToScene(mesh, mat = new Phong(Vector3(1,1,1)));
     
     mesh = new TriangleMesh;
     mesh->load("models/cornell_box_2.obj");
-    addMeshTrianglesToScene(mesh, mat = new Phong(Vector3(1), Vector3(1)));
+    addMeshTrianglesToScene(mesh, mat = new Phong(Vector3(1,0,0), Vector3(0)));
 
     mesh = new TriangleMesh;
     mesh->load("models/cornell_box_3.obj");
@@ -414,7 +420,7 @@ makeCornellScene()
     
     mesh = new TriangleMesh;
     mesh->load("models/cornell_box_4.obj");
-    addMeshTrianglesToScene(mesh, new Phong(Vector3(1)));
+    addMeshTrianglesToScene(mesh, new Phong(Vector3(0.5)));
 
     // let objects do pre-calculations if needed
     g_scene->preCalc();
