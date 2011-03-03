@@ -216,6 +216,12 @@ public:
     {
 	return *this = rotated(theta, w);
     }
+
+    //Return the average intensity of the components
+    float average()
+    {
+        return (x+y+z)/3.0f;
+    }
 };
 
 
@@ -270,7 +276,7 @@ Vector3::rotated(float theta, const Vector3 & w) const
 inline std::ostream &
 operator<<(std::ostream& out, const Vector3& v)
 {
-    return out << v.x << " " << v.y << " " << v.z ;
+    return out << v.x << ",\t" << v.y << ",\t" << v.z ;
 }
 
 #endif // CSE168_VECTOR3_H_INCLUDED

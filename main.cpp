@@ -370,7 +370,7 @@ makeTestSphereScene()
     g_camera->setEye(Vector3(0, 1, -9));
     g_camera->setLookAt(Vector3(0, 0, 0));
     g_camera->setUp(Vector3(0, 1, 0));
-    g_camera->setFOV(45);
+    g_camera->setFOV(90);
 
     
 
@@ -388,10 +388,10 @@ makeTestSphereScene()
     g_scene->addLight(light);
 
     Sphere  *sphere = new Sphere;
-    sphere->setCenter(Vector3(0,0.5,-4));
+    sphere->setCenter(Vector3(0,0.5,-5));
     sphere->setRadius(1.5);
-    sphere->setMaterial(m = new Phong(Vector3(0.0f, 1.0f, 0.0f), Vector3(1.0f)));
-    m->setShininess(100);
+    sphere->setMaterial(m = new Phong(Vector3(0.0f, 1.0f, 0.0f), Vector3(0.0f), Vector3(1.0f), 500, 1.5));
+    
     g_scene->addObject(sphere);
 
     Plane *plane = new Plane;
@@ -475,9 +475,13 @@ main(int argc, char*argv[])
     //makeBunny1Scene();
     //makeBunny20Scene();
     //makeSponzaScene();
-    //makeCornellScene();
+    makeCornellScene();
     //makeTeapotScene();
-    makeTestSphereScene(); 
+
+    //Assignment 3 scenes
+    //makeTestSphereScene(); 
+    //makeTestPetalScene();
+
 
     MiroWindow miro(&argc, argv);
 #ifndef NO_GFX
