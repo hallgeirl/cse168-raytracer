@@ -12,6 +12,8 @@ const float DegToRad = PI/180.0f;
 const float RadToDeg = 180.0f/PI;
 const float TRACE_DEPTH = 5;
 const float TRACE_SAMPLES = 100;
+const float PHOTON_MAX_DIST = 100.f;
+const float PHOTON_SAMPLES = 500.f;
 
 #include <stdlib.h>
 #include "OpenGL.h"

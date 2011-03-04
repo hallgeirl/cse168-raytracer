@@ -36,7 +36,7 @@ public:
 	bool traceScene(const Ray& ray, Vector3& shadeResult, int depth);
 
     void tracePhotons();
-    void tracePhoton(const Vector3& position, const Vector3& direction, const Vector3& power);
+    void tracePhoton(const Vector3& position, const Vector3& direction, const Vector3& power, int depth);
 
 	void setEnvironment(Texture* environment) { m_environment = environment; }
 	Vector3 getEnvironmentMap(const Ray & ray);

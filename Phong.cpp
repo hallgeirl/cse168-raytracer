@@ -83,7 +83,7 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 #endif
 		if (scene.trace(hitInfo, Shadow, 0.f, sqrt(falloff)))
 		{
-//			continue;
+			continue;
 		}
 #endif
 

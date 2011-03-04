@@ -263,20 +263,29 @@ bool Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 			
 			shadeResult = hitInfo.material->shade(ray, hitInfo, *this);
 			
-            #ifdef PATH_TRACING
-			//if diffuse material, send trace with RandomRay generate by Monte Carlo
 			if (hitInfo.material->isDiffuse())
+			//if diffuse material, send trace with RandomRay generate by Monte Carlo
 			{
-				Vector3 diffuseResult;
+
+            #ifdef PATH_TRACING
+
 				Ray diffuseRay = ray.diffuse(hitInfo);
 
 				if (traceScene(diffuseRay, diffuseResult, depth))
 				{
 					shadeResult += (hitInfo.material->getDiffuse() * diffuseResult);
 				}
-			}
-			#endif
+			#else
+				float pos[3] = {hitInfo.P.x, hitInfo.P.y, hitInfo.P.z};
+				float normal[3] = {hitInfo.N.x, hitInfo.N.y, hitInfo.N.z};
+				float diffuseColor[3];
+            
+				m_photonMap.irradiance_estimate(diffuseColor, pos, normal, PHOTON_MAX_DIST, PHOTON_SAMPLES);
 
+				shadeResult += Vector3(diffuseColor[0], diffuseColor[1], diffuseColor[2])/(PHOTON_SAMPLES * PI * pow(PHOTON_MAX_DIST, 2.0f));
+
+			#endif
+			}
 			
 			//if reflective material, send trace with ReflectRay
 			if (hitInfo.material->isReflective())
@@ -329,7 +338,7 @@ void Scene::tracePhotons()
             Vector3 power = light->color() / (light->wattage()/PhotonsPerLightSource);
             Vector3 dir = light->samplePhotonDirection();
             Vector3 pos = light->samplePhotonOrigin();
-            tracePhoton(pos, dir, power);
+            tracePhoton(pos, dir, power, 0);
             if (i % 1000 == 0)
                 printf("Photon Map Progress: %.3f%%\r", 100.0f*(float)i/(float)PhotonsPerLightSource);
             
@@ -344,11 +353,13 @@ void Scene::tracePhotons()
 }
 
 //Trace a single photon through the scene
-void Scene::tracePhoton(const Vector3& position, const Vector3& direction, const Vector3& power)
+void Scene::tracePhoton(const Vector3& position, const Vector3& direction, const Vector3& power, int depth)
 {
     //Create a ray to trace the scene with
     Ray ray(position+epsilon*direction, direction);
     HitInfo hit;
+
+	++depth;
 
     if (m_bvh.intersect(hit, ray, 0.0f, MIRO_TMAX))
     {
@@ -374,28 +385,32 @@ void Scene::tracePhoton(const Vector3& position, const Vector3& direction, const
             #pragma omp critical
             #endif
             {
-                m_photonMap.store(pwr, pos, dir);
+				//only store indirect lighting
+				if (depth > 1)
+				{
+					m_photonMap.store(pwr, pos, dir);
 
-                #ifdef VISUALIZE_PHOTON_MAP
-                Sphere* sp = new Sphere;
-                sp->setCenter(hit.P);
-                sp->setRadius(0.02f);
-                sp->setMaterial(new Phong(Vector3(1)));
-                addObject(sp);
-                #endif
+					#ifdef VISUALIZE_PHOTON_MAP
+					Sphere* sp = new Sphere;
+					sp->setCenter(hit.P);
+					sp->setRadius(0.02f);
+					sp->setMaterial(new Phong(Vector3(1)));
+					addObject(sp);
+					#endif
+				}
             }
         }
         else if (rnd < prob[1])
         {
             //Reflect.
             Ray refl = ray.reflect(hit);
-            tracePhoton(hit.P, refl.d, power);
+            tracePhoton(hit.P, refl.d, power, depth);
         }
         else if (rnd < prob[2])
         {
             //Transmit (refract)
             Ray refr = ray.refract(hit);
-            tracePhoton(hit.P, refr.d, power);
+            tracePhoton(hit.P, refr.d, power, depth);
         }
     }
 }
