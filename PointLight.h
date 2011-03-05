@@ -35,12 +35,13 @@ public:
     
     //Sample a position on the surface of the light source.
     //For point lights, it's m_position. For area lights, a random position on the surface should be generated.
-    virtual Vector3 samplePhotonOrigin() const  
+    //The parameters can be used to produce a more evenly distributed sampling for area lights.
+    virtual Vector3 samplePhotonOrigin(int sampleNumber = 0, int totalSamples = 1) const  
     {
         return m_position;
     }
 
-    void preCalc() {} // use this if you need to
+    virtual void preCalc() {} // use this if you need to
 
 protected:
     Vector3 m_position;

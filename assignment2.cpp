@@ -9,6 +9,7 @@
 #include "TriangleMesh.h"
 #include "Triangle.h"
 #include "Lambert.h"
+#include "SquareLight.h"
 
 // local helper function declarations
 namespace
@@ -385,6 +386,7 @@ makeCornellScene()
     g_camera->setUp(Vector3(0, 1, 0));
     g_camera->setFOV(90);
 
+
 /*    Sphere *sp = new Sphere;
     sp->setCenter(Vector3(3, 5.4, -3));
     sp->setRadius(0.2);
@@ -392,15 +394,18 @@ makeCornellScene()
     g_scene->addObject(sp);*/
 
     // create and place a point light source
-    PointLight * light = new PointLight;
-    light->setPosition(Vector3(2.5, 4.0, -1));
+//    PointLight * light = new PointLight;
+    SquareLight *light = new SquareLight;
+    light->setNormal(Vector3(0, -1, 0));
+    light->setDimensions(1, 1);
+    light->setPosition(Vector3(2.5, 4.9, -1));
     light->setColor(Vector3(1, 1, 1));
-    light->setWattage(110);
+    light->setWattage(130);
     g_scene->addLight(light);
     
     Sphere *sp = new Sphere;
     sp->setRadius(0.5);
-    sp->setCenter(Vector3(2.5f, 3.0f, -1.0f));
+    sp->setCenter(Vector3(1.5f, 1.5f, -1.0f));
     sp->setMaterial(new Phong(Vector3(1), Vector3(0), Vector3(1), infinity, 1.5));
     g_scene->addObject(sp);
 
@@ -420,7 +425,7 @@ makeCornellScene()
     
     mesh = new TriangleMesh;
     mesh->load("models/cornell_box_4.obj");
-    addMeshTrianglesToScene(mesh, new Phong(Vector3(0.5)));
+    addMeshTrianglesToScene(mesh, new Phong(Vector3(1)));
 
     // let objects do pre-calculations if needed
     g_scene->preCalc();

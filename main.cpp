@@ -376,13 +376,13 @@ makeTestSphereScene()
 
     // create and place a point light source
     PointLight * light = new PointLight;
-    light->setPosition(Vector3(0, 25, 0));
+    light->setPosition(Vector3(0, 5, 0));
     light->setColor(Vector3(1, 1, 1));
     light->setWattage(8000);
- //   g_scene->addLight(light);
+    g_scene->addLight(light);
 
     light = new PointLight;
-    light->setPosition(Vector3(0, 25, -25));
+    light->setPosition(Vector3(0, 5, -25));
     light->setColor(Vector3(1, 1, 1));
     light->setWattage(15000);
     g_scene->addLight(light);
@@ -452,6 +452,7 @@ makeTestScene()
 int
 main(int argc, char*argv[])
 {
+    srand(time(0));
     //Initialize FreeImage
     FreeImage_Initialise();
 #ifdef __SSE4_1__

@@ -2,7 +2,7 @@
 #include "Phong.h"
 #include "Ray.h"
 #include "Scene.h"
-
+#include "SquareLight.h"
 #ifdef STATS
 #include "Stats.h"
 #endif
@@ -62,43 +62,48 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
     for (lightIter = lightlist->begin(); lightIter != lightlist->end(); lightIter++)
     {
         PointLight* pLight = *lightIter;
-
-        Vector3 l = pLight->position() - hit.P;
-
-		Vector3 r = - l + 2 * dot(l, hit.N) * hit.N;
-		r.normalize();
-
-        // the inverse-squared falloff
-        float falloff = l.length2();
-
-        // normalize the light direction
-        l /= sqrt(falloff);
-
-		// No light contribution if Ray hits an object 
-#ifndef DISABLE_SHADOWS && ifndef VISUALIZE_PHOTON_MAP
-		Ray Shadow(hit.P+(l*epsilon), l);
-		HitInfo hitInfo;
-#ifdef STATS 
-		Stats::Shadow_Rays++;
-#endif
-		if (scene.trace(hitInfo, Shadow, 0.f, sqrt(falloff)))
-		{
-			continue;
-		}
-#endif
-
-        // get the diffuse component
-        float nDotL = dot(hit.N, l);
-
-		// get the specular component
-        float eDotr = dot(e, r);
-
+        float contribution = 0, samples;
 		Vector3 result = pLight->color();
+        #ifdef PATH_TRACING
+        samples = 1;
+        #else
+        if (dynamic_cast<SquareLight*>(*lightIter))
+            samples = 49;
+        else
+            samples = 1;
+        #endif
 
-		//removed m_specular from specular highlight 
-		//specular highlight should be dependent on shinyness rather than reflective component
-		L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / (4 * PI)) * diffuseColor * m_diffuse);
-        //Old specular highlights component. /*+ (pow(std::max(0.0f, eDotr/falloff * pLight->wattage() / (4 * PI)), m_a))*/
+        for (int i = 0; i < samples; i++)
+        {
+
+            Vector3 l = pLight->samplePhotonOrigin(i, samples) - hit.P;
+
+            // the inverse-squared falloff
+            float falloff = l.length2();
+
+            // normalize the light direction
+            l /= sqrt(falloff);
+
+            // No light contribution if Ray hits an object 
+#if ! defined (DISABLE_SHADOWS) && ! defined (VISUALIZE_PHOTON_MAP)
+            Ray Shadow(hit.P+(l*epsilon), l);
+            HitInfo hitInfo;
+#ifdef STATS 
+            Stats::Shadow_Rays++;
+#endif
+            if (scene.trace(hitInfo, Shadow, 0.f, sqrt(falloff)))
+            {
+                continue;
+            }
+#endif
+
+            // get the diffuse component
+            float nDotL = dot(hit.N, l);
+
+            //removed m_specular from specular highlight 
+            //specular highlight should be dependent on shinyness rather than reflective component
+            L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / (4.0f * PI * (float)samples)) * diffuseColor * m_diffuse);
+        }
     }
 
     return L;

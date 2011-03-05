@@ -23,6 +23,9 @@ public:
 	//Default to 2D lookup
 	virtual LookupCoordinates GetLookupCoordinates() const { return UV; }
 
+    virtual Vector3 diffuse2D(const tex_coord2d_t & texcoords) const { return Vector3(0); }
+    virtual Vector3 diffuse3D(const tex_coord3d_t & texcoords) const { return Vector3(0); }
+
     virtual float   bumpHeight2D(const tex_coord2d_t & texture_coords) const { return 0; }
     virtual float   bumpHeight3D(const tex_coord3d_t & texture_coords) const { return 0; }
 

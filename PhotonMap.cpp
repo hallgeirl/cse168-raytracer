@@ -10,6 +10,9 @@
 #include <string.h>
 #include <math.h>
 #include "PhotonMap.h"
+#include <iostream>
+
+using namespace std;
 
 /* This is the constructor for the photon map.
  * To create the photon map it is necessary to specify the
@@ -95,22 +98,28 @@ void Photon_map :: irradiance_estimate(
   locate_photons( &np, 1 );
 
   // if less than 8 photons return
-  if (np.found<8)
-    return;
+  /*if (np.found<8)
+    return;*/
 
   float pdir[3];
-
+ static bool foo = false;
   // sum irradiance from all photons
   for (int i=1; i<=np.found; i++) {
     const Photon *p = np.index[i];
     // the photon_dir call and following if can be omitted (for speed)
     // if the scene does not have any thin surfaces
     photon_dir( pdir, p );
-    if ( (pdir[0]*normal[0]+pdir[1]*normal[1]+pdir[2]*normal[2]) < 0.0f ) {
+    
+/*    if (!foo){ foo = true;
+    cout << endl << "dir2 " << pdir[0] << " " << pdir[1] << " " << pdir[2] << endl;
+    cout << "normal " << normal[0] << " " << normal[1] << " " << normal[2] << endl;
+    cout << "dot " << pdir[0]*normal[0]+pdir[1]*normal[1]+pdir[2]*normal[2] << endl;}*/
+    //TODO: Figure out what causes this check to fail when it shouldn't
+    //if ( (pdir[0]*normal[0]+pdir[1]*normal[1]+pdir[2]*normal[2]) < 0.0f ) {
       irrad[0] += p->power[0];
       irrad[1] += p->power[1];
       irrad[2] += p->power[2];
-    }
+    //}
   }
 
   const float tmp=(1.0f/M_PI)/(np.dist2[0]);	// estimate of density
