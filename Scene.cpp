@@ -426,6 +426,9 @@ void Scene::tracePhoton(const Vector3& position, const Vector3& direction, const
             }
             else
             {
+#ifdef STATS
+				Stats::Photon_Bounces++;
+#endif
                 //Shoot out a new diffuse photon
                 Ray r = ray.random(hit);
                 HitInfo diffHit;
@@ -435,6 +438,9 @@ void Scene::tracePhoton(const Vector3& position, const Vector3& direction, const
         }
         else if (rnd < prob[1])
         {
+#ifdef STATS
+			Stats::Photon_Bounces++;
+#endif
             //Reflect.
             Ray refl = ray.reflect(hit);
             PHOTON_DEBUG("Tracing reflected photon");
@@ -442,6 +448,9 @@ void Scene::tracePhoton(const Vector3& position, const Vector3& direction, const
         }
         else if (rnd < prob[2])
         {
+#ifdef STATS
+			Stats::Photon_Bounces++;
+#endif
             //Transmit (refract)
             Ray refr = ray.refract(hit);
             PHOTON_DEBUG("Tracing refracted photon");
