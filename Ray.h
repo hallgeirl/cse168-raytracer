@@ -117,6 +117,31 @@ class Ray
             return random;
         }
 
+        Ray random(const HitInfo & hitInfo) const
+        {
+#ifdef STATS
+            Stats::Secondary_Rays++;
+#endif
+            //bias to the surface normal
+            float x, y, z;
+			do
+			{ 
+				x = 2*frand() - 1;
+				y = 2*frand() - 1;
+				z = 2*frand() - 1;
+			} while (x*x + y*y + z*z < 1.0f && dot(Vector3(x, y, z), hitInfo.N) > 0);
+
+            Ray random(hitInfo.P, Vector3(x, y, z));
+		    /*float phi = asin((float) rand() / (float)RAND_MAX);
+            float theta = 2.0f * PI * ((float) rand() / (float)RAND_MAX);
+
+            Ray random = alignToVector(hitInfo.N, hitInfo.P, theta, phi);*/
+
+            random.isDiffuse = true;
+
+            return random;
+        }
+
         //Shoots a reflection ray. If path tracing is enabled, shoot a random ray according to the glossyness of the material.
         Ray reflect(const HitInfo & hitInfo) const
         {

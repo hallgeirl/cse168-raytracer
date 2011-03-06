@@ -427,7 +427,7 @@ void Scene::tracePhoton(const Vector3& position, const Vector3& direction, const
             else
             {
                 //Shoot out a new diffuse photon
-                Ray r = ray.diffuse(hit);
+                Ray r = ray.random(hit);
                 HitInfo diffHit;
                 PHOTON_DEBUG("Tracing diffuse photon");
                 tracePhoton(r.o, r.d, diffuseColor*power/prob[0], depth);
