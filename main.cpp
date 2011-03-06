@@ -354,7 +354,16 @@ void makeBUNNIZ()
 void
 makeTestSphereScene()
 {
-	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/earth.jpg"));
+
+	Texture2D *autumnHDR = new CloudTexture(3.0f,  //Scale (higher is smaller)
+	                                        0.1f,  //Cloud size
+	                                        0.2f, //Cloud density
+	                                        50.0f,  //Sharpness
+	                                        0.4f,  //Ambient (higher number means lower contrast)
+	                                        0.35f,  //Shadow threshold
+	                                        0.5f,  //Shadow magnitude
+	                                        0.3f   //Shadow sharpness
+	                                        ); 
     Material *m;
     cout << "Test scene" << endl;
     g_camera = new Camera;
@@ -366,7 +375,7 @@ makeTestSphereScene()
     // set up the camera
     g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
     //g_camera->setEye(Vector3(-5, 2, 3));
-    g_camera->setEye(Vector3(0, 1, -9));
+    g_camera->setEye(Vector3(9, 1, 0));
     g_camera->setLookAt(Vector3(0, 0, 0));
     g_camera->setUp(Vector3(0, 1, 0));
     g_camera->setFOV(90);
@@ -393,7 +402,7 @@ makeTestSphereScene()
     sphere->setRadius(3);
     sphere->setMaterial(m = new Phong(Vector3(0.0f, 1.0f, 0.0f), Vector3(0.1f), Vector3(0.0f), 10, 1.5));
     
-    g_scene->addObject(sphere);
+    //g_scene->addObject(sphere);
 
 	//close sphere
 
@@ -402,7 +411,7 @@ makeTestSphereScene()
     sphereClose->setRadius(1.5);
     sphereClose->setMaterial(m = new Phong(Vector3(1.0f, 0.0f, 0.0f), Vector3(0.1f), Vector3(0.0f), 10, 1.5));
 
-    g_scene->addObject(sphereClose);
+   // g_scene->addObject(sphereClose);
 	
 	//far sphere
 
@@ -411,10 +420,18 @@ makeTestSphereScene()
     sphereFar->setRadius(5);
     sphereFar->setMaterial(m = new Phong(Vector3(0.0f, 0.0f, 1.0f), Vector3(0.1f), Vector3(0.0f), 10, 1.5));
 
-    g_scene->addObject(sphereFar);
+ //   g_scene->addObject(sphereFar);
+
+
+	sphere = new Sphere;
+    sphere->setCenter(Vector3(0,0.5,0));
+    sphere->setRadius(3);
+    sphere->setMaterial(m = new Phong(Vector3(0.0f, 1.0f, 0.0f), Vector3(1.f), Vector3(0.0f), 10, 1.5));
+    
+    g_scene->addObject(sphere);
 
     Plane *plane = new Plane;
-    plane->setMaterial(m = new TexturedPhong(new CheckerBoardTexture(Vector3(1), Vector3(0), 1)));
+    plane->setMaterial(m = new TexturedPhong(new CheckerBoardTexture(Vector3(1), Vector3(0), 1), Vector3(0)));
     plane->setOrigin(Vector3(0,-1,0));
     g_scene->addObject(plane);
 

@@ -10,6 +10,7 @@
 #include <FreeImage.h>
 #include <Worley.h>
 #include <cmath>
+#include "Utility.h"
 
 //Generate turbulent perlin noise at (x,y,z).
 //The returned number is between -1 and 1.
@@ -129,6 +130,42 @@ public:
         if (coords.v < 0) v += m_scale;
         return ((int)((int)u+(int)v) % 2 == 0 ? m_color1 : m_color2); 
     }
+};
+
+class CloudTexture : public Texture2D
+{
+public:
+    CloudTexture(float scale = 3.0f, float cloudSize = 0.3f, float density = -0.1f, float sharpness = 20.0f, float ambient = 0.3f, 
+                 float shadowThreshold = 0.3, float shadowMagnitude = 0.5, float shadowSharpness = 0.3)
+    { 
+        m_scale = scale;
+        
+        m_cloudSize = cloudSize;
+        m_density = density;
+        m_sharpness = sharpness;
+        m_ambient = ambient;
+        m_shadowThreshold = shadowThreshold;
+        m_shadowMagnitude = shadowMagnitude;
+        m_shadowSharpness = shadowSharpness;
+    }
+
+    virtual Vector3 lookup2D(const tex_coord2d_t & coords) 
+    {
+        float u = m_scale * coords.u, 
+              v = m_scale * coords.v;
+        
+        float val = generateNoise(u, v, 0, 1.0f/m_cloudSize, 2, 0.5, 15);
+        
+        float cloudResult = std::min(1.0f, m_ambient+sigmoid(m_sharpness*(val + m_density)));
+        float shadowResult = m_shadowMagnitude*sigmoid(m_shadowSharpness*m_sharpness*(val - m_shadowThreshold));
+        
+        return Vector3(cloudResult, cloudResult, 1) - 
+               Vector3(shadowResult);
+    }
+    
+private:
+    float m_scale;
+    float m_cloudSize, m_density, m_sharpness, m_ambient, m_shadowThreshold, m_shadowMagnitude, m_shadowSharpness;
 };
 
 class PetalTexture : public Texture3D
