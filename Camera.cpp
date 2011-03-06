@@ -104,7 +104,7 @@ Ray
 Camera::eyeRay(int x, int y, int imageWidth, int imageHeight, bool randomize)
 {
     static bool initialized = false;
-    static Vector3 wDir, uDir, vDir, new_eye;
+    static Vector3 wDir, uDir, vDir;
     static float top, left, bottom, right, aspectRatio;
     if (!initialized)
     {
@@ -128,6 +128,7 @@ Camera::eyeRay(int x, int y, int imageWidth, int imageHeight, bool randomize)
 
 	//randomize eye location around circle of confusion
 	float x_rand, y_rand;
+	Vector3 new_eye;
 	do {
 		x_rand = (2*frand() - 1) * DOF_APERTURE;
 		y_rand = (2*frand() - 1) * DOF_APERTURE;
@@ -156,5 +157,9 @@ Camera::eyeRay(int x, int y, int imageWidth, int imageHeight, bool randomize)
     const float imPlaneUPos = left   + (right - left)*(((float)x+dx)/(float)imageWidth);
     const float imPlaneVPos = bottom + (top - bottom)*(((float)y+dy)/(float)imageHeight);
 
+	#ifdef DOF
     return Ray(new_eye, (imPlaneUPos*uDir + imPlaneVPos*vDir - wDir).normalize());
+	#endif 
+
+    return Ray(m_eye, (imPlaneUPos*uDir + imPlaneVPos*vDir - wDir).normalize());
 }
