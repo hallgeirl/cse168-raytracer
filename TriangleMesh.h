@@ -36,6 +36,7 @@ public:
 
     Vector3* vertices()     {return m_vertices;}
     Vector3* normals()      {return m_normals;}
+    VectorR2* texCoords()   {return m_texCoords;}
     
     #ifdef __SSE4_1__
     __m128* SSEvertices()     {return m_SSEvertices;}
@@ -44,6 +45,7 @@ public:
     
     TupleI3* vIndices()     {return m_vertexIndices;}
     TupleI3* nIndices()     {return m_normalIndices;}
+	TupleI3* tIndices()		{return m_texCoordIndices;}
     int numTris()           {return m_numTris;}
 
 protected:
