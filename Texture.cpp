@@ -20,7 +20,7 @@ Texture loaded from a image file.
 ********************************/
 
 //Tonemaps to (0,1)
-float LoadedTexture::tonemapValue(float value)
+float LoadedTexture::tonemapValue(float value) const
 {
     if (FreeImage_GetImageType(m_bitmap) == FIT_BITMAP) return value;
     
@@ -152,7 +152,7 @@ Vector3 LoadedTexture::getPixel(FIBITMAP* bm, int x, int y)
     return output;
 }
 
-Vector3 LoadedTexture::lookup(const tex_coord2d_t & texture_coords, bool lowres)
+Vector3 LoadedTexture::lookup(const tex_coord2d_t & texture_coords, bool lowres) const
 {
     float u = texture_coords.u, v = texture_coords.v;
     FIBITMAP* bm = (lowres ? m_lowres : m_bitmap);
@@ -227,7 +227,7 @@ void CellularTexture2D::populateGrid(int points)
 
 
 
-Vector3 CellularTexture2D::lookup2D(const tex_coord2d_t & coords)
+Vector3 CellularTexture2D::lookup2D(const tex_coord2d_t & coords) const
 {
     float *f = getClosestDistances(coords, 4);
     
@@ -243,7 +243,7 @@ Vector3 CellularTexture2D::lookup2D(const tex_coord2d_t & coords)
 }
 
 //Find the n closest distances to the given point
-float* CellularTexture2D::getClosestDistances(const tex_coord2d_t & coords, int n)
+float* CellularTexture2D::getClosestDistances(const tex_coord2d_t & coords, int n) const
 {
     //Make sure coords is between 0 and 1
     float u = coords.u - int(coords.u), 
@@ -387,7 +387,7 @@ float StoneTexture::bumpHeight2D(const tex_coord2d_t & coords) const
 }
 
 
-Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
+Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords) const
 {
     float red, green, blue;
     float u = coords.u * m_scale, v = coords.v * m_scale;
@@ -438,7 +438,7 @@ float PetalTexture::bumpHeight3D(const tex_coord3d_t & coords) const
     return 1.0f;
 }
 
-Vector3 PetalTexture::lookup3D(const tex_coord3d_t & coords)
+Vector3 PetalTexture::lookup3D(const tex_coord3d_t & coords) const
 {
 //    Vector3 baseColor(0.6f, 0.25f, 0.33f);
 //    Vector3 tipColor(0.92f, 0.57f, 0.62f);
