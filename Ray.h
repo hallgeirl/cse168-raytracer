@@ -136,6 +136,7 @@ class Ray
             return alignToVector(d_reflect, hitInfo.P, theta, phi);
 #else
             Vector3 d_r = d - 2 * dot(hitInfo.N, d) * hitInfo.N;
+			d_r.normalize();
             Ray reflect(hitInfo.P + d_r * epsilon, d_r);
             return reflect;
 #endif

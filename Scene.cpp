@@ -115,7 +115,7 @@ Scene::raytraceImage(Camera *cam, Image *img)
             Vector3 tempShadeResult;
             Vector3 shadeResult(0.f);
 
-			#ifdef PATH_TRACING
+			#if defined (PATH_TRACING) || defined(DOF)
 			for (int k = 0; k < TRACE_SAMPLES; ++k)
 			{
                 ray = cam->eyeRay(j, i, width, height, true);

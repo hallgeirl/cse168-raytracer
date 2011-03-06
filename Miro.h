@@ -14,6 +14,8 @@ const float TRACE_DEPTH = 5;
 const float TRACE_SAMPLES = 100;
 const float PHOTON_MAX_DIST = 1e10;
 const float PHOTON_SAMPLES = 100.f;
+const float DOF_APERTURE = 0.25f;
+const float DOF_FOCUS_PLANE = 2.0f;
 
 
 #include <stdlib.h>
