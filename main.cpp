@@ -495,13 +495,13 @@ main(int argc, char*argv[])
     //makeBunny1Scene();
     //makeBunny20Scene();
     //makeSponzaScene();
-    //makeCornellScene();
+    makeCornellScene();
     //makeTeapotScene();
 
     //Assignment 3 scenes
     //makeTestSphereScene(); 
     //makeTestPetalScene();
-	makeTestSphereTextureScene();
+	//makeTestSphereTextureScene();
 
 
     MiroWindow miro(&argc, argv);

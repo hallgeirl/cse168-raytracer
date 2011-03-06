@@ -41,31 +41,36 @@ makeTestPetalScene()
     
     // set up the camera
     g_camera->setBGColor(Vector3(0.0f, 0.0f, 0.2f));
-    g_camera->setEye(Vector3(2, 4, 0));
-    g_camera->setLookAt(Vector3(0, 0, 6));
+    g_camera->setEye(Vector3(0, 0, 10));
+    //g_camera->setEye(Vector3(2, 4, 0));
+    g_camera->setLookAt(Vector3(0, 0, 0));
+    //g_camera->setLookAt(Vector3(0, 0, 6));
     g_camera->setUp(Vector3(0, 1, 0));
     g_camera->setFOV(45);
 
     // create and place a point light source
     PointLight * light = new PointLight;
-    light->setPosition(Vector3(10, 10, 10));
+    light->setPosition(Vector3(50, 50, 50));
     light->setColor(Vector3(1, 1, 1));
-    light->setWattage(400);
+    light->setWattage(40000);
     g_scene->addLight(light);
 
 	 // create and place a point light source
     PointLight * amlight = new PointLight;
-    amlight->setPosition(Vector3(-10, 10, 10));
+    amlight->setPosition(Vector3(-20, 20, 20));
     amlight->setColor(Vector3(1, 1, 1));
-    amlight->setWattage(300);
+    amlight->setWattage(30000);
     g_scene->addLight(amlight);
 
 	//Material* material = new Lambert(Vector3(1.0f, 0.3f, 0.3f));
-	Material* material = new TexturedPhong(new PetalTexture(Vector3(0.f), 10), Vector3(0), Vector3(0), 5);
-	addFlowerModel("models/petal.obj", material, g_scene, Vector3(0.f));
+	Material* material = new TexturedPhong(new PetalTexture(Vector3(0.f), 1000), Vector3(0), Vector3(0), 5);
+	addFlowerModel("models/Petals.obj", material, g_scene, Vector3(0.f));
 
-	Material* water = new Phong(Vector3(1.f), Vector3(0), Vector3(1.0f), 5, 1.33);
-	addFlowerModel("models/WaterDrops.obj", water, g_scene, Vector3(0.f));
+//	Material* water = new Phong(Vector3(1.f), Vector3(0), Vector3(1.0f), 5, 1.33);
+//	addFlowerModel("models/WaterDrops.obj", water, g_scene, Vector3(0.f));
+
+	//Material* center = new Phong(Vector3(1.f, 0.6f, 0.1f), Vector3(0.1f), Vector3(0.0f), 5, 1.33);
+	//addFlowerModel("models/FlowerCenter.obj", center, g_scene, Vector3(0.f));
     
     // create the floor triangle
     TriangleMesh * floor = new TriangleMesh;
@@ -77,12 +82,12 @@ makeTestPetalScene()
     floor->setN2(Vector3(0, 1, 0));
     floor->setN3(Vector3(0, 1, 0));
     
-	Material* floorMaterial = new Phong(Vector3(0.5f));
+/*	Material* floorMaterial = new Phong(Vector3(0.5f));
     Triangle* t = new Triangle;
     t->setIndex(0);
     t->setMesh(floor);
     t->setMaterial(floorMaterial); 
-    g_scene->addObject(t);
+    g_scene->addObject(t);*/
     
     // let objects do pre-calculations if needed
     g_scene->preCalc();
