@@ -86,8 +86,12 @@ class Ray
         //Returns a ray that is aligned to a vector v, given spherical coordinates theta and phi.
         static Ray alignToVector(const Vector3& v, const Vector3& origin, float theta, float phi) 
         {
+            Vector3 dir = alignHemisphereToVector(v, theta, phi);
+
+            return Ray(origin + epsilon*dir, dir);
+
             //convert spherical coords to cartesian coords
-            float u1 = sin(phi) * cos(theta);
+           /* float u1 = sin(phi) * cos(theta);
             float u2 = sin(phi) * sin(theta);
             float u3 = cos(phi);
 
@@ -99,7 +103,7 @@ class Ray
             Vector3 aligned_d(u1*t1 + u2*cross(t1, v) + u3*v);
 
             aligned_d.normalize();
-            return Ray(origin + aligned_d * epsilon, aligned_d);
+            return Ray(origin + aligned_d * epsilon, aligned_d);*/
         }
 
         Ray diffuse(const HitInfo & hitInfo) const
@@ -122,16 +126,9 @@ class Ray
 #ifdef STATS
             Stats::Secondary_Rays++;
 #endif
-            //bias to the surface normal
-            float x, y, z;
-			do
-			{ 
-				x = 2*frand() - 1;
-				y = 2*frand() - 1;
-				z = 2*frand() - 1;
-			} while (x*x + y*y + z*z < 1.0f && dot(Vector3(x, y, z), hitInfo.N) > 0);
+            
+            Ray random(hitInfo.P, sampleHemisphereDirection(hitInfo.N));
 
-            Ray random(hitInfo.P, Vector3(x, y, z));
 		   /* float phi = frand() * PI / 2.0f;
             float theta = 2.0f * PI * (frand());
 

@@ -2,6 +2,7 @@
 #include "Triangle.h"
 #include "TriangleMesh.h"
 #include "Ray.h"
+#include "Vector3.h"
 
 #ifdef STATS
 #include "Stats.h"
@@ -87,64 +88,7 @@ Triangle::renderGL()
 bool
 Triangle::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
 {
-#ifdef __SSE4_1__
-
-/*    const __m128 _A = m_mesh->SSEvertices()[ti3.v[0]];
-    const __m128 _B = m_mesh->SSEvertices()[ti3.v[1]];
-    const __m128 _C = m_mesh->SSEvertices()[ti3.v[2]];
-    const __m128 _nA = m_mesh->SSEnormals()[ni3.v[0]];
-    const __m128 _nB = m_mesh->SSEnormals()[ni3.v[1]];
-    const __m128 _nC = m_mesh->SSEnormals()[ni3.v[2]];
-
-	//Load the ray origin and direction
-	__m128 _rd = _mm_sub_ps(_mm_setzero_ps(), r.d_SSE),
-	       _ro = r.o_SSE;
-	       
-	__m128 _BmA = _mm_sub_ps(_B, _A);
-	__m128 _CmA = _mm_sub_ps(_C, _A);
-	__m128 _normal = _mm_cross_ps(_BmA, _CmA);
-	__m128 _ddotn = _mm_dp_ps(_rd, _normal, 0xEE);
-
-    //Calculate t, beta and gamma
-    __m128 _beta_gamma_t = _mm_div_ps(_mm_add_ps(_mm_dp_ps(_mm_sub_ps(_ro, _A), _normal, 0xE2), //(O-A) * N = t -> r0
-                                                 _mm_add_ps(_mm_dp_ps(_rd, _mm_cross_ps(_mm_sub_ps(_ro, _A), _CmA), 0xE4), //d * (O-A)x(C-A) = beta -> r1
-                                                            _mm_dp_ps(_rd, _mm_cross_ps(_BmA, _mm_sub_ps(_ro, _A)), 0xE8))), // = gamma -> r2
-                                      _ddotn);
-    
-    //Compare to see if we have a hit 
-	float betagammat[4];
-    _mm_storeu_ps(betagammat, _beta_gamma_t);
-    
-    if (betagammat[2] < -epsilon || betagammat[3] < -epsilon || betagammat[2]+betagammat[3] > 1+epsilon || betagammat[1] < tMin || betagammat[1] > tMax) 
-    {
-		return false;
-	}
-
-
-    __m128 _beta  = _mm_shuffle_ps(_beta_gamma_t, _beta_gamma_t, _MM_SHUFFLE(2, 2, 2, 2)),
-           _gamma = _mm_shuffle_ps(_beta_gamma_t, _beta_gamma_t, _MM_SHUFFLE(3, 3, 3, 3));
-	__m128 _alpha = _mm_sub_ps(_mm_sub_ps(_mm_set1_ps(1.0f), _beta), _gamma);
-           
-    //_mm_test_all_zeros(_beta, _gamma);
-    __m128 _P = _mm_add_ps(_A, _mm_add_ps(_mm_mul_ps(_beta, _BmA), _mm_mul_ps(_gamma, _CmA)));
-	__m128 _N = _mm_add_ps(_mm_mul_ps(_alpha, _nA), _mm_add_ps(_mm_mul_ps(_beta, _nB), _mm_mul_ps(_gamma, _nC)));
-	
-    float P[4], N[4];
-    
-    _mm_storeu_ps(P, _P);
-    _mm_storeu_ps(N, _N);
-
-	result.P.x = P[3];
-	result.P.y = P[2];
-	result.P.z = P[1];
-
-	result.N.x = N[3];
-	result.N.y = N[2];
-	result.N.z = N[1];
-	
-	result.t = betagammat[1];
-*/
-#else
+#ifndef __SSE4_1__
     TriangleMesh::TupleI3 ti3 = m_mesh->vIndices()[m_index];
     TriangleMesh::TupleI3 ni3 = m_mesh->nIndices()[m_index];
 
@@ -184,9 +128,9 @@ tex_coord2d_t Triangle::toUVCoordinates(const Vector3 & xyz) const
     const Vector3 & vA = m_mesh->vertices()[vi3.v[0]];
     const Vector3 & vB = m_mesh->vertices()[vi3.v[1]];
     const Vector3 & vC = m_mesh->vertices()[vi3.v[2]];
-    const TriangleMesh::VectorR2 & tA = m_mesh->texCoords()[ti3.v[0]];
-    const TriangleMesh::VectorR2 & tB = m_mesh->texCoords()[ti3.v[1]];
-    const TriangleMesh::VectorR2 & tC = m_mesh->texCoords()[ti3.v[2]];
+    const VectorR2 & tA = m_mesh->texCoords()[ti3.v[0]];
+    const VectorR2 & tB = m_mesh->texCoords()[ti3.v[1]];
+    const VectorR2 & tC = m_mesh->texCoords()[ti3.v[2]];
 
 	// if no texture coords exist
 	//return tex_coord2d_t(xyz.x, xyz.z);

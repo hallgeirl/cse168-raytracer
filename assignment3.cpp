@@ -123,7 +123,7 @@ makeTestSphereTextureScene()
     amlight->setWattage(5000);
     g_scene->addLight(amlight);
 
-	LoadedTexture *earth = new LoadedTexture(std::string("gfx/earth.jpg"), FIF_JPEG);
+	LoadedTexture *earth = new LoadedTexture(std::string("gfx/earth.jpg"));
 //	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"), FIF_HDR);
 	Material* material = new TexturedPhong(earth, Vector3(0), Vector3(0), 5);
 	addFlowerModel("models/TexturedSphere.obj", material, g_scene, Vector3(0.f));

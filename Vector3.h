@@ -10,6 +10,11 @@
 #pragma warning(disable:4244)
 #endif
 
+struct VectorR2
+{
+    float x, y;
+};
+
 class Vector3
 {
 

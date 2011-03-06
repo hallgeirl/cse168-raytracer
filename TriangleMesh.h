@@ -29,10 +29,6 @@ public:
         unsigned int v[3];
     };
 
-    struct VectorR2
-    {
-        float x, y;
-    };
 
     Vector3* vertices()     {return m_vertices;}
     Vector3* normals()      {return m_normals;}

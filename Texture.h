@@ -147,7 +147,7 @@ public:
 class LoadedTexture : public Texture2D
 {
 public:
-    LoadedTexture(std::string filename, enum FREE_IMAGE_FORMAT format);
+    LoadedTexture(std::string filename);
 	~LoadedTexture();
 
     Vector3 lookup(const tex_coord2d_t & coords, bool lowres);
@@ -157,7 +157,6 @@ public:
 protected:
     static Vector3 getPixel(FIBITMAP* bm, int x, int y);     //Get the tonemapped pixel
     static void setPixel(FIBITMAP* bm, Vector3& value, int x, int y);
-    static FIRGBF getRawPixel(FIBITMAP* bm, int x, int y); //Get a pixel from the HDR
     float tonemapValue(float val);
 
 	FIBITMAP* m_bitmap; 

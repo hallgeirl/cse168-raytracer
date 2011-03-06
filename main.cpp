@@ -115,7 +115,7 @@ void addModel(const char* filename, Material *mat, Scene* scene, Vector3 positio
 //Teapot is fully reflective, one sphere is texture mapped with the stone texture and one is part refractive, part reflective.
 void makeScene1()
 {
-	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"), FIF_HDR);
+	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"));
     g_camera = new Camera;
     g_scene = new Scene;
     g_image = new Image;
@@ -202,7 +202,7 @@ void makeScene1()
 //Make a scene with different refractive spheres.
 void makeScene2()
 {
-	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"), FIF_HDR);
+	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"));
     g_camera = new Camera;
     g_scene = new Scene;
     g_image = new Image;
@@ -273,7 +273,7 @@ void makeScene2()
 //Make a scene with different refractive spheres.
 void makeBUNNIZ()
 {
-	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"), FIF_HDR);
+	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"));
     g_camera = new Camera;
     g_scene = new Scene;
     g_image = new Image;
@@ -354,7 +354,7 @@ void makeBUNNIZ()
 void
 makeTestSphereScene()
 {
-	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"), FIF_HDR);
+	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/earth.jpg"));
     Material *m;
     cout << "Test scene" << endl;
     g_camera = new Camera;
@@ -425,7 +425,7 @@ makeTestSphereScene()
 void
 makeTestScene()
 {
-	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"), FIF_HDR);
+	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"));
     cout << "Test scene" << endl;
     g_camera = new Camera;
     g_scene = new Scene;
@@ -499,7 +499,7 @@ main(int argc, char*argv[])
     //makeTeapotScene();
 
     //Assignment 3 scenes
-    //makeTestSphereScene(); 
+    makeTestSphereScene(); 
     //makeTestPetalScene();
 	//makeTestSphereTextureScene();
 
