@@ -9,6 +9,14 @@
 
 using namespace std;
 
+namespace
+{
+	float Det(float a, float b, float c, float d)
+	{
+		return a * d - b * c;
+	}
+}
+
 Triangle::Triangle(TriangleMesh * m, unsigned int i)
 {
     setMesh(m);
@@ -166,4 +174,53 @@ Triangle::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
     result.material = m_material;
 
     return true;
+}
+
+tex_coord2d_t Triangle::toUVCoordinates(const Vector3 & xyz) const
+{
+    TriangleMesh::TupleI3 vi3 = m_mesh->vIndices()[m_index];
+    TriangleMesh::TupleI3 ti3 = m_mesh->tIndices()[m_index];
+
+    const Vector3 & vA = m_mesh->vertices()[vi3.v[0]];
+    const Vector3 & vB = m_mesh->vertices()[vi3.v[1]];
+    const Vector3 & vC = m_mesh->vertices()[vi3.v[2]];
+    const TriangleMesh::VectorR2 & tA = m_mesh->texCoords()[ti3.v[0]];
+    const TriangleMesh::VectorR2 & tB = m_mesh->texCoords()[ti3.v[1]];
+    const TriangleMesh::VectorR2 & tC = m_mesh->texCoords()[ti3.v[2]];
+
+	// if no texture coords exist
+	//return tex_coord2d_t(xyz.x, xyz.z);
+
+	//discard largest normal component
+    Vector3 BmA = vB-vA, CmA = vC-vA;
+    Vector3 normal = cross(BmA, CmA);
+	int i = 0;
+	int j = 1;
+
+	if (normal.x > normal.z)
+		i = 2;
+	else if (normal.y > normal.z)
+		j = 2;
+
+	// convert to float arrays to alleviate calculations
+	float p[3] = {xyz.x-vA.x, xyz.y-vA.y, xyz.z-vA.z};
+	float B[3] = {vB.x-vA.x, vB.y-vA.y, vB.z-vA.z};
+	float C[3] = {vC.x-vA.x, vC.y-vA.y, vC.z-vA.z};
+
+	//Cramer's rule to determine barycentric coords
+	float detPC = Det(p[i], C[i], p[j], C[j]);
+	float detBP = Det(B[i], p[i], B[j], p[j]);
+	float detBC = Det(B[i], C[i], B[j], C[j]);
+
+	float beta = max(detPC / detBC, 0.f);
+	float gamma = max(detBP / detBC, 0.f);
+	//this shouldn't happen...but just in case
+	float alpha = max(1 - (beta + gamma), 0.f);
+
+	//interpolate vertices texture coords
+	tex_coord2d_t UV;
+	UV.u = alpha * tA.x + beta * tB.x + gamma * tC.x;
+	UV.v = alpha * tA.y + beta * tB.y + gamma * tC.y;
+
+	return UV;
 }

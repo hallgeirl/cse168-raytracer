@@ -25,9 +25,9 @@ float LoadedTexture::tonemapValue(float value)
     return std::min(pow(value / m_maxIntensity, 0.2f)*1.7f, 1.0f); //This seems to give a fairly good image. +2ev, gamma ~3
 }
 
-LoadedTexture::LoadedTexture(std::string filename)
+LoadedTexture::LoadedTexture(std::string filename, enum FREE_IMAGE_FORMAT format)
 {
-	m_bitmap = FreeImage_Load(FIF_HDR, filename.c_str());
+	m_bitmap = FreeImage_Load(format, filename.c_str());
     m_maxIntensity = -1e15;
     
     int w = FreeImage_GetWidth(m_bitmap), h = FreeImage_GetHeight(m_bitmap);

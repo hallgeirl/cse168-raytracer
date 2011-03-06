@@ -115,13 +115,12 @@ void addModel(const char* filename, Material *mat, Scene* scene, Vector3 positio
 //Teapot is fully reflective, one sphere is texture mapped with the stone texture and one is part refractive, part reflective.
 void makeScene1()
 {
-	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"));
+	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"), FIF_HDR);
     g_camera = new Camera;
     g_scene = new Scene;
     g_image = new Image;
 
     g_image->resize(256, 256);
-    Material *mat;
 
     // set up the camera
     float viewAngleXZ = -PI;
@@ -203,7 +202,7 @@ void makeScene1()
 //Make a scene with different refractive spheres.
 void makeScene2()
 {
-	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"));
+	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"), FIF_HDR);
     g_camera = new Camera;
     g_scene = new Scene;
     g_image = new Image;
@@ -274,7 +273,7 @@ void makeScene2()
 //Make a scene with different refractive spheres.
 void makeBUNNIZ()
 {
-	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"));
+	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"), FIF_HDR);
     g_camera = new Camera;
     g_scene = new Scene;
     g_image = new Image;
@@ -355,14 +354,14 @@ void makeBUNNIZ()
 void
 makeTestSphereScene()
 {
-	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"));
+	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"), FIF_HDR);
     Material *m;
     cout << "Test scene" << endl;
     g_camera = new Camera;
     g_scene = new Scene;
     g_image = new Image;
 
-    g_image->resize(400, 300);
+    g_image->resize(512, 512);
 
     // set up the camera
     g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
@@ -376,23 +375,43 @@ makeTestSphereScene()
 
     // create and place a point light source
     PointLight * light = new PointLight;
-    light->setPosition(Vector3(0, 5, 0));
+    light->setPosition(Vector3(0, 5, -5));
     light->setColor(Vector3(1, 1, 1));
-    light->setWattage(8000);
+    light->setWattage(1000);
     g_scene->addLight(light);
 
     light = new PointLight;
     light->setPosition(Vector3(0, 5, -25));
     light->setColor(Vector3(1, 1, 1));
-    light->setWattage(15000);
+    light->setWattage(1500);
     g_scene->addLight(light);
 
+	// focused sphere
+
     Sphere  *sphere = new Sphere;
-    sphere->setCenter(Vector3(0,0.5,-5));
-    sphere->setRadius(1.5);
-    sphere->setMaterial(m = new Phong(Vector3(0.0f, 1.0f, 0.0f), Vector3(0.0f), Vector3(1.0f), 500, 1.5));
+    sphere->setCenter(Vector3(0,0.5,0));
+    sphere->setRadius(3);
+    sphere->setMaterial(m = new Phong(Vector3(0.0f, 1.0f, 0.0f), Vector3(0.1f), Vector3(0.0f), 10, 1.5));
     
     g_scene->addObject(sphere);
+
+	//close sphere
+
+	Sphere  *sphereClose = new Sphere;
+    sphereClose->setCenter(Vector3(2.5,1,-6));
+    sphereClose->setRadius(1.5);
+    sphereClose->setMaterial(m = new Phong(Vector3(1.0f, 0.0f, 0.0f), Vector3(0.1f), Vector3(0.0f), 10, 1.5));
+
+    g_scene->addObject(sphereClose);
+	
+	//far sphere
+
+	Sphere  *sphereFar = new Sphere;
+    sphereFar->setCenter(Vector3(-5,1,5));
+    sphereFar->setRadius(5);
+    sphereFar->setMaterial(m = new Phong(Vector3(0.0f, 0.0f, 1.0f), Vector3(0.1f), Vector3(0.0f), 10, 1.5));
+
+    g_scene->addObject(sphereFar);
 
     Plane *plane = new Plane;
     plane->setMaterial(m = new TexturedPhong(new CheckerBoardTexture(Vector3(1), Vector3(0), 1)));
@@ -406,7 +425,7 @@ makeTestSphereScene()
 void
 makeTestScene()
 {
-	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"));
+	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"), FIF_HDR);
     cout << "Test scene" << endl;
     g_camera = new Camera;
     g_scene = new Scene;
@@ -417,7 +436,7 @@ makeTestScene()
     // set up the camera
     g_camera->setBGColor(Vector3(1.0f, 1.0f, 1.0f));
     //g_camera->setEye(Vector3(-5, 2, 3));
-    g_camera->setEye(Vector3(0, 0, -5));
+    g_camera->setEye(Vector3(0, 0, -8));
     g_camera->setLookAt(Vector3(0, 0, 0));
     g_camera->setUp(Vector3(0, 1, 0));
     g_camera->setFOV(45);
@@ -452,7 +471,7 @@ makeTestScene()
 int
 main(int argc, char*argv[])
 {
-    srand(time(0));
+//    srand(time(0));
     //Initialize FreeImage
     FreeImage_Initialise();
 #ifdef __SSE4_1__
@@ -476,12 +495,13 @@ main(int argc, char*argv[])
     //makeBunny1Scene();
     //makeBunny20Scene();
     //makeSponzaScene();
-    makeCornellScene();
+    //makeCornellScene();
     //makeTeapotScene();
 
     //Assignment 3 scenes
     //makeTestSphereScene(); 
     //makeTestPetalScene();
+	makeTestSphereTextureScene();
 
 
     MiroWindow miro(&argc, argv);

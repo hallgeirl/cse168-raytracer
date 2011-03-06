@@ -30,6 +30,8 @@ public:
     virtual void renderGL();
     virtual bool intersect(HitInfo& result, const Ray& ray,
                            float tMin = 0.0f, float tMax = MIRO_TMAX);
+	virtual tex_coord2d_t toUVCoordinates(const Vector3 & xyz) const;
+
     
 protected:
     TriangleMesh* m_mesh;

@@ -17,7 +17,7 @@ using namespace std;
 void
 A1makeBunnyScene()
 {
-	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"));
+	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"), FIF_HDR);
     g_camera = new Camera;
     g_scene = new Scene;
     g_image = new Image;
@@ -129,7 +129,7 @@ A1makeSphereScene()
 void
 A1makeTeapotScene()
 {
-	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"));
+	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"), FIF_HDR);
     g_camera = new Camera;
     g_scene = new Scene;
     g_image = new Image;

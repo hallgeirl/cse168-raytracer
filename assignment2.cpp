@@ -394,10 +394,10 @@ makeCornellScene()
     g_scene->addObject(sp);*/
 
     // create and place a point light source
-//    PointLight * light = new PointLight;
+    //PointLight * light = new PointLight;
     SquareLight *light = new SquareLight;
     light->setNormal(Vector3(0, -1, 0));
-    light->setDimensions(1, 1);
+    light->setDimensions(0.5, 0.5);
     light->setPosition(Vector3(2.5, 4.9, -1));
     light->setColor(Vector3(1, 1, 1));
     light->setWattage(130);

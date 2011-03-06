@@ -147,7 +147,7 @@ public:
 class LoadedTexture : public Texture2D
 {
 public:
-    LoadedTexture(std::string filename);
+    LoadedTexture(std::string filename, enum FREE_IMAGE_FORMAT format);
 	~LoadedTexture();
 
     Vector3 lookup(const tex_coord2d_t & coords, bool lowres);
