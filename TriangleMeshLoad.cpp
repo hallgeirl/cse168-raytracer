@@ -155,6 +155,7 @@ TriangleMesh::loadObj(FILE* fp, const Matrix4x4& ctm)
         m_texCoords = new VectorR2[nt];
         m_texCoordIndices = new TupleI3[nf];
     }
+	m_numTextCoords = nt;
     
     //For normal averaging.
     //Index i contains a list of all normals that are neighbors to vertex i.

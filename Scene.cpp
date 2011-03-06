@@ -70,6 +70,7 @@ Scene::preCalc()
     t1 = -getTime();
     //Generate photon map
     tracePhotons();
+	traceCausticPhotons();
     t1 += getTime();
     debug("Done generating photon map. Time spent: %f\n", t1);
 
@@ -286,11 +287,13 @@ bool Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 				float pos[3] = {hitInfo.P.x, hitInfo.P.y, hitInfo.P.z};
 				float normal[3] = {hitInfo.N.x, hitInfo.N.y, hitInfo.N.z};
 				float irradiance[3];
+				float caustic[3];
             
 				m_photonMap.irradiance_estimate(irradiance, pos, normal, PHOTON_MAX_DIST, PHOTON_SAMPLES);
+				m_causticMap.irradiance_estimate(caustic, pos, normal, 0.5, 10);
 
                 //irradiance_estimate does the dividing by PI and all that
-				shadeResult += Vector3(irradiance[0], irradiance[1], irradiance[2]);
+				shadeResult += Vector3(irradiance[0]+caustic[0]/10, irradiance[1]+caustic[1]/10, irradiance[2]+caustic[2]/10);
 
 		//	#endif
 			}
@@ -360,6 +363,41 @@ void Scene::tracePhotons()
 
     #endif
 }
+
+//Shoot out all caust photons and trace them
+void Scene::traceCausticPhotons()
+{
+	printf("Caustic Map Progress: %.3f%%\r", 0.0f);
+    for (int l = 0; l < m_lights.size(); l++)
+    {
+        PointLight *light = m_lights[l];
+        #ifdef OPENMP
+        #pragma omp parallel for schedule(static, 1000)
+        #endif
+		Objects::iterator it;
+		for (it = m_specObjects.begin(); it != m_specObjects.end(); ++it)
+		{
+			Object *pObj = *it;			
+            //Create a new photon
+            Photon p;
+            Vector3 power = light->color() * (light->wattage()/(float)PhotonsPerLightSource);
+            Vector3 dir = light->samplePhotonDirection(pObj);
+            Vector3 pos = light->samplePhotonOrigin();
+            traceCausticPhoton(pos, dir, power, 0);
+           // if (i % 1000 == 0)
+           //     printf("Caustic Map Progress: %.3f%%\r", 100.0f*(float)i/(float)PhotonsPerLightSource);
+            
+        }
+    }
+    printf("Caustic Map Progress: %.3f%%\n", 100.0f);
+    m_causticMap.balance();
+    #ifdef VISUALIZE_PHOTON_MAP
+    debug("Rebuilding BVH for visualization. Number of objects: %d\n", m_objects.size());
+    m_bvh.build(&m_objects);
+
+    #endif
+}
+
 
 //Trace a single photon through the scene
 void Scene::tracePhoton(const Vector3& position, const Vector3& direction, const Vector3& power, int depth)
@@ -438,6 +476,13 @@ void Scene::tracePhoton(const Vector3& position, const Vector3& direction, const
         }
         else if (rnd < prob[1])
         {
+			if (depth == 1)
+			{
+				//Absorb. Do nothing.
+				PHOTON_DEBUG("Caustic map contains Reflective Ray.");
+				return;
+			}
+
 #ifdef STATS
 			Stats::Photon_Bounces++;
 #endif
@@ -448,6 +493,13 @@ void Scene::tracePhoton(const Vector3& position, const Vector3& direction, const
         }
         else if (rnd < prob[2])
         {
+
+			if (depth == 1)
+			{
+				//Absorb. Do nothing.
+				PHOTON_DEBUG("Caustic map contains Refractive Ray.");
+				return;
+			}
 #ifdef STATS
 			Stats::Photon_Bounces++;
 #endif
@@ -460,6 +512,103 @@ void Scene::tracePhoton(const Vector3& position, const Vector3& direction, const
 #   ifdef DEBUG_PHOTONS
     else { PHOTON_DEBUG("Missed scene."); }
 #   endif
+}
+
+//Trace a single caustic photon through the scene
+bool Scene::traceCausticPhoton(const Vector3& position, const Vector3& direction, const Vector3& power, int depth)
+{
+    PHOTON_DEBUG(endl << "traceCausticPhoton(): pos " << position << ", dir " << direction << ", pwr " << power << ", depth " << depth);
+    if (depth > TRACE_DEPTH) return false;
+
+    //Create a ray to trace the scene with
+    Ray ray(position+epsilon*direction, direction);
+    HitInfo hit;
+
+	++depth;
+    if (m_bvh.intersect(hit, ray, 0.0f, MIRO_TMAX))
+    {
+        //Do "russian roulette but not really"
+        //Choose a random kind of ray - transmission, diffuse or reflective. Or absorb.
+        //[ --diffuse-- | --specular (refl.)-- | --transmission-- | --absorb-- ]
+        float prob[3], rnd = frand();
+        Vector3 diffuseColor;
+        if (hit.material->GetLookupCoordinates() == UV)
+            diffuseColor = hit.material->diffuse2D(hit.object->toUVCoordinates(hit.P));
+        else
+            diffuseColor = hit.material->diffuse3D(tex_coord3d_t(hit.P.x, hit.P.y, hit.P.z));
+
+        prob[0] = diffuseColor.average();
+        prob[1] = prob[0] + hit.material->getReflection().average();
+        prob[2] = prob[1] + hit.material->getRefraction().average();
+
+        PHOTON_DEBUG("rnd = " << rnd << " F[reflect] = " << prob[0] << " F[refract] = " << prob[1] << "F[absorb] = " << prob[2]);
+
+        if (rnd > prob[2])
+        {
+            //Absorb. Do nothing.
+            PHOTON_DEBUG("Absorbed.");
+            return false;
+        }
+
+        if (rnd < prob[0])
+        {
+            PHOTON_DEBUG("Diffuse contribution.");
+
+            //Diffuse.
+            //only store indirect lighting
+            if (depth > 1)
+            {
+                float pos[3] = {hit.P.x, hit.P.y, hit.P.z}, dir[3] = {direction.x, direction.y, direction.z}, pwr[3] = {power.x, power.y, power.z};
+#               ifdef OPENMP
+#               pragma omp critical
+#               endif
+                {
+                    PHOTON_DEBUG("Storing photon. Surface normal " << hit.N);
+                    m_causticMap.store(pwr, pos, dir);
+
+#                   ifdef VISUALIZE_PHOTON_MAP
+                    Sphere* sp = new Sphere;
+                    sp->setCenter(hit.P);
+                    sp->setRadius(0.02f);
+                    Vector3 ref = power; //Use the normalized power as the reflectance for visualization.
+                    ref.normalize();
+                    sp->setMaterial(new Phong(ref));
+                    addObject(sp);
+#                   endif
+                }
+				return true;
+            }
+            else
+            {
+				//first ray missed refractive surface
+				return false;
+            }
+        }
+        else if (rnd < prob[1])
+        {
+#ifdef STATS
+			Stats::Photon_Bounces++;
+#endif
+            //Reflect.
+            Ray refl = ray.reflect(hit);
+            PHOTON_DEBUG("Tracing reflected photon");
+            traceCausticPhoton(hit.P, refl.d, power, depth);
+        }
+        else if (rnd < prob[2])
+        {
+#ifdef STATS
+			Stats::Photon_Bounces++;
+#endif
+            //Transmit (refract)
+            Ray refr = ray.refract(hit);
+            PHOTON_DEBUG("Tracing refracted photon");
+            traceCausticPhoton(hit.P, refr.d, power, depth);
+        }
+    }
+#   ifdef DEBUG_PHOTONS
+    else { PHOTON_DEBUG("Missed scene."); }
+#   endif
+	return false;
 }
 
 
