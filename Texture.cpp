@@ -22,12 +22,15 @@ Texture loaded from a image file.
 //Tonemaps to (0,1)
 float LoadedTexture::tonemapValue(float value)
 {
+    if (FreeImage_GetImageType(m_bitmap) == FIT_BITMAP) return value;
+    
     return std::min(pow(value / m_maxIntensity, 0.2f)*1.7f, 1.0f); //This seems to give a fairly good image. +2ev, gamma ~3
 }
 
-LoadedTexture::LoadedTexture(std::string filename, enum FREE_IMAGE_FORMAT format)
+LoadedTexture::LoadedTexture(std::string filename)
 {
-	m_bitmap = FreeImage_Load(format, filename.c_str());
+    FREE_IMAGE_FORMAT format = FreeImage_GetFileType(filename.c_str());
+    m_bitmap = FreeImage_Load(format, filename.c_str());
     m_maxIntensity = -1e15;
     
     int w = FreeImage_GetWidth(m_bitmap), h = FreeImage_GetHeight(m_bitmap);
@@ -36,16 +39,15 @@ LoadedTexture::LoadedTexture(std::string filename, enum FREE_IMAGE_FORMAT format
     {
         for (int j = 0; j < w; j++)
         {
-            FIRGBF p = getRawPixel(m_bitmap, j, i);
+            Vector3 p = getPixel(m_bitmap, j, i);
             //Figure out the maximum intensity in the image for tone mapping
-            if (m_maxIntensity < p.red) m_maxIntensity = p.red;
-            if (m_maxIntensity < p.green) m_maxIntensity = p.green;
-            if (m_maxIntensity < p.blue) m_maxIntensity = p.blue;
+            for (int k = 0; k < 3; k++)
+                if (m_maxIntensity < p[k]) m_maxIntensity = p[k];
         }
     }
     
     //Initialize lowres version of the bitmap
-    m_lowres = FreeImage_AllocateT(FIT_RGBF, LOWRES_WIDTH, (int)((float)LOWRES_WIDTH*((float)h/(float)w)));
+    m_lowres = FreeImage_AllocateT(FreeImage_GetImageType(m_bitmap), LOWRES_WIDTH, (int)((float)LOWRES_WIDTH*((float)h/(float)w)));
    // m_lowres = FreeImage_Rescale(FreeImage_Copy(m_bitmap, 0, 0, w-1, h-1);
 
     int lrw = FreeImage_GetWidth(m_lowres), lrh = FreeImage_GetHeight(m_lowres);
@@ -65,22 +67,19 @@ LoadedTexture::LoadedTexture(std::string filename, enum FREE_IMAGE_FORMAT format
             {
                 for (int jj = (w/lrw)*j; jj < (w/lrw)*j+(w/lrw) && jj < w; jj++)
                 {
-                    FIRGBF p = getRawPixel(m_bitmap, jj, ii);
+                    Vector3 p = getPixel(m_bitmap, jj, ii);
                     //Calculate gaussian
                     float x = jj-midX, y = ii-midY;
                     float sigma = 1;
                     long double g = 1.0/(2.0*PI*sigma)*exp(-(x*x+y*y)/(2*sigma));
-                    acc[0] += g*p.red;
-                    acc[1] += g*p.green;
-                    acc[2] += g*p.blue;
+                    acc[0] += g*p.x;
+                    acc[1] += g*p.y;
+                    acc[2] += g*p.z;
                 }
             }
             color.x = acc[0];
             color.y = acc[1];
             color.z = acc[2];
-       /*     color.x = acc[0]/pixelSize;
-            color.y = acc[1]/pixelSize;
-            color.z = acc[2]/pixelSize;*/
             setPixel(m_lowres, color, j, i); 
         }
     }
@@ -88,63 +87,92 @@ LoadedTexture::LoadedTexture(std::string filename, enum FREE_IMAGE_FORMAT format
 
 LoadedTexture::~LoadedTexture()
 {
-	free(m_bitmap->data);
-	free(m_bitmap);
+    free(m_bitmap->data);
+    free(m_bitmap);
     free(m_lowres->data);
     free(m_lowres);
 }
 
-FIRGBF LoadedTexture::getRawPixel(FIBITMAP* bm, int x, int y)
-{
-
-    FIRGBF* row = (FIRGBF*)FreeImage_GetScanLine(bm, y);
-    return row[x];
-}
-
 void LoadedTexture::setPixel(FIBITMAP* bm, Vector3& value, int x, int y)
 {
-    FIRGBF* row = (FIRGBF*)FreeImage_GetScanLine(bm, y); 
-    row[x].red = value[0];
-    row[x].green = value[1];
-    row[x].blue = value[2];
+    FREE_IMAGE_TYPE type = FreeImage_GetImageType(bm);
+
+    switch (type)
+    {
+        case FIT_BITMAP:
+        {
+            RGBQUAD color;
+            color.rgbRed = value[0];
+            color.rgbGreen = value[1];
+            color.rgbBlue = value[2];
+            FreeImage_SetPixelColor(bm, x, y, &color);
+        }
+        break;
+        
+        case FIT_RGBF:
+        {
+            FIRGBF* row = (FIRGBF*)FreeImage_GetScanLine(bm, y); 
+            row[x].red = value[0];
+            row[x].green = value[2];
+            row[x].blue = value[1];
+        }    
+        break;
+    }
+
 }
 
 //Aux. function to retrieve pixel values from a freeimage bitmap, tonemap them and put them in a vector.
 Vector3 LoadedTexture::getPixel(FIBITMAP* bm, int x, int y)
 {
-	FIRGBF color;
-	color = getRawPixel(bm, x, y);
+    FREE_IMAGE_TYPE type = FreeImage_GetImageType(bm);
+    Vector3 output(0);
 
+    switch (type)
+    {
+        case FIT_BITMAP:
+        {
+            int bpp = FreeImage_GetBPP(bm);
+            RGBQUAD color;
+            FreeImage_GetPixelColor(bm, x, y, &color);
+            output[0] = float(color.rgbRed)/255.0f;
+            output[1] = float(color.rgbGreen)/255.0f;
+            output[2] = float(color.rgbBlue)/255.0f;
+        }    
+        break;    
+        case FIT_RGBF:
+        {
+            FIRGBF color = ((FIRGBF*)FreeImage_GetScanLine(bm, y))[x];
+            output[0] = color.red;
+            output[1] = color.blue;
+            output[2] = color.green;
+        }    
+        break;
+    }
     
-	//Blue and Green are somehow reversed on Win32 machines
-#ifdef WIN32
-	return Vector3(color.red, color.blue, color.green);
-#else
-	return Vector3(color.red, color.blue, color.green);
-#endif
+    return output;
 }
 
 Vector3 LoadedTexture::lookup(const tex_coord2d_t & texture_coords, bool lowres)
 {
-	float u = texture_coords.u, v = texture_coords.v;
+    float u = texture_coords.u, v = texture_coords.v;
     FIBITMAP* bm = (lowres ? m_lowres : m_bitmap);
 
-	//Image dimensions
-	int w = FreeImage_GetWidth(bm), h = FreeImage_GetHeight(bm);
+    //Image dimensions
+    int w = FreeImage_GetWidth(bm), h = FreeImage_GetHeight(bm);
 
-	//Do bilinear filtering
-	float px_real = (float)w*u, py_real = (float)h*v; //Point in image we really want
+    //Do bilinear filtering
+    float px_real = (float)w*u, py_real = (float)h*v; //Point in image we really want
 
-	int x1 = (int)px_real, x2 = x1+1;
-	x1 %= w; x2 %= w;
-	float x1_error = px_real - (float)x1;
+    int x1 = (int)px_real, x2 = x1+1;
+    x1 %= w; x2 %= w;
+    float x1_error = px_real - (float)x1;
 
-	int y1 = (int)py_real, y2 = y1+1;
-	y1 %= h; y2 %= h;
-	float y1_error = py_real - (float)y1;
+    int y1 = (int)py_real, y2 = y1+1;
+    y1 %= h; y2 %= h;
+    float y1_error = py_real - (float)y1;
 
-	//Get pixel values and average them
-	Vector3 f = (getPixel(bm, x1, y1) * (1-x1_error) + getPixel(bm, x2, y1) * x1_error) * (1 - y1_error) + (getPixel(bm, x1, y2) * (1-x1_error) + getPixel(bm, x2, y2) * x1_error) * y1_error;
+    //Get pixel values and average them
+    Vector3 f = (getPixel(bm, x1, y1) * (1-x1_error) + getPixel(bm, x2, y1) * x1_error) * (1 - y1_error) + (getPixel(bm, x1, y2) * (1-x1_error) + getPixel(bm, x2, y2) * x1_error) * y1_error;
 
 //    return f;
     return Vector3(tonemapValue(f.x), tonemapValue(f.z), tonemapValue(f.y));
@@ -334,14 +362,14 @@ float StoneTexture::bumpHeight2D(const tex_coord2d_t & coords) const
     WorleyNoise::noise2D(pos, order, f, delta, id);
     
     float f1f0 = (1-pow(f[1]-f[0], 0.8f))*1.5;//(pow(f[1]-f[0], 0.2));
-	f1f0 *= -1.f;
+    f1f0 *= -1.f;
     float height = 1/(1+exp(-20.0*(f[1]-f[0]-0.3)));
-	if (f1f0 > -1.1)
-	{
-		//float cellturb = generateNoise(u, v, 0, 0.5, 2, 0.5, id[0]%5+2)/2+0.5;
-		float cellturb = generateNoise(u, v, 0, 0.5, 2, 0.5, id[0]%3+5)/5+0.5;
-		return 0.8f* cellturb+heightFactor*height;
-	}
+    if (f1f0 > -1.1)
+    {
+        //float cellturb = generateNoise(u, v, 0, 0.5, 2, 0.5, id[0]%5+2)/2+0.5;
+        float cellturb = generateNoise(u, v, 0, 0.5, 2, 0.5, id[0]%3+5)/5+0.5;
+        return 0.8f* cellturb+heightFactor*height;
+    }
 
  //   float turb = generateNoise(u, v, 0, 0.5, 2, 0.5, 5)/2+0.5;
     float turb = generateNoise(u, v, 0, 1, 2, 0.5, 3)/10+0.5;
@@ -350,10 +378,10 @@ float StoneTexture::bumpHeight2D(const tex_coord2d_t & coords) const
     //f1f0 += 0.2*turb;
     //return 0;
     //return 0.1*pow(sin(30*turb+u*5)/2+0.5, 0.05);
-	//float cells = ((float)(id[0]%10)/10.f);
-	delete id;
+    //float cells = ((float)(id[0]%10)/10.f);
+    delete id;
     delete f;
-	
+    
     return 1.0f*turb+heightFactor*height;
 
 }
@@ -375,7 +403,7 @@ Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
     float f1f0 = (1-pow(f[1]-f[0], 0.8f))*1.5;
 
     //Initial color value.
-	float base = std::min(std::max(pow((f[2]-f[1]+f[0]), 0.1f) - f1f0, 0.f), 0.5f);
+    float base = std::min(std::max(pow((f[2]-f[1]+f[0]), 0.1f) - f1f0, 0.f), 0.5f);
     
     //Some intensity variation based on which cell we're in
     base *= ((float)(id[0]%10))/20+0.5;
@@ -385,74 +413,74 @@ Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords)
     base = std::max(0.0f, base); 
     base += 0.8*fabs(turb); //0.1*pow(fabs(sin(u*20+turb)), 30);
 
-	if (f1f0 > 1.1)
-	{
-		float edges = std::min((pow(f1f0,2)-1.f), 0.75f);
-		red = green = blue = edges + 0.25*fabs(turb);
-	}
-	else
-	{
-		//Color palette
-		red = base +(float)(id[0]%10)/10;
-		green = base +((float)(id[0]%10)/10)*0.5f;
-		blue = base +((float)(id[0]%5)/5)*0.25f;
-	}
+    if (f1f0 > 1.1)
+    {
+        float edges = std::min((pow(f1f0,2)-1.f), 0.75f);
+        red = green = blue = edges + 0.25*fabs(turb);
+    }
+    else
+    {
+        //Color palette
+        red = base +(float)(id[0]%10)/10;
+        green = base +((float)(id[0]%10)/10)*0.5f;
+        blue = base +((float)(id[0]%5)/5)*0.25f;
+    }
 
     //base = f1f0;
-	delete f;
-	delete id;
+    delete f;
+    delete id;
 
     return Vector3(red, green, blue);
 }
 
 float PetalTexture::bumpHeight3D(const tex_coord3d_t & coords) const
 {
-	return 1.0f;
+    return 1.0f;
 }
 
 Vector3 PetalTexture::lookup3D(const tex_coord3d_t & coords)
 {
-//	Vector3 baseColor(0.6f, 0.25f, 0.33f);
-//	Vector3 tipColor(0.92f, 0.57f, 0.62f);
+//    Vector3 baseColor(0.6f, 0.25f, 0.33f);
+//    Vector3 tipColor(0.92f, 0.57f, 0.62f);
 
-	Vector3 baseHighlight(1,0,0.5);
-	Vector3 tipHighlight(1, 0.5, 0);
-	Vector3 baseDepression(0.5, 0.15, 0.3);
-	Vector3 tipDepression(0.75, 0.15, 0.15);
+    Vector3 baseHighlight(1,0,0.5);
+    Vector3 tipHighlight(1, 0.5, 0);
+    Vector3 baseDepression(0.5, 0.15, 0.3);
+    Vector3 tipDepression(0.75, 0.15, 0.15);
 
-	Vector3 baseColor(0.8, 0.1, 0.3);
-	Vector3 tipColor(1.0, 0.2, 0.1);
+    Vector3 baseColor(0.8, 0.1, 0.3);
+    Vector3 tipColor(1.0, 0.2, 0.1);
 
-	Vector3 position(coords.u-m_pivot.x, coords.v-m_pivot.y, coords.w-m_pivot.z);
-	float radius = position.length();
-	float dist = radius/m_radius;
+    Vector3 position(coords.u-m_pivot.x, coords.v-m_pivot.y, coords.w-m_pivot.z);
+    float radius = position.length();
+    float dist = radius/m_radius;
 
-	Vector3 north(0,1,0);
-	Vector3 equator(1,0,0);
+    Vector3 north(0,1,0);
+    Vector3 equator(1,0,0);
 
-	Vector3 diffuseColor = (1-dist)*baseColor + dist*tipColor;
-	Vector3 interpHighlight = (1-dist)*baseHighlight + dist*tipHighlight;
-	Vector3 interpDepression = (1-dist)*baseDepression + dist*tipDepression;
-	float phi = acos(-dot(north, position));
-	float v = phi/PI;
-	float u;
-	float theta = ( acos( dot( position, equator ) / sin( phi )) ) / ( 2 * PI);
-	if ( dot(cross(north, equator), position) > 0 )
-		u = theta;
-	else
-		u = 1 - theta;
-	
+    Vector3 diffuseColor = (1-dist)*baseColor + dist*tipColor;
+    Vector3 interpHighlight = (1-dist)*baseHighlight + dist*tipHighlight;
+    Vector3 interpDepression = (1-dist)*baseDepression + dist*tipDepression;
+    float phi = acos(-dot(north, position));
+    float v = phi/PI;
+    float u;
+    float theta = ( acos( dot( position, equator ) / sin( phi )) ) / ( 2 * PI);
+    if ( dot(cross(north, equator), position) > 0 )
+        u = theta;
+    else
+        u = 1 - theta;
+    
 
-	//float turb = abs(generateNoise(u, u, 0, 3, 2, 0.9, 10));
-	float turb = abs(generateNoise(u, v*0.25, 0, 4, 2, 0.9, 10));
-	float highTurb = std::min(pow(turb / 0.1f, 0.85f)*1.5f, 1.0f);
+    //float turb = abs(generateNoise(u, u, 0, 3, 2, 0.9, 10));
+    float turb = abs(generateNoise(u, v*0.25, 0, 4, 2, 0.9, 10));
+    float highTurb = std::min(pow(turb / 0.1f, 0.85f)*1.5f, 1.0f);
 
-	turb = abs(generateNoise(u, v, 0, 4, 3, 0.9, 25));
-	float lowTurb = std::min(pow(turb / 0.1f, 0.85f)*1.5f, 1.0f);
+    turb = abs(generateNoise(u, v, 0, 4, 3, 0.9, 25));
+    float lowTurb = std::min(pow(turb / 0.1f, 0.85f)*1.5f, 1.0f);
 
-	return 0.5*(highTurb*diffuseColor + (1-highTurb)*interpHighlight) + 0.5*(lowTurb*diffuseColor + (1-lowTurb)*interpDepression);
-	//return lowTurb*diffuseColor + (1-lowTurb)*interpDepression;
-	
+    return 0.5*(highTurb*diffuseColor + (1-highTurb)*interpHighlight) + 0.5*(lowTurb*diffuseColor + (1-lowTurb)*interpDepression);
+    //return lowTurb*diffuseColor + (1-lowTurb)*interpDepression;
+    
 }
 
 

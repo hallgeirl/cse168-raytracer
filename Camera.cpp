@@ -127,15 +127,12 @@ Camera::eyeRay(int x, int y, int imageWidth, int imageHeight, bool randomize)
 	#ifdef DOF
 
 	//randomize eye location around circle of confusion
-	float x_rand, y_rand;
-	Vector3 new_eye;
-	do {
-		x_rand = (2*frand() - 1) * DOF_APERTURE;
-		y_rand = (2*frand() - 1) * DOF_APERTURE;
-	} while (x_rand*x_rand + y_rand*y_rand < DOF_APERTURE*DOF_APERTURE);
+    VectorR2 discSample = sampleDisc(DOF_APERTURE);
 
-	new_eye = m_eye + (x_rand*uDir + y_rand*vDir);
-	Vector3 new_viewDir = m_viewDir * DOF_FOCUS_PLANE - new_eye;
+	Vector3 new_eye = m_eye + (discSample.x*uDir + discSample.y*vDir);
+
+	m_viewDir.normalize();
+	Vector3 new_viewDir = m_eye + m_viewDir * DOF_FOCUS_PLANE - new_eye;
 
 	//need to recalulate view plane
     wDir = Vector3(-new_viewDir).normalize();

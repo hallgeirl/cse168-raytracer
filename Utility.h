@@ -47,4 +47,34 @@ inline Vector3 alignHemisphereToVector(const Vector3& v, float theta, float phi)
     return aligned_d;
 }
 
+//Returns a random direction in the hemisphere that is oriented in the direction specified
+inline Vector3 sampleHemisphereDirection(const Vector3& hemisphereOrientation)
+{
+    //bias to the surface normal
+    float x, y, z;
+    do
+    { 
+        x = 2*frand() - 1;
+        y = 2*frand() - 1;
+        z = 2*frand() - 1;
+    } while (x*x + y*y + z*z > 1.0f && dot(Vector3(x, y, z), hemisphereOrientation) < 0);
+
+    return Vector3(x,y,z);
+}
+
+inline VectorR2 sampleDisc(float radius)
+{
+	float x_rand, y_rand;
+	Vector3 new_eye;
+	do {
+		x_rand = (2*frand() - 1) * radius;
+		y_rand = (2*frand() - 1) * radius;
+	} while (x_rand*x_rand + y_rand*y_rand > radius*radius);
+
+    VectorR2 v;
+    v.x = x_rand; v.y = y_rand;
+
+    return v;
+}
+
 #endif
