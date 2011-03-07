@@ -65,8 +65,8 @@ makeTestPetalScene()
 	Material* material = new TexturedPhong(new PetalTexture(Vector3(0.f), 7), Vector3(0), Vector3(0), 5);
 	addFlowerModel("models/Petals.obj", material, g_scene, Vector3(0.f), 0);
 
-	material = new TexturedPhong(new FlowerCenterTexture(Vector3(0,0,0), 1.37));
-	addFlowerModel("models/FlowerCenter.obj", material, g_scene, Vector3(0.f));//Vector3(-0.05f, 0.25, 0.32f), 0);
+//	material = new TexturedPhong(new FlowerCenterTexture(Vector3(0,0,0), 1.37));
+//	addFlowerModel("models/FlowerCenter.obj", material, g_scene, Vector3(0.f));//Vector3(-0.05f, 0.25, 0.32f), 0);
 
 	Material* water = new Phong(Vector3(1.f), Vector3(0), Vector3(1.0f), 5, 1.33);
 	addFlowerModel("models/WaterDrops.obj", water, g_scene, Vector3(0.f));

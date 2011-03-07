@@ -381,8 +381,8 @@ makeCornellScene()
     
     // set up the camera
     g_camera->setBGColor(Vector3(0.0f, 0.0f, 0.2f));
-    g_camera->setEye(Vector3(2.5, 3, 3));
-    g_camera->setLookAt(Vector3(2.5, 2.5, 0));
+    g_camera->setEye(Vector3(2, 1, 1));
+    g_camera->setLookAt(Vector3(2, 0.5, 0));
     g_camera->setUp(Vector3(0, 1, 0));
     g_camera->setFOV(90);
 
@@ -394,20 +394,20 @@ makeCornellScene()
     g_scene->addObject(sp);*/
 
     // create and place a point light source
-    //PointLight * light = new PointLight;
-    SquareLight *light = new SquareLight;
-    light->setNormal(Vector3(0, -1, 0));
-    light->setDimensions(0.5, 0.5);
+    PointLight * light = new PointLight;
+    //SquareLight *light = new SquareLight;
+    //light->setNormal(Vector3(0, -1, 0));
+    //light->setDimensions(0.5, 0.5);
     light->setPosition(Vector3(2.5, 4.9, -1));
     light->setColor(Vector3(1, 1, 1));
     light->setWattage(130);
     g_scene->addLight(light);
     
-    Sphere *sp = new Sphere;
+    /*Sphere *sp = new Sphere;
     sp->setRadius(0.5);
     sp->setCenter(Vector3(1.5f, 1.5f, -1.0f));
     sp->setMaterial(new Phong(Vector3(1), Vector3(0), Vector3(1), infinity, 1.5));
-    g_scene->addObject(sp);
+    g_scene->addObject(sp);*/
 
     Material *mat;
     TriangleMesh * mesh;
@@ -426,6 +426,15 @@ makeCornellScene()
     mesh = new TriangleMesh;
     mesh->load("models/cornell_box_4.obj");
     addMeshTrianglesToScene(mesh, new Phong(Vector3(1)));
+
+	Matrix4x4 xform;
+	//xform *= rotate(90, 1, 0, 0);
+	xform *= translate(-2, -0.5, 0);
+
+	Material* water = new Phong(Vector3(1.f), Vector3(0), Vector3(1.0f), 5, 1.5);
+    mesh = new TriangleMesh;
+    mesh->load("models/WaterDrops.obj", xform);
+    addMeshTrianglesToScene(mesh, water);
 
     // let objects do pre-calculations if needed
     g_scene->preCalc();

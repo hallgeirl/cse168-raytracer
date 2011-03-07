@@ -41,8 +41,7 @@ public:
 
     void tracePhotons();
     void traceCausticPhotons();
-    void tracePhoton(const Vector3& position, const Vector3& direction, const Vector3& power, int depth);
-    bool traceCausticPhoton(const Vector3& position, const Vector3& direction, const Vector3& power, int depth);
+    void tracePhoton(const Vector3& position, const Vector3& direction, const Vector3& power, int depth, bool bCausticRay=false);
 
 	void setEnvironment(Texture* environment) { m_environment = environment; }
 	Vector3 getEnvironmentMap(const Ray & ray);
