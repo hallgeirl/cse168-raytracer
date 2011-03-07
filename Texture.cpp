@@ -461,7 +461,9 @@ Vector3 PetalTexture::lookup3D(const tex_coord3d_t & coords) const
     Vector3 diffuseColor = (1-dist)*baseColor + dist*tipColor;
     Vector3 interpHighlight = (1-dist)*baseHighlight + dist*tipHighlight;
     Vector3 interpDepression = (1-dist)*baseDepression + dist*tipDepression;
-    float phi = acos(-dot(north, position));
+    
+	Vector3 dir = position.normalize();
+	float phi = acos(-dot(north, position));
     float v = phi/PI;
     float u;
     float theta = ( acos( dot( position, equator ) / sin( phi )) ) / ( 2 * PI);
