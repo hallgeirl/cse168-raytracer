@@ -46,7 +46,7 @@ makeTestPetalScene()
     g_camera->setLookAt(Vector3(0, 0, 0));
     //g_camera->setLookAt(Vector3(0, 0, 6));
     g_camera->setUp(Vector3(0, 1, 0));
-    g_camera->setFOV(45);
+    g_camera->setFOV(15);
 
     // create and place a point light source
     PointLight * light = new PointLight;
@@ -63,8 +63,16 @@ makeTestPetalScene()
     g_scene->addLight(amlight);
 
 	//Material* material = new Lambert(Vector3(1.0f, 0.3f, 0.3f));
-	Material* material = new TexturedPhong(new PetalTexture(Vector3(0.f), 1000), Vector3(0), Vector3(0), 5);
-	addFlowerModel("models/Petals.obj", material, g_scene, Vector3(0.f));
+//	Material* material = new TexturedPhong(new PetalTexture(Vector3(0.f), 1000), Vector3(0), Vector3(0), 5);
+    Material * material = new TexturedPhong(new FlowerCenterTexture(Vector3(0,0,0), 1.37));
+	addFlowerModel("models/FlowerCenter.obj", material, g_scene, Vector3(-0.05f, 0.25, 0.32f), 0);
+
+/*    Sphere *sp = new Sphere;
+    sp->setMaterial(new Phong(Vector3(1), Vector3(0), Vector3(0.0), infinity, 1.0f));
+    sp->setRadius(1.3f);
+    sp->setCenter(Vector3(0));
+    g_scene->addObject(sp);*/
+    
 
 //	Material* water = new Phong(Vector3(1.f), Vector3(0), Vector3(1.0f), 5, 1.33);
 //	addFlowerModel("models/WaterDrops.obj", water, g_scene, Vector3(0.f));

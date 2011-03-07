@@ -49,9 +49,9 @@ public:
     Grid(int gridWidth, int gridHeight);
     void addPoint(tex_coord2d_t point);
 
-    const std::vector<tex_coord2d_t> &getPoints(int cellI, int cellJ) { return m_grid[cellI][cellJ].points; }
-    int getWidth() { return m_gridWidth; }
-    int getHeight() { return m_gridHeight; }
+    const std::vector<tex_coord2d_t> &getPoints(int cellI, int cellJ) const { return m_grid[cellI][cellJ].points; }
+    int getWidth() const { return m_gridWidth; }
+    int getHeight() const { return m_gridHeight; }
 private:
     gridcell_t ** m_grid;
     int m_gridWidth, m_gridHeight;
@@ -63,10 +63,10 @@ public:
     virtual float bumpHeight2D(const tex_coord2d_t & coords) const { return 0; }
     virtual float bumpHeight3D(const tex_coord3d_t & coords) const { return 0; }
 	virtual LookupCoordinates GetLookupCoordinates() const = 0;
-    virtual Vector3 lookup2D(const tex_coord2d_t & coords) { return Vector3(0,0,0); } // Look up the color value for a specified position
-    virtual Vector3 lookup3D(const tex_coord3d_t & coords) { return Vector3(0,0,0); } // For 3D textures
-    virtual Vector3 lowresLookup2D(const tex_coord2d_t & coords) { return lookup2D(coords); }
-    virtual Vector3 lowresLookup3D(const tex_coord2d_t & coords) { return lookup2D(coords); }
+    virtual Vector3 lookup2D(const tex_coord2d_t & coords) const { return Vector3(0,0,0); } // Look up the color value for a specified position
+    virtual Vector3 lookup3D(const tex_coord3d_t & coords) const { return Vector3(0,0,0); } // For 3D textures
+    virtual Vector3 lowresLookup2D(const tex_coord2d_t & coords) const { return lookup2D(coords); }
+    virtual Vector3 lowresLookup3D(const tex_coord2d_t & coords) const { return lookup2D(coords); }
 };
 
 class Texture2D : public Texture
@@ -85,12 +85,12 @@ class CellularTexture2D : public Texture2D
 {
 public:
     CellularTexture2D(int points, int gridWidth, int gridHeight);
-    float * getClosestDistances(const tex_coord2d_t &point, int n); //Get the n closest distances from a given point
+    float * getClosestDistances(const tex_coord2d_t &point, int n) const; //Get the n closest distances from a given point
     
     //Populate the grid with grid points. Override to control distribution of points.
     virtual void populateGrid(int points); 
     //Typically, this function combines the values gotten from getClosestDistances() and maps it to a color value.
-    virtual Vector3 lookup2D(const tex_coord2d_t & coords); 
+    virtual Vector3 lookup2D(const tex_coord2d_t & coords) const; 
     
 protected:
     std::vector<tex_coord2d_t> m_points;
@@ -106,7 +106,7 @@ public:
     StoneTexture(float scale=1) { m_scale = scale; }
     
     virtual float bumpHeight2D(const tex_coord2d_t & coords) const;
-    virtual Vector3 lookup2D(const tex_coord2d_t & coords);
+    virtual Vector3 lookup2D(const tex_coord2d_t & coords) const;
 };
 
 class CheckerBoardTexture : public Texture2D
@@ -122,7 +122,7 @@ public:
         m_scale = scale; 
     }
 
-    virtual Vector3 lookup2D(const tex_coord2d_t & coords) 
+    virtual Vector3 lookup2D(const tex_coord2d_t & coords) const
     {
         float u = std::abs(m_scale*(coords.u));
         float v = std::abs(m_scale*(coords.v));
@@ -149,7 +149,7 @@ public:
         m_shadowSharpness = shadowSharpness;
     }
 
-    virtual Vector3 lookup2D(const tex_coord2d_t & coords) 
+    virtual Vector3 lookup2D(const tex_coord2d_t & coords) const
     {
         float u = m_scale * coords.u, 
               v = m_scale * coords.v;
@@ -177,7 +177,33 @@ protected:
 public:
     PetalTexture(const Vector3 & Pivot, float Radius=1, float scale=1) { m_scale = scale; m_pivot = Pivot; m_radius = Radius; }
     virtual float bumpHeight3D(const tex_coord3d_t & coords) const;
-    virtual Vector3 lookup3D(const tex_coord3d_t & coords);
+    virtual Vector3 lookup3D(const tex_coord3d_t & coords) const;
+};
+
+class FlowerCenterTexture : public Texture3D
+{
+protected:
+    float m_scale;
+	float m_radius;
+	Vector3 m_pivot;
+public:
+    FlowerCenterTexture(const Vector3 & Pivot, float Radius=1, float scale=1) { m_scale = scale; m_pivot = Pivot; m_radius = Radius; }
+    virtual Vector3 lookup3D(const tex_coord3d_t & coords) const
+    {
+        float x = coords.u, y = coords.v, z = coords.w;
+        Vector3 point(x,y,z);
+        float dist = (point-m_pivot).length();
+        float fraction = std::max(std::min((float)pow(dist / m_radius, 30.0f), 1.0f), 0.0f);
+        
+        float maxRed = 0.92f, maxGreen = 0.71f,
+              minRed = 0.31f, minGreen = 0.18f;
+
+        float red = std::min((1.0f-fraction)*minRed+fraction*maxRed, 1.0f);
+        float green = std::min((1.0f-fraction)*minGreen+fraction*maxGreen, 1.0f);
+        
+       
+        return Vector3(red, green, 0.1f);
+    };
 };
 
 //Texture loaded from a file
@@ -187,14 +213,14 @@ public:
     LoadedTexture(std::string filename);
 	~LoadedTexture();
 
-    Vector3 lookup(const tex_coord2d_t & coords, bool lowres);
-    Vector3 lookup2D(const tex_coord2d_t & coords) { return lookup(coords, false); }
-    Vector3 lowresLookup2D(const tex_coord2d_t & coords) { return lookup(coords, true); }
+    Vector3 lookup(const tex_coord2d_t & coords, bool lowres) const;
+    Vector3 lookup2D(const tex_coord2d_t & coords) const { return lookup(coords, false); }
+    Vector3 lowresLookup2D(const tex_coord2d_t & coords) const { return lookup(coords, true); }
     
 protected:
     static Vector3 getPixel(FIBITMAP* bm, int x, int y);     //Get the tonemapped pixel
     static void setPixel(FIBITMAP* bm, Vector3& value, int x, int y);
-    float tonemapValue(float val);
+    float tonemapValue(float val) const;
 
 	FIBITMAP* m_bitmap; 
     FIBITMAP* m_lowres;
