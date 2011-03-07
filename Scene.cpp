@@ -380,7 +380,7 @@ void Scene::traceCausticPhotons()
 			Object *pObj = *it;			
             //Create a new photon
             Photon p;
-            Vector3 power = light->color() * (light->wattage()/(float)PhotonsPerLightSource);
+            Vector3 power = light->color() * (light->wattage()/(float)PhotonsPerLightSource/1000.f);
             Vector3 dir = light->samplePhotonDirection(pObj);
             Vector3 pos = light->samplePhotonOrigin();
             tracePhoton(pos, dir, power, 0, true);
