@@ -36,17 +36,19 @@ makeTestPetalScene()
     g_camera = new Camera;
     g_scene = new Scene;
     g_image = new Image;
+    g_scene->setEnvironment(new LoadedTexture("gfx/forrest_salzburg02_big.hdr"));
+    g_scene->setEnvironmentRotation(PI/3+0.05, PI/8);
 
     g_image->resize(512, 512);
     
     // set up the camera
     g_camera->setBGColor(Vector3(0.0f, 0.0f, 0.2f));
-    g_camera->setEye(Vector3(8, 6, 8));
+    g_camera->setEye(Vector3(18, 12, 13));
     //g_camera->setEye(Vector3(2, 4, 0));
-    g_camera->setLookAt(Vector3(4, 2, 4));
+    g_camera->setLookAt(Vector3(6, 3.2, 4));
     //g_camera->setLookAt(Vector3(0, 0, 6));
     g_camera->setUp(Vector3(0, 1, 0));
-    g_camera->setFOV(45);
+    g_camera->setFOV(20);
 
     // create and place a point light source
     PointLight * light = new PointLight;
@@ -62,13 +64,14 @@ makeTestPetalScene()
     amlight->setWattage(30000);
     g_scene->addLight(amlight);
 
-	Material* material = new TexturedPhong(new PetalTexture(Vector3(0.f), 7), Vector3(0), Vector3(0), 5);
-	addFlowerModel("models/Petals.obj", material, g_scene, Vector3(0.f), 0);
+	Material* material = new TexturedPhong(new PetalTexture(Vector3(0.f), 7), Vector3(0.2), Vector3(0), 200, 1.5);
+	//Material* material = new Phong(Vector3(1), Vector3(0.2), Vector3(0), 200, 1.5);
+	addFlowerModel("models/Petals.obj", material, g_scene, Vector3(0.f), 0.0);
 
-//	material = new TexturedPhong(new FlowerCenterTexture(Vector3(0,0,0), 1.37));
-//	addFlowerModel("models/FlowerCenter.obj", material, g_scene, Vector3(0.f));//Vector3(-0.05f, 0.25, 0.32f), 0);
+	material = new TexturedPhong(new FlowerCenterTexture(Vector3(0,0,0), 1.37));
+	addFlowerModel("models/FlowerCenter.obj", material, g_scene, Vector3(0.f));//Vector3(-0.05f, 0.25, 0.32f), 0);
 
-	Material* water = new Phong(Vector3(1.f), Vector3(0), Vector3(1.0f), 5, 1.33);
+	Material* water = new Phong(Vector3(1.f), Vector3(0), Vector3(1.0f), infinity, 1.33);
 	addFlowerModel("models/WaterDrops.obj", water, g_scene, Vector3(0.f));
     
     // create the floor triangle
@@ -86,7 +89,7 @@ makeTestPetalScene()
     t->setIndex(0);
     t->setMesh(floor);
     t->setMaterial(floorMaterial); 
-    g_scene->addObject(t);
+    //g_scene->addObject(t);
     
     // let objects do pre-calculations if needed
     g_scene->preCalc();
@@ -123,7 +126,6 @@ makeTestSphereTextureScene()
     g_scene->addLight(amlight);
 
 	LoadedTexture *earth = new LoadedTexture(std::string("gfx/earth.jpg"));
-//	LoadedTexture *autumnHDR = new LoadedTexture(string("gfx/autumnforrest.hdr"), FIF_HDR);
 	Material* material = new TexturedPhong(earth, Vector3(0), Vector3(0), 5);
 	addFlowerModel("models/TexturedSphere.obj", material, g_scene, Vector3(0.f));
 

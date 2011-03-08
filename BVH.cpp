@@ -585,6 +585,7 @@ BVH::intersectChildren(HitInfo& minHit, const Ray& ray, float tMin, float tMax) 
 
 #else
     float minT = infinity;
+    float minTother = infinity;
     int minIndex = -1;
     int otherIndex = -1;
 
@@ -610,13 +611,15 @@ BVH::intersectChildren(HitInfo& minHit, const Ray& ray, float tMin, float tMax) 
 
         if (minT > minOverlap)
         {
-            minT = minOverlap;
+            minTother = minT;
             otherIndex = minIndex;
+            minT = minOverlap;
             minIndex = i;
         }
-        else
+        else if (minTother > minOverlap)
         {
             otherIndex = i;
+            minTother = minOverlap;
         }
     }
     if (minIndex == -1) return false;
@@ -639,7 +642,8 @@ BVH::intersectChildren(HitInfo& minHit, const Ray& ray, float tMin, float tMax) 
 #ifdef STATS
         Stats::Ray_Box_Intersect += 1;
 #endif
-        if (m_children->at(otherIndex^1)->intersectChildren(tempMinHit, ray, tMin, minHit.t))
+        //if (m_children->at(minIndex^1)->intersectChildren(tempMinHit, ray, tMin, minHit.t))
+        if (m_children->at(otherIndex)->intersectChildren(tempMinHit, ray, tMin, minHit.t))
         {
             minHit = tempMinHit;
             hit = true;

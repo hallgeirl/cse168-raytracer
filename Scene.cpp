@@ -306,7 +306,7 @@ bool Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 
 				if (traceScene(reflectRay, reflectResult, depth))
 				{
-					shadeResult += hitInfo.material->getReflection()* reflectResult;
+					shadeResult += hitInfo.material->getReflection() * reflectResult;
 				}
 			}
 
@@ -374,13 +374,12 @@ void Scene::traceCausticPhotons()
         #ifdef OPENMP
         #pragma omp parallel for schedule(static, 1000)
         #endif
-		Objects::iterator it;
-		for (it = m_specObjects.begin(); it != m_specObjects.end(); ++it)
-		{
-			Object *pObj = *it;			
+        for (int i = 0; i < m_specObjects.size(); i++)
+        {
+			Object *pObj = m_specObjects[i];			
             //Create a new photon
             Photon p;
-            Vector3 power = light->color() * (light->wattage()/(float)PhotonsPerLightSource/1000.f);
+            Vector3 power = light->color() * ((light->wattage()/(float)PhotonsPerLightSource)/1000.f);
             Vector3 dir = light->samplePhotonDirection(pObj);
             Vector3 pos = light->samplePhotonOrigin();
             tracePhoton(pos, dir, power, 0, true);
@@ -522,9 +521,18 @@ Scene::getEnvironmentMap(const Ray & ray)
 	if (m_environment != 0)
 	{
 		tex_coord2d_t coords;
+		float phi = atan2(ray.d.x, ray.d.z) + m_environmentRotation.x + PI; //Phi is in [0, 2PI]
+		float theta = asin(ray.d.y) + m_environmentRotation.y;    //
+        if (theta > PI/2.0f) 
+        {
+            phi += PI;
+            theta -= 2.0f*(theta-PI/2.0f);
+        }
+		if (phi > 2.0f*PI) phi -= (2.0f*PI); // Force phi to be in [0, 2PI]
+	
 		//Calculate texture coordinates for where the ray hits the "sphere"
-		coords.u = (atan2(ray.d.x, ray.d.z)) / (2.0f * PI) + 0.5;
-		coords.v = (asin(ray.d.y)) / PI + 0.5;
+		coords.u = phi / (2.0f * PI);
+		coords.v = theta / PI + 0.5;
 		//And just look up the shading value in the texture.
         if (!ray.isDiffuse)
     		envResult = m_environment->lookup2D(coords);

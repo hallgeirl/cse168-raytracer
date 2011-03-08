@@ -512,12 +512,12 @@ main(int argc, char*argv[])
     //makeBunny1Scene();
     //makeBunny20Scene();
     //makeSponzaScene();
-    makeCornellScene();
+    //makeCornellScene();
     //makeTeapotScene();
 
     //Assignment 3 scenes
-    makeTestSphereScene(); 
-    //makeTestPetalScene();
+    //makeTestSphereScene(); 
+    makeTestPetalScene();
 	//makeTestSphereTextureScene();
 
 

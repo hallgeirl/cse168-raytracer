@@ -48,7 +48,10 @@ public:
 
     void setBgColor(Vector3 color) { m_bgColor = color; }
 
+    void setEnvironmentRotation(float phi, float theta) { m_environmentRotation.x = phi; m_environmentRotation.y = theta; }
+
 protected:
+    VectorR2 m_environmentRotation;
     Objects m_objects;
     Objects m_specObjects;
     Objects m_unboundedObjects;

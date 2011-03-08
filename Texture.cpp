@@ -441,7 +441,7 @@ Vector3 StoneTexture::lookup2D(const tex_coord2d_t & coords) const
 
 float PetalTexture::bumpHeight3D(const tex_coord3d_t & coords) const
 {
-    return 1.0f;
+    return 0.0f;
 }
 
 Vector3 PetalTexture::lookup3D(const tex_coord3d_t & coords) const
@@ -477,7 +477,15 @@ Vector3 PetalTexture::lookup3D(const tex_coord3d_t & coords) const
 	float phi = acos(-dot(north, position));
     float v = phi/PI;
     float u;
-    float theta = ( acos( dot( position, equator ) / sin( phi )) ) / ( 2 * PI);
+
+    float sinphi = sin(phi);
+    if (abs(sinphi) < 0.01)
+    {
+        if (sinphi > 0.0f) sinphi = 0.01;
+        else sinphi = -0.01;
+    }
+
+    float theta = ( acos( dot( position, equator )/* / sinphi*/) ) / ( 2 * PI);
     if ( dot(cross(north, equator), position) > 0 )
         u = theta;
     else
