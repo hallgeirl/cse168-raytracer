@@ -59,7 +59,22 @@ inline Vector3 sampleHemisphereDirection(const Vector3& hemisphereOrientation)
         z = 2*frand() - 1;
     } while (x*x + y*y + z*z > 1.0f && dot(Vector3(x, y, z), hemisphereOrientation) < 0);
 
-    return Vector3(x,y,z);
+    return Vector3(x,y,z).normalize();
+}
+
+//Returns a random direction in the hemisphere that is oriented in the direction specified
+inline Vector3 sampleSphericalDirection()
+{
+    //bias to the surface normal
+    float x, y, z;
+    do
+    { 
+        x = 2*frand() - 1;
+        y = 2*frand() - 1;
+        z = 2*frand() - 1;
+    } while (x*x + y*y + z*z > 1.0f);
+
+    return Vector3(x,y,z).normalize();
 }
 
 inline VectorR2 sampleDisc(float radius)

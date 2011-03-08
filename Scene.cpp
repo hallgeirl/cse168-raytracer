@@ -70,6 +70,7 @@ Scene::preCalc()
     t1 = -getTime();
     //Generate photon map
     tracePhotons();
+	traceCausticPhotons();
     t1 += getTime();
     debug("Done generating photon map. Time spent: %f\n", t1);
 
@@ -286,11 +287,13 @@ bool Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 				float pos[3] = {hitInfo.P.x, hitInfo.P.y, hitInfo.P.z};
 				float normal[3] = {hitInfo.N.x, hitInfo.N.y, hitInfo.N.z};
 				float irradiance[3];
+				float caustic[3];
             
 				m_photonMap.irradiance_estimate(irradiance, pos, normal, PHOTON_MAX_DIST, PHOTON_SAMPLES);
+				m_causticMap.irradiance_estimate(caustic, pos, normal, PHOTON_MAX_DIST, PHOTON_SAMPLES);
 
                 //irradiance_estimate does the dividing by PI and all that
-				shadeResult += Vector3(irradiance[0], irradiance[1], irradiance[2]);
+				shadeResult += Vector3(irradiance[0]+caustic[0], irradiance[1]+caustic[1], irradiance[2]+caustic[2]);
 
 		//	#endif
 			}
@@ -361,8 +364,43 @@ void Scene::tracePhotons()
     #endif
 }
 
+//Shoot out all caust photons and trace them
+void Scene::traceCausticPhotons()
+{
+	printf("Caustic Map Progress: %.3f%%\r", 0.0f);
+    for (int l = 0; l < m_lights.size(); l++)
+    {
+        PointLight *light = m_lights[l];
+        #ifdef OPENMP
+        #pragma omp parallel for schedule(static, 1000)
+        #endif
+		Objects::iterator it;
+		for (it = m_specObjects.begin(); it != m_specObjects.end(); ++it)
+		{
+			Object *pObj = *it;			
+            //Create a new photon
+            Photon p;
+            Vector3 power = light->color() * (light->wattage()/(float)PhotonsPerLightSource/1000.f);
+            Vector3 dir = light->samplePhotonDirection(pObj);
+            Vector3 pos = light->samplePhotonOrigin();
+            tracePhoton(pos, dir, power, 0, true);
+           // if (i % 1000 == 0)
+           //     printf("Caustic Map Progress: %.3f%%\r", 100.0f*(float)i/(float)PhotonsPerLightSource);
+            
+        }
+    }
+    printf("Caustic Map Progress: %.3f%%\n", 100.0f);
+    m_causticMap.balance();
+    #ifdef VISUALIZE_PHOTON_MAP
+    debug("Rebuilding BVH for visualization. Number of objects: %d\n", m_objects.size());
+    m_bvh.build(&m_objects);
+
+    #endif
+}
+
+
 //Trace a single photon through the scene
-void Scene::tracePhoton(const Vector3& position, const Vector3& direction, const Vector3& power, int depth)
+void Scene::tracePhoton(const Vector3& position, const Vector3& direction, const Vector3& power, int depth, bool bCausticRay)
 {
     PHOTON_DEBUG(endl << "tracePhoton(): pos " << position << ", dir " << direction << ", pwr " << power << ", depth " << depth);
     if (depth > TRACE_DEPTH) return;
@@ -411,7 +449,10 @@ void Scene::tracePhoton(const Vector3& position, const Vector3& direction, const
 #               endif
                 {
                     PHOTON_DEBUG("Storing photon. Surface normal " << hit.N);
-                    m_photonMap.store(pwr, pos, dir);
+                    if (bCausticRay)
+						m_causticMap.store(pwr, pos, dir);
+					else
+						m_photonMap.store(pwr, pos, dir);
 
 #                   ifdef VISUALIZE_PHOTON_MAP
                     Sphere* sp = new Sphere;
@@ -426,6 +467,9 @@ void Scene::tracePhoton(const Vector3& position, const Vector3& direction, const
             }
             else
             {
+				//Caustic Rays only send rays from specular surfaces
+				if (bCausticRay)
+					return;
 #ifdef STATS
 				Stats::Photon_Bounces++;
 #endif
@@ -433,35 +477,42 @@ void Scene::tracePhoton(const Vector3& position, const Vector3& direction, const
                 Ray r = ray.random(hit);
                 HitInfo diffHit;
                 PHOTON_DEBUG("Tracing diffuse photon");
-                tracePhoton(r.o, r.d, diffuseColor*power/prob[0], depth);
+                tracePhoton(r.o, r.d, diffuseColor*power/prob[0], depth, bCausticRay);
             }
         }
         else if (rnd < prob[1])
         {
+			//only caustics should count this first bounce
+			if (!bCausticRay && depth == 1)
+				return;
+
 #ifdef STATS
 			Stats::Photon_Bounces++;
 #endif
             //Reflect.
             Ray refl = ray.reflect(hit);
             PHOTON_DEBUG("Tracing reflected photon");
-            tracePhoton(hit.P, refl.d, power, depth);
+            tracePhoton(hit.P, refl.d, power, depth, bCausticRay);
         }
         else if (rnd < prob[2])
         {
+			//only caustics should count this first bounce
+			if (!bCausticRay && depth == 1)
+				return;
+
 #ifdef STATS
 			Stats::Photon_Bounces++;
 #endif
             //Transmit (refract)
             Ray refr = ray.refract(hit);
             PHOTON_DEBUG("Tracing refracted photon");
-            tracePhoton(hit.P, refr.d, power, depth);
+            tracePhoton(hit.P, refr.d, power, depth, bCausticRay);
         }
     }
 #   ifdef DEBUG_PHOTONS
     else { PHOTON_DEBUG("Missed scene."); }
 #   endif
 }
-
 
 Vector3
 Scene::getEnvironmentMap(const Ray & ray)

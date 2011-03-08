@@ -446,16 +446,21 @@ float PetalTexture::bumpHeight3D(const tex_coord3d_t & coords) const
 
 Vector3 PetalTexture::lookup3D(const tex_coord3d_t & coords) const
 {
-//    Vector3 baseColor(0.6f, 0.25f, 0.33f);
-//    Vector3 tipColor(0.92f, 0.57f, 0.62f);
-
-    Vector3 baseHighlight(1,0,0.5);
+    /*Vector3 baseHighlight(1,0,0.5);
     Vector3 tipHighlight(1, 0.5, 0);
     Vector3 baseDepression(0.5, 0.15, 0.3);
     Vector3 tipDepression(0.75, 0.15, 0.15);
 
     Vector3 baseColor(0.8, 0.1, 0.3);
-    Vector3 tipColor(1.0, 0.2, 0.1);
+    Vector3 tipColor(1.0, 0.2, 0.1);*/
+
+    Vector3 baseHighlight(0.2,0,0.8);
+    Vector3 tipHighlight(0.8, 0.5, 1);
+    Vector3 baseDepression(0.2, 0.0, 0.5);
+    Vector3 tipDepression(0.3, 0.15, 0.75);
+
+    Vector3 baseColor(0.1, 0.0, 0.6);
+    Vector3 tipColor(0.6, 0.3, 1.0);
 
     Vector3 position(coords.u-m_pivot.x, coords.v-m_pivot.y, coords.w-m_pivot.z);
     float radius = position.length();
@@ -467,7 +472,9 @@ Vector3 PetalTexture::lookup3D(const tex_coord3d_t & coords) const
     Vector3 diffuseColor = (1-dist)*baseColor + dist*tipColor;
     Vector3 interpHighlight = (1-dist)*baseHighlight + dist*tipHighlight;
     Vector3 interpDepression = (1-dist)*baseDepression + dist*tipDepression;
-    float phi = acos(-dot(north, position));
+    
+	Vector3 dir = position.normalize();
+	float phi = acos(-dot(north, position));
     float v = phi/PI;
     float u;
     float theta = ( acos( dot( position, equator ) / sin( phi )) ) / ( 2 * PI);

@@ -122,6 +122,9 @@ Triangle::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
 
 tex_coord2d_t Triangle::toUVCoordinates(const Vector3 & xyz) const
 {
+	if (m_mesh->numTextCoords() == 0)
+		return tex_coord2d_t();
+
     TriangleMesh::TupleI3 vi3 = m_mesh->vIndices()[m_index];
     TriangleMesh::TupleI3 ti3 = m_mesh->tIndices()[m_index];
 

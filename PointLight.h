@@ -20,17 +20,12 @@ public:
     //For point lights, it's a random direction in either direction.
     virtual Vector3 samplePhotonDirection() const  
     {
-        float x,y,z;
-        do
-        {
-            x = 2*frand()-1;
-            y = 2*frand()-1;
-            z = 2*frand()-1;
-        } while (x*x+y*y+z*z > 1.0f);
-        Vector3 out(x,y,z);
-        out.normalize();
+        return sampleSphericalDirection();
+    }
 
-        return out;
+	virtual Vector3 samplePhotonDirection(Object *pObj) const
+    {
+		return (pObj->center() - m_position).normalize();
     }
     
     //Sample a position on the surface of the light source.

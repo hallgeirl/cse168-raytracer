@@ -43,6 +43,7 @@ public:
     TupleI3* nIndices()     {return m_normalIndices;}
 	TupleI3* tIndices()		{return m_texCoordIndices;}
     int numTris()           {return m_numTris;}
+    int numTextCoords()		{return m_numTextCoords;}
 
 protected:
     void setVertex(int index, const Vector3 &v);
@@ -64,6 +65,7 @@ protected:
     TupleI3* m_texCoordIndices;
     unsigned int m_numVertices;
     unsigned int m_numTris;
+	unsigned int m_numTextCoords;
 };
 
 

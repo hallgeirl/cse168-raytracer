@@ -14,13 +14,17 @@ class Image;
 class Scene
 {
 public:
-	Scene() : m_photonMap(PhotonsPerLightSource) { m_environment = 0; m_bgColor = Vector3(0.0f); }
+	Scene() 
+		: m_photonMap(PhotonsPerLightSource), m_causticMap(PhotonsPerLightSource), m_environment(0), m_bgColor(Vector3(0.0f))
+	{}
     void addObject(Object* pObj)        
     { 
         if (pObj->isBounded()) m_objects.push_back(pObj);
         else m_unboundedObjects.push_back(pObj);
+		if (pObj->getMaterial()->isRefractive() || pObj->getMaterial()->isReflective()) m_specObjects.push_back(pObj);
     }
     const Objects* objects() const      {return &m_objects;}
+    const Objects* specObjects() const      {return &m_specObjects;}
 
     void addLight(PointLight* pObj)     {m_lights.push_back(pObj);}
     const Lights* lights() const        {return &m_lights;}
@@ -36,7 +40,8 @@ public:
 	bool traceScene(const Ray& ray, Vector3& shadeResult, int depth);
 
     void tracePhotons();
-    void tracePhoton(const Vector3& position, const Vector3& direction, const Vector3& power, int depth);
+    void traceCausticPhotons();
+    void tracePhoton(const Vector3& position, const Vector3& direction, const Vector3& power, int depth, bool bCausticRay=false);
 
 	void setEnvironment(Texture* environment) { m_environment = environment; }
 	Vector3 getEnvironmentMap(const Ray & ray);
@@ -45,8 +50,10 @@ public:
 
 protected:
     Objects m_objects;
+    Objects m_specObjects;
     Objects m_unboundedObjects;
     Photon_map m_photonMap;
+    Photon_map m_causticMap;
     BVH m_bvh;
     Lights m_lights;
     Texture * m_environment; //Environment map
