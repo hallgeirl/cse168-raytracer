@@ -132,7 +132,7 @@ public:
     }
 };
 
-class CloudTexture : public Texture2D
+class CloudTexture : public Texture3D
 {
 public:
     CloudTexture(float scale = 3.0f, float cloudSize = 0.3f, float density = -0.1f, float sharpness = 20.0f, float ambient = 0.3f, 
@@ -149,7 +149,7 @@ public:
         m_shadowSharpness = shadowSharpness;
     }
 
-    virtual Vector3 lookup2D(const tex_coord2d_t & coords) const
+    virtual Vector3 lookup2D(const tex_coord3d_t & coords) const
     {
         float u = m_scale * coords.u, 
               v = m_scale * coords.v;

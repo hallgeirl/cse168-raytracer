@@ -5,6 +5,9 @@
 #include "Image.h"
 #include <stdlib.h>
 #include <time.h>
+#include <iostream>
+
+using namespace std;
 
 #define ANGFACT     1.0
 #define LEFT        4
@@ -227,6 +230,13 @@ MiroWindow::keyboard(unsigned char key, int x, int y)
             break;
         }
         break;
+        case 'm':
+        case 'M':
+        {
+            cout << "Eye: " << g_camera->eye() << endl;
+            cout << "Look-at: " << g_camera->lookAt() << endl;
+            break;
+        }
 
         default:
         break;

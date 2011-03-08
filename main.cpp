@@ -355,7 +355,7 @@ void
 makeTestSphereScene()
 {
 
-	Texture2D *autumnHDR = new CloudTexture(3.0f,  //Scale (higher is smaller)
+	Texture *autumnHDR = new CloudTexture(3.0f,  //Scale (higher is smaller)
 	                                        0.1f,  //Cloud size
 	                                        0.2f, //Cloud density
 	                                        50.0f,  //Sharpness
