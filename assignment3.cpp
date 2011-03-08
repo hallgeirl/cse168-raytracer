@@ -6,7 +6,7 @@
 #include "Camera.h"
 #include "Image.h"
 #include "Sphere.h"
-#include "PointLight.h"
+#include "DirectionalAreaLight.h"
 #include "TriangleMesh.h"
 #include "Triangle.h"
 #include "Lambert.h"
@@ -64,10 +64,13 @@ makeTestPetalScene()
     g_camera->setFOV(30);
 
     // create and place a point light source
-    PointLight * light = new PointLight;
+    DirectionalAreaLight * light = new DirectionalAreaLight(7);
     light->setPosition(Vector3(50, 50, 50));
+    Vector3 lightNormal = -light->position();
+    lightNormal.normalize();
+    light->setNormal(lightNormal);
     light->setColor(Vector3(1, 1, 1));
-    light->setWattage(40000);
+    light->setWattage(100);
     g_scene->addLight(light);
 
 	 // create and place a point light source
@@ -75,9 +78,9 @@ makeTestPetalScene()
     amlight->setPosition(Vector3(-20, 20, 20));
     amlight->setColor(Vector3(1, 1, 1));
     amlight->setWattage(30000);
-    g_scene->addLight(amlight);
+    //g_scene->addLight(amlight);
 
-	Material* material = new TexturedPhong(new PetalTexture(Vector3(0.f), 7), Vector3(0.2), Vector3(0), infinity, 1.5);
+	Material* material = new TexturedPhong(new PetalTexture(Vector3(0.f), 7), Vector3(0.), Vector3(0), infinity, 1.5);
 	addFlowerModel("models/Petals.obj", material, g_scene, Vector3(0.f), 0.0);
 
 	material = new TexturedPhong(new FlowerCenterTexture(Vector3(-0.1,-0.35,0), 1.1));

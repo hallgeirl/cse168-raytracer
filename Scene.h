@@ -66,7 +66,7 @@ protected:
     #ifdef PHOTONS_PER_LIGHT
     PHOTONS_PER_LIGHTSOURCE;
     #else
-    100000;
+    1000000;
     #endif
 };
 

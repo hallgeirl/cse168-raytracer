@@ -104,9 +104,9 @@ void Photon_map :: irradiance_estimate(
   // if less than 8 photons return
   /*if (np.found<8)
     return;*/
-
+    
   float pdir[3];
- static bool foo = false;
+
   // sum irradiance from all photons
   for (int i=1; i<=np.found; i++) {
     const Photon *p = np.index[i];
@@ -128,9 +128,13 @@ void Photon_map :: irradiance_estimate(
 
   const float tmp=(1.0f/M_PI)/(np.dist2[0]);	// estimate of density
 
+
   irrad[0] *= tmp;
   irrad[1] *= tmp;
   irrad[2] *= tmp;
+  
+/*  #pragma omp critical
+  cout << irrad[0] << "," << irrad[1] << "," << irrad[2] << " density " << tmp << " no. photons " << np.found << " radius^2 " << np.dist2[0] << endl;*/
 }
 
 
