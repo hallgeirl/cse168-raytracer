@@ -2,10 +2,11 @@
 #include "Phong.h"
 #include "Ray.h"
 #include "Scene.h"
-#include "SquareLight.h"
+#include "DirectionalAreaLight.h"
 #ifdef STATS
 #include "Stats.h"
 #endif
+#include "Sphere.h"
 
 using namespace std;
 
@@ -75,15 +76,16 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 
         for (int i = 0; i < samples; i++)
         {
-
-            Vector3 l = pLight->samplePhotonOrigin(i, samples) - hit.P;
-
+            Vector3 origin = pLight->samplePhotonOrigin(i, samples);
+            Vector3 l = origin - hit.P;
+            
             // the inverse-squared falloff
             float falloff = l.length2();
 
             // normalize the light direction
             l /= sqrt(falloff);
 
+            
             // No light contribution if Ray hits an object 
 #if ! defined (DISABLE_SHADOWS) && ! defined (VISUALIZE_PHOTON_MAP)
             Ray Shadow(hit.P+(l*epsilon), l);
@@ -96,13 +98,35 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
                 continue;
             }
 #endif
+        
 
             // get the diffuse component
-            float nDotL = dot(hit.N, l);
+            float nDotL;
+
+            //Check if it's a directional light. If so, we need the point to be in the path of the light.
+            {
+                DirectionalAreaLight *dl = dynamic_cast<DirectionalAreaLight*>(pLight);
+                if (dl != NULL)
+                {
+                    Vector3 lightNormal = dl->getNormal();
+                    //Directional lights always shoot light in the direction of the normals.
+                    nDotL = dot(hit.N, -lightNormal);
+                    
+                    //Shoot a "ray" from the point towards the square light in the opposite direction of the normal
+                    //Test intersection with plane of the rectangle to find the t
+                    float t = dot(lightNormal, dl->position()-hit.P) / -1.0f;
+                    if (((hit.P-t*lightNormal) - dl->position()).length2() > dl->getRadius()*dl->getRadius()) continue;
+                    falloff = 1;
+                }
+                else
+                {
+                    nDotL = dot(hit.N, l);
+                }
+            }
 
             //removed m_specular from specular highlight 
             //specular highlight should be dependent on shinyness rather than reflective component
-            L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / (4.0f * PI * (float)samples)) * diffuseColor * m_diffuse);
+            L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / (4.0f * PI*PI * (float)samples)) * diffuseColor * m_diffuse);
         }
     }
 

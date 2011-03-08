@@ -2,7 +2,7 @@
 #define _SQUARELIGHT_H_
 #include "PointLight.h"
 #include <iostream>
-using namespace std;
+
 class SquareLight : public PointLight
 {
 public:
@@ -11,6 +11,11 @@ public:
     void setNormal(Vector3 n) 
     { 
         m_normal = n;
+    }
+    
+    Vector3 getNormal()
+    {
+        return m_normal;
     }
 
     void setDimensions(float width, float height) { m_dimensions[0] = width; m_dimensions[1] = height; }
@@ -46,6 +51,7 @@ public:
     {
         getTangents(m_normal, m_tangent1, m_tangent2);
     }
+    
 protected:
     Vector3 m_normal; Vector3 m_tangent1, m_tangent2;
     float m_dimensions[2];
