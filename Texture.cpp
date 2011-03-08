@@ -24,7 +24,7 @@ float LoadedTexture::tonemapValue(float value) const
 {
     if (FreeImage_GetImageType(m_bitmap) == FIT_BITMAP) return value;
     
-    return std::min(pow(value / m_maxIntensity, 0.2f)*1.7f, 1.0f); //This seems to give a fairly good image. +2ev, gamma ~3
+    return std::min(pow(value / m_maxIntensity, 0.5f)*1.5f, 1.0f); //This seems to give a fairly good image. +2ev, gamma ~3
 }
 
 LoadedTexture::LoadedTexture(std::string filename)
@@ -35,6 +35,9 @@ LoadedTexture::LoadedTexture(std::string filename)
     
     int w = FreeImage_GetWidth(m_bitmap), h = FreeImage_GetHeight(m_bitmap);
     
+    #ifdef OPENMP
+    #pragma omp parallel for
+    #endif
     for (int i = 0; i < h; i++)
     {
         for (int j = 0; j < w; j++)
@@ -52,8 +55,11 @@ LoadedTexture::LoadedTexture(std::string filename)
 
     int lrw = FreeImage_GetWidth(m_lowres), lrh = FreeImage_GetHeight(m_lowres);
     int pixelSize = (h/lrh)*(w/lrw); 
-
     lrw = FreeImage_GetWidth(m_lowres); lrh = FreeImage_GetHeight(m_lowres);
+
+    #ifdef OPENMP
+    #pragma omp parallel for
+    #endif
     for (int i = 0; i < lrh; i++)
     {
         for (int j = 0; j < lrw; j++)

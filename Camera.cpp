@@ -124,6 +124,14 @@ Camera::eyeRay(int x, int y, int imageWidth, int imageHeight, bool randomize)
         left    = -right;
     }
 
+    float dx = 0.5, dy = 0.5;
+
+    if (randomize)
+    {
+        dx = frand();
+        dy = frand();
+    }
+
 	#ifdef DOF
 
 	//randomize eye location around circle of confusion
@@ -131,32 +139,23 @@ Camera::eyeRay(int x, int y, int imageWidth, int imageHeight, bool randomize)
 
 	Vector3 new_eye = m_eye + (discSample.x*uDir + discSample.y*vDir);
 
-	m_viewDir.normalize();
 	Vector3 new_viewDir = m_eye + m_viewDir * DOF_FOCUS_PLANE - new_eye;
 
 	//need to recalulate view plane
-    wDir = Vector3(-new_viewDir).normalize();
+    Vector3 localwDir = Vector3(-new_viewDir).normalize();
     //uDir = cross(m_up, wDir).normalize();
     //vDir = cross(wDir, uDir);
-	
-	#endif
 
-	// need stratified sampling
+	#else
+    Vector3 new_eye = m_eye;
+    Vector3 localwDir = wDir;
+    // need stratified sampling
     // transform x and y into camera space
     // -----------------------------------
-    float dx = 0.5, dy = 0.5;
-    if (randomize)
-    {
-        dx = frand();
-        dy = frand();
-    }
+	#endif
 
     const float imPlaneUPos = left   + (right - left)*(((float)x+dx)/(float)imageWidth);
     const float imPlaneVPos = bottom + (top - bottom)*(((float)y+dy)/(float)imageHeight);
 
-	#ifdef DOF
-    return Ray(new_eye, (imPlaneUPos*uDir + imPlaneVPos*vDir - wDir).normalize());
-	#endif 
-
-    return Ray(m_eye, (imPlaneUPos*uDir + imPlaneVPos*vDir - wDir).normalize());
+    return Ray(new_eye, (imPlaneUPos*uDir + imPlaneVPos*vDir - localwDir).normalize());
 }
