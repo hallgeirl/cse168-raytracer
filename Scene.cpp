@@ -401,6 +401,7 @@ void Scene::traceCausticPhotons()
 			int count = 0;
 			// send samples proportional to the object area
 			for (float n = 0.0f; n < objArea; n += SURFACE_SAMPLES)
+		//	for (int j = 0; j < 60; ++j)
 			{
 				Vector3 dir = light->samplePhotonDirection(pObj);
 				Vector3 pos = light->samplePhotonOrigin();  
