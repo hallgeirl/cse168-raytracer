@@ -3,6 +3,7 @@
 #include "TriangleMesh.h"
 #include "Ray.h"
 #include "Vector3.h"
+#include "Utility.h"
 
 #ifdef STATS
 #include "Stats.h"
@@ -44,6 +45,39 @@ Vector3 Triangle::center() const
     Vector3 BmA = verts[1]-verts[0], CmA = verts[2]-verts[0];
  
     return verts[0] + BmA/3 + CmA/3;
+}
+
+float Triangle::GetArea(const Vector3& lightPos)
+{
+	//need to cache center
+	Vector3 l_dir = (lightPos - center()).normalize();
+	Vector3 ut, vt;
+	getTangents(l_dir, ut, vt);
+
+    TriangleMesh::TupleI3 ti3 = m_mesh->vIndices()[m_index];
+    Vector3 verts[3] = {m_mesh->vertices()[ti3.v[0]], m_mesh->vertices()[ti3.v[1]], m_mesh->vertices()[ti3.v[2]]};
+	float minBase = infinity;
+	float minHeight = infinity;
+	float maxBase = -infinity;
+	float maxHeight = -infinity;
+
+	for (int i = 0; i < 3; ++i)
+	{
+		float projU = dot(ut, verts[i]);
+		float projV = dot(vt, verts[i]);
+		
+		if (projU < minBase)
+			minBase = projU;
+		if (projU > maxBase)
+			maxBase = projU;
+
+		if (projV < minHeight)
+			minHeight = projV;
+		if (projV > maxHeight)
+			maxHeight = projV;
+	}
+
+	return (0.5f * (maxHeight-minHeight) * (maxBase-minBase));
 }
 
 void Triangle::updateMinMax()

@@ -23,6 +23,8 @@ public:
     virtual Vector3 coordsMin() const = 0;
     virtual Vector3 coordsMax() const = 0;
     virtual Vector3 center() const = 0;
+
+	virtual float GetArea(const Vector3& lightPos) {return 0;}
     
     //Unbounded objects like planes should override this and return false.
     virtual bool isBounded() const { return true; }

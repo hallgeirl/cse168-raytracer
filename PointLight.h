@@ -16,6 +16,12 @@ public:
     const Vector3 & color() const       {return m_color;}
     const Vector3& position() const     {return m_position;}
 
+	virtual float GetLightRatio(float objArea, const Vector3& objCenter) const 
+	{
+		float dist = (m_position - objCenter).length();
+		return (objArea / (dist * dist) / (4 * PI));
+	}
+
     //Generate a photon in a direction determined by the light type.
     //For point lights, it's a random direction in either direction.
     virtual Vector3 samplePhotonDirection() const  
