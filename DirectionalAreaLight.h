@@ -9,7 +9,7 @@ class DirectionalAreaLight : public SquareLight
 public:
     DirectionalAreaLight(float radius = 1) { m_radius = radius; }
    
-    float getRadius() { return m_radius; } 
+    virtual float getRadius() { return m_radius; } 
    
     virtual Vector3 samplePhotonOrigin(int sampleNumber = 0, int totalSamples = 1) const  
     {

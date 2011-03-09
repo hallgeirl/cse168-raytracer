@@ -21,7 +21,6 @@ typedef struct Photon {
     float power[3];               // photon power (uncompressed)
 } Photon;
 
-
 /* This structure is used only to locate the
  * nearest photons
 */
@@ -65,7 +64,7 @@ public:
 
   void locate_photons(
     NearestPhotons *const np,      // np is used to locate the photons
-    const int index ) const;       // call with index = 1
+    const int index, const float normal[3] ) const;       // call with index = 1
 
   void photon_dir(
     float *dir,                    // direction of photon (returned)

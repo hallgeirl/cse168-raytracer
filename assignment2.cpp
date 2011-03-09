@@ -381,8 +381,8 @@ makeCornellScene()
     
     // set up the camera
     g_camera->setBGColor(Vector3(0.0f, 0.0f, 0.2f));
-    g_camera->setEye(Vector3(2, 1, 1));
-    g_camera->setLookAt(Vector3(2, 0.5, 0));
+    g_camera->setEye(Vector3(2.5, 3, 3));
+    g_camera->setLookAt(Vector3(2.5, 2.5, 0));
     g_camera->setUp(Vector3(0, 1, 0));
     g_camera->setFOV(90);
 
@@ -400,7 +400,7 @@ makeCornellScene()
     //light->setDimensions(0.5, 0.5);
     light->setPosition(Vector3(2.5, 4.9, -1));
     light->setColor(Vector3(1, 1, 1));
-    light->setWattage(130);
+    light->setWattage(160);
     g_scene->addLight(light);
     
     /*Sphere *sp = new Sphere;

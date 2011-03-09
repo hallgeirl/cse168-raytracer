@@ -15,7 +15,7 @@ class Scene
 {
 public:
 	Scene() 
-		: m_photonMap(PhotonsPerLightSource), m_causticMap(PhotonsPerLightSource), m_environment(0), m_bgColor(Vector3(0.0f))
+		: m_photonMap(PhotonsPerLightSource*MaxLights+MaxLights*10000), m_causticMap(PhotonsPerLightSource), m_environment(0), m_bgColor(Vector3(0.0f))
 	{}
     void addObject(Object* pObj)        
     { 
@@ -41,7 +41,7 @@ public:
 
     void tracePhotons();
     void traceCausticPhotons();
-    void tracePhoton(const Vector3& position, const Vector3& direction, const Vector3& power, int depth, bool bCausticRay=false);
+    int tracePhoton(const Vector3& position, const Vector3& direction, const Vector3& power, int depth, bool bCausticRay=false);
 
 	void setEnvironment(Texture* environment) { m_environment = environment; }
 	Vector3 getEnvironmentMap(const Ray & ray);
@@ -62,11 +62,13 @@ protected:
     Texture * m_environment; //Environment map
     Vector3 m_bgColor;       //Background color (for when environment map is not available)
 
+    static const int MaxLights = 10;
+
     static const int PhotonsPerLightSource =
     #ifdef PHOTONS_PER_LIGHT
     PHOTONS_PER_LIGHTSOURCE;
     #else
-    1000000;
+    10000;
     #endif
 };
 
