@@ -400,6 +400,7 @@ makeCornellScene()
     //light->setDimensions(0.5, 0.5);
     light->setPosition(Vector3(2.5, 4.9, -1));
     light->setColor(Vector3(1, 1, 1));
+
     light->setWattage(160);
     g_scene->addLight(light);
     

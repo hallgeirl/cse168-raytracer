@@ -70,7 +70,7 @@ Scene::preCalc()
     debug("Generating photon map... Number of photons: %d\n", PhotonsPerLightSource);
     t1 = -getTime();
     //Generate photon map
-    tracePhotons();
+//    tracePhotons();
 	traceCausticPhotons();
     t1 += getTime();
     debug("Done generating photon map. Time spent: %f\n", t1);
@@ -274,11 +274,11 @@ bool Scene::traceScene(const Ray& ray, Vector3& shadeResult, int depth)
 
 				float pos[3] = {hitInfo.P.x, hitInfo.P.y, hitInfo.P.z};
 				float normal[3] = {hitInfo.N.x, hitInfo.N.y, hitInfo.N.z};
-				float irradiance[3];
+				float irradiance[3] = {0,0,0};
 				float caustic[3] = {0,0,0};
             
-				m_photonMap.irradiance_estimate(irradiance, pos, normal, PHOTON_MAX_DIST, PHOTON_SAMPLES);
-				//m_causticMap.irradiance_estimate(caustic, pos, normal, PHOTON_MAX_DIST, PHOTON_SAMPLES);
+				//m_photonMap.irradiance_estimate(irradiance, pos, normal, PHOTON_MAX_DIST, PHOTON_SAMPLES);
+				m_causticMap.irradiance_estimate(caustic, pos, normal, PHOTON_MAX_DIST, PHOTON_SAMPLES);
 
                 //irradiance_estimate does the dividing by PI and all that
 				shadeResult += Vector3(irradiance[0]+caustic[0], irradiance[1]+caustic[1], irradiance[2]+caustic[2]);
@@ -384,22 +384,33 @@ void Scene::traceCausticPhotons()
         #pragma omp parallel for schedule(static, 1000)
         #endif
         for (int i = 0; i < m_specObjects.size(); i++)
-        {
-            for (int j = 0; j < 60; j++){
-			Object *pObj = m_specObjects[i];			
-            //Create a new photon
-            Photon p;
-            Vector3 power = light->color() * ((light->wattage()/(float)m_specObjects.size())/5.0f);
-            Vector3 dir = light->samplePhotonDirection(pObj);
-            Vector3 pos = light->samplePhotonOrigin();
-            
-            DirectionalAreaLight *dl = dynamic_cast<DirectionalAreaLight*>(light);
-            if (dl != 0)
-            {
-                 power *= PI * dl->getRadius() * dl->getRadius();
-            }
-            //tracePhoton(pos, dir, power, 0, true);
-            }
+        {	
+			Object *pObj = m_specObjects[i];	
+
+			float objArea = pObj->GetArea(light->position());
+			float ratioToLight = light->GetLightRatio(objArea, pObj->center());
+
+			//Vector3 power = light->color() * ((light->wattage()/(float)m_specObjects.size()) * ratioToLight);
+			Vector3 power = light->color() * (light->wattage()* ratioToLight);
+
+			DirectionalAreaLight *dl = dynamic_cast<DirectionalAreaLight*>(light);
+			if (dl != 0)
+			{
+				 power *= PI * dl->getRadius() * dl->getRadius();
+			}
+			int count = 0;
+			// send samples proportional to the object area
+			for (float n = 0.0f; n < objArea; n += SURFACE_SAMPLES)
+		//	for (int j = 0; j < 60; ++j)
+			{
+				Vector3 dir = light->samplePhotonDirection(pObj);
+				Vector3 pos = light->samplePhotonOrigin();  
+
+				tracePhoton(pos, dir, power, 0, true);
+				count++;
+			}
+
+			printf( "samples: %d \n", count);
            // if (i % 1000 == 0)
            //     printf("Caustic Map Progress: %.3f%%\r", 100.0f*(float)i/(float)PhotonsPerLightSource);
             
@@ -526,6 +537,7 @@ int Scene::tracePhoton(const Vector3& position, const Vector3& direction, const 
 #   ifdef DEBUG_PHOTONS
     else { PHOTON_DEBUG("Missed scene."); }
 #   endif
+	return 0;
 }
 
 Vector3
