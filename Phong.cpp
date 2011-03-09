@@ -70,7 +70,7 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
         #else
         if (dynamic_cast<SquareLight*>(*lightIter))
             //samples = 49;
-            samples = 9;
+            samples = 1;
         else
             samples = 1;
         #endif
@@ -78,7 +78,7 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
         for (int i = 0; i < samples; i++)
         {
             Vector3 origin = pLight->samplePhotonOrigin(i, samples);
-            Vector3 l = origin - hit.P;
+            Vector3 l = pLight->getLightDirection(origin, hit.P);
             
             // the inverse-squared falloff
             float falloff = l.length2();

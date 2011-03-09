@@ -180,6 +180,64 @@ public:
     virtual Vector3 lookup3D(const tex_coord3d_t & coords) const;
 };
 
+
+class StemTexture : public Texture2D
+{
+protected:
+    float m_scale;
+
+public:
+    StemTexture(float scale=1) { m_scale = scale; }
+    virtual float bumpHeight2D(const tex_coord2d_t & coords) const { return 0.0f; }
+    virtual Vector3 lookup2D(const tex_coord2d_t & coords) const
+    {
+        float u = coords.u*m_scale,
+              v = coords.v*m_scale;
+     
+        long order = 3;
+        float pos[2] = {u, v}, 
+          *f = new float[order], 
+          (*delta)[2] = new float[order][2];
+    
+        unsigned long *id = new unsigned long[order];
+        WorleyNoise::noise2D(pos, order, f, delta, id);
+              
+        float noise = generateNoise(u, v, 0, 10, 1.5, 0.8, 10);
+        
+        float cells = f[0]-f[1];
+        
+        delete f; delete delta;
+        
+        return Vector3(0, 0.5+0.5*(noise+1.0f)/2.0f - 0.3*cells, 0);
+    }
+};
+
+
+class LeafTexture : public Texture3D
+{
+protected:
+    float m_scale;
+	Vector3 m_direction;
+	Vector3 m_pivot;
+public:
+    LeafTexture(const Vector3 & pivot, const Vector3 &direction, float scale=1) 
+    { 
+        m_direction = direction; m_direction.normalize();
+        m_scale = scale; m_pivot = pivot; 
+    }
+    
+    virtual float bumpHeight3D(const tex_coord3d_t & coords) const { return 0.0f; }
+    virtual Vector3 lookup3D(const tex_coord3d_t & coords) const
+    {
+        Vector3 texcoords(coords.u, coords.v, coords.w);
+        
+        float cosangle = dot(texcoords-m_pivot, m_direction) / ((texcoords-m_pivot).length());
+        if (cosangle < 0) cosangle = 0;
+        //std::cout << cosangle << std::endl;
+        return Vector3(0, 1-std::pow(cosangle,10000), 0);
+    }
+};
+
 class FlowerCenterTexture : public Texture3D
 {
 protected:

@@ -28,6 +28,13 @@ public:
 		return (pObj->center() - m_position).normalize();
     }
     
+    //Calculates the light direction from the origin to the directionOf object.
+    //Made overridable in order to allow e.g. directional lights return its own direction.
+    virtual Vector3 getLightDirection(const Vector3 &origin, const Vector3 &directionOf) const
+    {
+        return origin - directionOf;
+    }
+    
     //Sample a position on the surface of the light source.
     //For point lights, it's m_position. For area lights, a random position on the surface should be generated.
     //The parameters can be used to produce a more evenly distributed sampling for area lights.

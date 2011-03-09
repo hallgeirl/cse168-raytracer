@@ -17,6 +17,12 @@ public:
         return m_position + (discSample.x*m_tangent1 + discSample.y*m_tangent2);
     }
    
+    virtual Vector3 getLightDirection(const Vector3 &origin, const Vector3 &directionOf) const
+    {
+        //The light direction is always the negative normal
+        return -m_normal;
+    }
+   
     virtual Vector3 samplePhotonDirection() const
     {
         return m_normal;
