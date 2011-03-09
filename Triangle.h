@@ -21,6 +21,7 @@ public:
     virtual Vector3 center() const;
 
 	virtual float GetArea(const Vector3& lightPos);
+	virtual Vector3 GetSamplePosition() const;
 
     virtual void preCalc();
 

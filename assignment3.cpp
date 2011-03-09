@@ -55,22 +55,29 @@ makeTestPetalScene()
 
     g_image->resize(res, int((float)res/aspect));
     
+    Vector3 lightPos = Vector3(50,30,40);
+    
     // set up the camera
     g_camera->setBGColor(Vector3(0.0f, 0.0f, 0.2f));
-    g_camera->setEye(Vector3(2, 5.0, 16.8));
-//Don't delete    g_camera->setEye(Vector3(2, 4.4, 16.8));
-    g_camera->setLookAt(Vector3(3, 0.0, 4));
+
+//Don't delete    
+g_camera->setEye(Vector3(2, 4.4, 16.8));
+//Don't delete    
+g_camera->setLookAt(Vector3(3, 0.0, 4));
+
+//    g_camera->setEye(Vector3(8, 4.4, 16.8));
+//    g_camera->setLookAt(Vector3(3, 0.0, 4));
     g_camera->setUp(Vector3(0, 1, 0));
     g_camera->setFOV(30);
 
     // create and place a point light source
     DirectionalAreaLight * light = new DirectionalAreaLight(7);
-    light->setPosition(Vector3(50, 50, 50));
+    light->setPosition(lightPos);
     Vector3 lightNormal = -light->position();
     lightNormal.normalize();
     light->setNormal(lightNormal);
     light->setColor(Vector3(1, 1, 1));
-    light->setWattage(100);
+    light->setWattage(4);
     g_scene->addLight(light);
 
 	 // create and place a point light source
@@ -83,15 +90,21 @@ makeTestPetalScene()
 	Material* material = new TexturedPhong(new PetalTexture(Vector3(0.f), 7), Vector3(0.), Vector3(0), infinity, 1.5);
 	addFlowerModel("models/Petals.obj", material, g_scene, Vector3(0.f), 0.0);
 
+	material = new Phong(Vector3(0,1,0));
+	addFlowerModel("models/Stem.obj", material, g_scene, Vector3(0.f), 0.0);
+
+	material = new Phong(Vector3(0,1,0));
+	addFlowerModel("models/Leaf.obj", material, g_scene, Vector3(0.f, 0.5f, 0.f), 0.0);
+
 	material = new TexturedPhong(new FlowerCenterTexture(Vector3(-0.1,-0.35,0), 1.1));
 	addFlowerModel("models/FlowerCenter.obj", material, g_scene, Vector3(0.f));//Vector3(-0.05f, 0.25, 0.32f), 0);
 
 	Material* water = new Phong(Vector3(1.f), Vector3(0), Vector3(1.0f), infinity, 1.33);
 	addFlowerModel("models/WaterDrops.obj", water, g_scene, Vector3(0.f));
     
-/*    Sphere *sp = new Sphere();
+    /*Sphere *sp = new Sphere();
     sp->setCenter(Vector3(-0.1,-0.35,0));
-    sp->setRadius(1);
+    sp->setRadius(0.5);
     sp->setMaterial(new Phong(Vector3(1)));
     g_scene->addObject(sp);*/
     
@@ -112,10 +125,10 @@ makeTestPetalScene()
   //  g_scene->addObject(p);
     
     p = new Plane;
-    p->setMaterial(new Phong(Vector3(1), Vector3(1)));
-    p->setNormal(Vector3(0,1,0));
-    p->setOrigin(Vector3(0, 0, 0));
-//    g_scene->addObject(p);
+    p->setMaterial(new Phong(Vector3(0.5)));
+    p->setNormal(Vector3(1,0,0));
+    p->setOrigin(Vector3(3, 0, 0));
+    //g_scene->addObject(p);
     
 	Material* floorMaterial = new Phong(Vector3(0.5f));
     Triangle* t = new Triangle;

@@ -127,12 +127,12 @@ class Ray
             Stats::Secondary_Rays++;
 #endif
             
-            Ray random(hitInfo.P, sampleHemisphereDirection(hitInfo.N));
+            //Ray random(hitInfo.P, sampleHemisphereDirection(hitInfo.N));
 
-		   /* float phi = frand() * PI / 2.0f;
-            float theta = 2.0f * PI * (frand());
+		    float phi = asin(sqrt(frand()));// * PI / 2.0f;
+            float theta = 2.0f * PI * frand();
 
-            Ray random = alignToVector(hitInfo.N, hitInfo.P, theta, phi);*/
+            Ray random = alignToVector(hitInfo.N, hitInfo.P, theta, phi);
 
             random.isDiffuse = true;
 

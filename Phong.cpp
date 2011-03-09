@@ -66,10 +66,11 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
         float contribution = 0, samples;
 		Vector3 result = pLight->color();
         #ifdef PATH_TRACING
-        samples = 1;
+        samples = 1;    
         #else
         if (dynamic_cast<SquareLight*>(*lightIter))
-            samples = 49;
+            //samples = 49;
+            samples = 9;
         else
             samples = 1;
         #endif
@@ -116,17 +117,19 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
                     //Test intersection with plane of the rectangle to find the t
                     float t = dot(lightNormal, dl->position()-hit.P) / -1.0f;
                     if (((hit.P-t*lightNormal) - dl->position()).length2() > dl->getRadius()*dl->getRadius()) continue;
-                    falloff = 1;
+                    
+                    falloff = 1.0f/PI;
                 }
                 else
                 {
                     nDotL = dot(hit.N, l);
+                    falloff = 1.0f/(falloff * 4.0f * PI*PI);
                 }
             }
 
             //removed m_specular from specular highlight 
             //specular highlight should be dependent on shinyness rather than reflective component
-            L += result * (std::max(0.0f, nDotL/falloff * pLight->wattage() / (4.0f * PI*PI * (float)samples)) * diffuseColor * m_diffuse);
+            L += result * (std::max(0.0f, nDotL * falloff * pLight->wattage() / ((float)samples)) * diffuseColor * m_diffuse);
         }
     }
 

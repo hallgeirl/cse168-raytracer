@@ -99,7 +99,7 @@ void Photon_map :: irradiance_estimate(
   np.dist2[0] = max_dist*max_dist;
 
   // locate the nearest photons
-  locate_photons( &np, 1 );
+  locate_photons( &np, 1, normal);
 
   // if less than 8 photons return
   /*if (np.found<8)
@@ -124,6 +124,13 @@ void Photon_map :: irradiance_estimate(
       irrad[1] += p->power[1];
       irrad[2] += p->power[2];
     //}
+   /* else
+    {
+      irrad[0] += 0.3*p->power[0];
+      irrad[1] += 0.3*p->power[1];
+      irrad[2] += 0.3*p->power[2];
+    }*/
+
   }
 
   const float tmp=(1.0f/M_PI)/(np.dist2[0]);	// estimate of density
@@ -144,7 +151,7 @@ void Photon_map :: irradiance_estimate(
 //******************************************
 void Photon_map :: locate_photons(
   NearestPhotons *const np,
-  const int index ) const
+  const int index, const float normal[3]) const
 //******************************************
 {
   const Photon *p = &photons[index];
@@ -154,13 +161,13 @@ void Photon_map :: locate_photons(
     dist1 = np->pos[ p->plane ] - p->pos[ p->plane ];
 
     if (dist1>0.0) { // if dist1 is positive search right plane
-      locate_photons( np, 2*index+1 );
+      locate_photons( np, 2*index+1, normal);
       if ( dist1*dist1 < np->dist2[0] )
-        locate_photons( np, 2*index );
+        locate_photons( np, 2*index, normal );
     } else {         // dist1 is negative search left first
-      locate_photons( np, 2*index );
+      locate_photons( np, 2*index, normal );
       if ( dist1*dist1 < np->dist2[0] )
-        locate_photons( np, 2*index+1 );
+        locate_photons( np, 2*index+1, normal );
     }
   }
 
@@ -172,8 +179,11 @@ void Photon_map :: locate_photons(
   dist2 += dist1*dist1;
   dist1 = p->pos[2] - np->pos[2];
   dist2 += dist1*dist1;
+
+  float pdir[3];  
+  photon_dir( pdir, p );
   
-  if ( dist2 < np->dist2[0] ) {
+  if ( dist2 < np->dist2[0] && (pdir[0]*normal[0]+pdir[1]*normal[1]+pdir[2]*normal[2]) < 0.0f) {
     // we found a photon :) Insert it in the candidate list
 
     if ( np->found < np->max ) {

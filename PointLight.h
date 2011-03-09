@@ -31,7 +31,7 @@ public:
 
 	virtual Vector3 samplePhotonDirection(Object *pObj) const
     {
-		return (pObj->center() - m_position).normalize();
+		return (pObj->GetSamplePosition() - m_position).normalize();
     }
     
     //Sample a position on the surface of the light source.

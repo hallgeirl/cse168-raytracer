@@ -80,6 +80,20 @@ float Triangle::GetArea(const Vector3& lightPos)
 	return (0.5f * (maxHeight-minHeight) * (maxBase-minBase));
 }
 
+Vector3 Triangle::GetSamplePosition() const
+{
+	float u1 = frand();
+	float beta = 1.0f - sqrt(u1);
+	float gamma = sqrt(frand()) * u1;	
+
+	TriangleMesh::TupleI3 ti3 = m_mesh->vIndices()[m_index];
+    Vector3 verts[3] = {m_mesh->vertices()[ti3.v[0]], m_mesh->vertices()[ti3.v[1]], m_mesh->vertices()[ti3.v[2]]};
+    Vector3 BmA = (verts[1]-verts[0]), CmA = (verts[2]-verts[0]);
+
+	return (verts[0] + beta * BmA + gamma * CmA);
+}
+
+
 void Triangle::updateMinMax()
 {
     if (m_mesh != 0 && m_index < m_mesh->numTris() && m_index >= 0)
