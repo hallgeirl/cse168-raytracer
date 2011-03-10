@@ -10,21 +10,26 @@ const float epsilon   = 1e-4f;
 const float PI = 3.1415926535897932384626433832795028841972f;
 const float DegToRad = PI/180.0f;
 const float RadToDeg = 180.0f/PI;
-const float TRACE_DEPTH = 5;
+const float TRACE_DEPTH = 10;
+const float TRACE_DEPTH_PHOTONS = 5;
 const float TRACE_SAMPLES = 100;
 const float PHOTON_MAX_DIST = 1e10;
 const float PHOTON_SAMPLES = 500.f;
 const float DOF_APERTURE = .20f;
 const float DOF_FOCUS_PLANE = 15.3f;
-const float SURFACE_SAMPLES = 1e-5f;
+const float SURFACE_SAMPLES = 1e-4f;
 //const float DOF_FOCUS_PLANE = 25.23f;
 
 
-#include <stdlib.h>
+//C++ std lib includes
+#include <cstdlib>
 #include "OpenGL.h"
-#include <stdio.h>
+#include <cstdio>
 #include <iostream>
 #include <limits>
+#include <cmath>
+#include <string>
+
 
 typedef struct tex_coord2d_s
 {

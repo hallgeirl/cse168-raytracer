@@ -20,8 +20,8 @@ public:
     virtual Vector3 coordsMax() const { return m_center + m_radius; }
     virtual Vector3 center() const { return m_center; }
 	
-	virtual float GetArea(const Vector3& lightPos) {return PI*m_radius*m_radius;}
-
+	virtual float getArea(const Vector3& lightPos) {return PI*m_radius*m_radius;}
+	virtual Vector3 samplePosition(const Vector3& lightPos) const;
     virtual void renderGL();
 
     //For spherical texture mapping

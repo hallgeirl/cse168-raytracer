@@ -15,7 +15,7 @@ class Scene
 {
 public:
 	Scene() 
-		: m_photonMap(PhotonsPerLightSource*MaxLights+MaxLights*10000), m_causticMap(PhotonsPerLightSource), m_environment(0), m_bgColor(Vector3(0.0f))
+		: m_photonMap(PhotonsPerLightSource*TRACE_DEPTH*MaxLights+MaxLights*10000), m_causticMap(PhotonsPerLightSource*MaxLights+MaxLights*10000), m_environment(0), m_bgColor(Vector3(0.0f))
 	{}
     void addObject(Object* pObj)        
     { 
@@ -68,7 +68,7 @@ protected:
     #ifdef PHOTONS_PER_LIGHT
     PHOTONS_PER_LIGHTSOURCE;
     #else
-    10000;
+    1*100000;
     #endif
 };
 

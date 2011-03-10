@@ -149,8 +149,8 @@ Vector3 LoadedTexture::getPixel(FIBITMAP* bm, int x, int y)
         {
             FIRGBF color = ((FIRGBF*)FreeImage_GetScanLine(bm, y))[x];
             output[0] = color.red;
-            output[1] = color.blue;
-            output[2] = color.green;
+            output[1] = color.green;
+            output[2] = color.blue;
         }    
         break;
     }
@@ -181,7 +181,7 @@ Vector3 LoadedTexture::lookup(const tex_coord2d_t & texture_coords, bool lowres)
     Vector3 f = (getPixel(bm, x1, y1) * (1-x1_error) + getPixel(bm, x2, y1) * x1_error) * (1 - y1_error) + (getPixel(bm, x1, y2) * (1-x1_error) + getPixel(bm, x2, y2) * x1_error) * y1_error;
 
 //    return f;
-    return Vector3(tonemapValue(f.x), tonemapValue(f.z), tonemapValue(f.y));
+    return Vector3(tonemapValue(f.x), tonemapValue(f.y), tonemapValue(f.z));
 }
 
 /***********************************

@@ -3,5 +3,7 @@
 void A1makeBunnyScene();
 void A1makeSphereScene();
 void A1makeTeapotScene();
-
+void makeBUNNIZ();
+void makeScene1();
+void makeScene2();
 #endif

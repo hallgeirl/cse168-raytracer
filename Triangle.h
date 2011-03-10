@@ -20,8 +20,8 @@ public:
     virtual Vector3 coordsMax() const { return m_cachedMax; }
     virtual Vector3 center() const;
 
-	virtual float GetArea(const Vector3& lightPos);
-	virtual Vector3 GetSamplePosition() const;
+	virtual float getArea(const Vector3& lightPos);
+	virtual Vector3 samplePosition() const;
 
     virtual void preCalc();
 

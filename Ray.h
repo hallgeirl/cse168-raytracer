@@ -164,6 +164,34 @@ class Ray
 #endif
         }
 
+        //Reflection coefficient from the Fresnel equations
+        float getReflectionCoefficient(const HitInfo &hitInfo) const
+        {
+            float n1, n2;
+            Vector3 n;
+                       
+            // if ray enters object, else ray exits object
+            if ( dot(d, hitInfo.N) < 0)
+            {
+                n1 = 1.0f;
+                n2 = hitInfo.material->getRefractionIndex();
+                n = hitInfo.N;
+            }
+            else 
+            {
+                n1 = hitInfo.material->getRefractionIndex();
+                n2 = 1.0f;
+                n = -hitInfo.N;
+            }
+            
+            float cosTheta = dot(-d, n);
+            float sinTheta = sin(acos(cosTheta));
+            float sqrtSinTheta = sqrt(1.f - (std::pow((n1/n2) * sinTheta, 2.f)));
+
+            //The equation is (n1*cos(th) - n2 * sqrt(1-((n1/n2)*sin(th))^2)) / (n1*cos(th) + n2 * sqrt(1-((n1/n2)*sin(th))^2))
+            return std::pow((n1*cosTheta - sqrtSinTheta)/(n1*cosTheta + sqrtSinTheta), 2.f);
+        }
+
         Ray refract(const HitInfo & hitInfo) const
         {
             float n1, n2;

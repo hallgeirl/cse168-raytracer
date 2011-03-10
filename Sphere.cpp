@@ -68,6 +68,17 @@ Sphere::intersect(HitInfo& result, const Ray& ray,
     return true;
 }
 
+Vector3 Sphere::samplePosition(const Vector3& lightPos) const
+{
+    Vector3 tang1, tang2, l = lightPos - m_center;
+    l.normalize();
+    getTangents(l, tang1, tang2);
+    
+    VectorR2 discSample = sampleDisc(m_radius);
+
+    return m_center + tang1 * discSample.x + tang2 * discSample.y;
+}
+
 // Sphere mapping
 tex_coord2d_t Sphere::toUVCoordinates(const Vector3 & xyz) const
 {

@@ -3,10 +3,12 @@
 
 #include <cstdlib>
 #include <cmath>
+#include "Material.h"
 #include "Vector3.h"
 
 double getTime();
 void getEigenVector(const float (&A)[3][3], float (&outV)[3], float lambda);
+void addModel(const char* filename, Material *mat, Scene* scene, Vector3 position, float rotY=0, Vector3 scale=Vector3(1,1,1));
 
 //Returns random number between 0 and 1
 inline float frand()
