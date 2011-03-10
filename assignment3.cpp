@@ -56,7 +56,7 @@ makeTestPetalScene()
 
     g_image->resize(res, int((float)res/aspect));
     
-    Vector3 lightPos = Vector3(50,10000,40);
+    Vector3 lightPos = Vector3(50,50,40);
     
     // set up the camera
     g_camera->setBGColor(Vector3(0.0f, 0.0f, 0.2f));
@@ -90,22 +90,22 @@ g_camera->setLookAt(Vector3(3, 0.0, 4));
     amlight->setWattage(30000);
     //g_scene->addLight(amlight);
 
-	Material* material = new TexturedPhong(new PetalTexture(Vector3(0.f), 7), Vector3(0.), Vector3(0), infinity, 1.5);
+	Material* material = new TexturedPhong(new PetalTexture(Vector3(0.f), 7), Vector3(0.), Vector3(0), 500, 1.5);
 	addFlowerModel("models/Petals2.obj", material, g_scene, Vector3(0.f), 0.0);
 
 	//material = new Phong(Vector3(0,1,0));
 	material = new TexturedPhong(new StemTexture(30));
 	addFlowerModel("models/Stem.obj", material, g_scene, Vector3(0.f), 0.0);
 
-	material = new Phong(Vector3(0,1,0));
-	//material = new TexturedPhong(new LeafTexture(Vector3(0,0,0), Vector3(1,0,0)));
+	//material = new Phong(Vector3(0,1,0));
+	material = new TexturedPhong(new LeafTexture(Vector3(0,0,0), Vector3(1,0,0)));
 	//material = new TexturedPhong(new LoadedTexture("LeafTexture.jpg"));
 	addFlowerModel("models/Leaf.obj", material, g_scene, Vector3(0.f, 0.5f, 0.f), 0.0);
 
 	material = new TexturedPhong(new FlowerCenterTexture(Vector3(-0.1,-0.35,0), 1.1));
 	addFlowerModel("models/FlowerCenter.obj", material, g_scene, Vector3(0.f));//Vector3(-0.05f, 0.25, 0.32f), 0);
 
-	Material* water = new Phong(Vector3(1.f), Vector3(0), Vector3(1.0f), infinity, 1.33);
+	Material* water = new Phong(Vector3(1.f), Vector3(0), Vector3(1.0f), 250, 1.33);
 	//Material* water = new Phong(Vector3(1.f), Vector3(0), Vector3(1.0f), infinity, 1);
 	addFlowerModel("models/WaterDropsMany.obj", water, g_scene, Vector3(0.f, 0.f, 0));
 	//addFlowerModel("models/WaterDrops.obj", water, g_scene, Vector3(0.f, 0.f, 0));

@@ -96,13 +96,20 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 #endif
             if (scene.trace(hitInfo, Shadow, 0.f, sqrt(falloff)))
             {
-                //continue;
-                if (dot(hitInfo.N, l) < 0) continue;
+                if (!hitInfo.material->isRefractive())
+                    continue;
 
-                //intensity = 1;
-                intensity = dot(hitInfo.N, l);
-                                
-                if (intensity < epsilon) continue;
+                if (dot(hitInfo.N, l) < 0)
+                {
+                    intensity = .5f;
+                }
+                else
+                {
+                    intensity = dot(hitInfo.N, l);
+                                    
+                    if (intensity < epsilon) continue;
+                    intensity = std::max(.5f, intensity);
+                }
             }
 #endif
         
@@ -136,6 +143,16 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
             //removed m_specular from specular highlight 
             //specular highlight should be dependent on shinyness rather than reflective component
             L += result * (std::max(0.0f, nDotL * falloff * pLight->wattage() / ((float)samples)) * diffuseColor * m_diffuse) * intensity;
+            
+            //Specular hightlights
+            if (m_shininess < infinity)
+            {
+                Vector3 r = - l + 2 * dot(l, hit.N) * hit.N;
+                float eDotr = pow(std::max(0.0f, std::min(1.f, dot(-ray.d, r))), 500);
+                
+                float highlights = std::max(0.0f, eDotr*falloff * pLight->wattage()/(float)samples);
+                L += highlights;
+            }
         }
     }
 

@@ -356,6 +356,9 @@ void Scene::tracePhotons()
     {
         PointLight *light = m_lights[l];
         
+        //Temporary hack
+        if (dynamic_cast<DirectionalAreaLight*>(light) == 0) continue;
+        
         while (photonsAdded < PhotonsPerLightSource)
         {
             #ifdef OPENMP

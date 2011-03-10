@@ -314,13 +314,17 @@ void Photon_map :: scale_photon_power( const float scale )
 void Photon_map :: balance(void)
 //******************************
 {
+  cout << "Balancing tree. Stored photons " << stored_photons << endl;
   if (stored_photons>1) {
     // allocate two temporary arrays for the balancing procedure
     Photon **pa1 = (Photon**)malloc(sizeof(Photon*)*(stored_photons+1));
     Photon **pa2 = (Photon**)malloc(sizeof(Photon*)*(stored_photons+1));
 
+
     for (int i=0; i<=stored_photons; i++)
+    {
       pa2[i] = &photons[i];
+    }
 
     balance_segment( pa1, pa2, 1, 1, stored_photons );
     free(pa2);
