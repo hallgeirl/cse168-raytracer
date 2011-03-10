@@ -101,14 +101,15 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 
                 if (dot(hitInfo.N, l) < 0)
                 {
-                    intensity = .5f;
+                    continue;
+//                    intensity = .5f;
                 }
                 else
                 {
                     intensity = dot(hitInfo.N, l);
                                     
                     if (intensity < epsilon) continue;
-                    intensity = std::max(.5f, intensity);
+                    //intensity = std::max(.5f, intensity);
                 }
             }
 #endif

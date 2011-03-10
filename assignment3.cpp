@@ -52,7 +52,7 @@ makeTestPetalScene()
     g_scene->setBgColor(Vector3(1));
 
     float aspect = 1.5;
-    int res = 4096;
+    int res = 2048;
 
     g_image->resize(res, int((float)res/aspect));
     
@@ -93,36 +93,23 @@ g_camera->setLookAt(Vector3(3, 0.0, 4));
 	Material* material = new TexturedPhong(new PetalTexture(Vector3(0.f), 7), Vector3(0.), Vector3(0), 500, 1.5);
 	addFlowerModel("models/Petals2.obj", material, g_scene, Vector3(0.f), 0.0);
 
-	//material = new Phong(Vector3(0,1,0));
 	material = new TexturedPhong(new StemTexture(30));
 	addFlowerModel("models/Stem.obj", material, g_scene, Vector3(0.f), 0.0);
 
-	//material = new Phong(Vector3(0,1,0));
 	material = new TexturedPhong(new LeafTexture(Vector3(0,0,0), Vector3(1,0,0)));
-	//material = new TexturedPhong(new LoadedTexture("LeafTexture.jpg"));
-	addFlowerModel("models/Leaf.obj", material, g_scene, Vector3(0.f, 0.5f, 0.f), 0.0);
+	addFlowerModel("models/Leaf.obj", material, g_scene, Vector3(0.f, 0.f, 0.f), 0.0);
 
 	material = new TexturedPhong(new FlowerCenterTexture(Vector3(-0.1,-0.35,0), 1.1));
 	addFlowerModel("models/FlowerCenter.obj", material, g_scene, Vector3(0.f));//Vector3(-0.05f, 0.25, 0.32f), 0);
 
 	Material* water = new Phong(Vector3(1.f), Vector3(0), Vector3(1.0f), 250, 1.33);
-	//Material* water = new Phong(Vector3(1.f), Vector3(0), Vector3(1.0f), infinity, 1);
 	addFlowerModel("models/WaterDropsMany.obj", water, g_scene, Vector3(0.f, 0.f, 0));
-	//addFlowerModel("models/WaterDrops.obj", water, g_scene, Vector3(0.f, 0.f, 0));
-	//addFlowerModel("models/WaterDropsHiRes.obj", water, g_scene, Vector3(0.f));
     
-    /*Sphere *sp = new Sphere();
-    sp->setCenter(Vector3(-0.1,-0.35,0));
-    sp->setRadius(0.5);
-    sp->setMaterial(new Phong(Vector3(1)));
-    g_scene->addObject(sp);*/
-    
-   
     Plane *p = new Plane;
-    p->setMaterial(new Phong(Vector3(1)));
-    p->setNormal(Vector3(0,-1,0));
-    p->setOrigin(Vector3(0, 51, 0));
-  //  g_scene->addObject(p);
+    p->setMaterial(new Phong(Vector3(.5)));
+    p->setNormal(Vector3(0.3,1,0).normalize());
+    p->setOrigin(Vector3(0, -1, 0));
+    //g_scene->addObject(p);
     
     p = new Plane;
     p->setMaterial(new Phong(Vector3(0.5)));
