@@ -15,7 +15,7 @@ class Scene
 {
 public:
 	Scene() 
-		: m_photonMap(PhotonsPerLightSource*TRACE_DEPTH*MaxLights+MaxLights*10000), m_causticMap(PhotonsPerLightSource*MaxLights+MaxLights*10000), m_environment(0), m_bgColor(Vector3(0.0f))
+		: m_photonMap(PhotonsPerLightSource*TRACE_DEPTH*MaxLights+MaxLights*10000), m_causticMap(CausticPhotonsPerLightSource*TRACE_DEPTH*MaxLights+MaxLights*10000), m_environment(0), m_bgColor(Vector3(0.0f))
 	{}
     void addObject(Object* pObj)        
     { 
@@ -64,12 +64,8 @@ protected:
 
     static const int MaxLights = 10;
 
-    static const int PhotonsPerLightSource =
-    #ifdef PHOTONS_PER_LIGHT
-    PHOTONS_PER_LIGHTSOURCE;
-    #else
-    1*100000;
-    #endif
+    static const int PhotonsPerLightSource = 200000;
+    static const int CausticPhotonsPerLightSource = 200000;
 };
 
 extern Scene * g_scene;

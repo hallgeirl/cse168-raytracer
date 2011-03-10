@@ -186,10 +186,17 @@ class Ray
             
             float cosTheta = dot(-d, n);
             float sinTheta = sin(acos(cosTheta));
-            float sqrtSinTheta = sqrt(1.f - (std::pow((n1/n2) * sinTheta, 2.f)));
+            float powsomething = std::pow((n1/n2) * sinTheta, 2.f);
+            
+            //If above critical angle, return 1.
+            if (powsomething > 1.f) return 1;
+            
+            float sqrtSinTheta = sqrt(1.f - (powsomething));
 
             //The equation is (n1*cos(th) - n2 * sqrt(1-((n1/n2)*sin(th))^2)) / (n1*cos(th) + n2 * sqrt(1-((n1/n2)*sin(th))^2))
-            return std::pow((n1*cosTheta - sqrtSinTheta)/(n1*cosTheta + sqrtSinTheta), 2.f);
+            float res = std::pow((n1*cosTheta - sqrtSinTheta)/(n1*cosTheta + sqrtSinTheta), 2.f);
+            //if (res != res || res < 0 || res > 1) std::cout << res << std::endl;
+            return res;
         }
 
         Ray refract(const HitInfo & hitInfo) const

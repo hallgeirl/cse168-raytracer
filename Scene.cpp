@@ -77,7 +77,7 @@ Scene::preCalc()
     t1 = -getTime();
     //Generate photon map
     tracePhotons();
-	//traceCausticPhotons();
+	traceCausticPhotons();
     t1 += getTime();
     debug("Done generating photon map. Time spent: %f\n", t1);
 
@@ -185,7 +185,15 @@ Scene::raytraceImage(Camera *cam, Image *img)
 
             #pragma unroll(3)
             for (int k = 0; k < 3; k++)
+            {
+                if (finalColor[k] != finalColor[k])
+                {
+                    //cout << finalColor[k] << endl;
+                    finalColor[k] = maxIntensity;
+                }
+                
                 finalColor[k] = tonemapValue(finalColor[k], maxIntensity);
+            }
             img->setPixel(j, i, finalColor);
         }
         #ifndef NO_GFX //If not rendering graphics to screen, don't draw scan lines (it will segfault in multithreading mode)
@@ -373,7 +381,7 @@ void Scene::tracePhotons()
                     DirectionalAreaLight *dl = dynamic_cast<DirectionalAreaLight*>(light);
                     if (dl != 0)
                     {
-                         power *= PI * dl->getRadius() * dl->getRadius() / 3.f;
+                         power *= PI * dl->getRadius() * dl->getRadius();
                     }
                     Vector3 dir = light->samplePhotonDirection();
                     Vector3 pos = light->samplePhotonOrigin();
@@ -404,53 +412,58 @@ void Scene::tracePhotons()
 //Shoot out all caust photons and trace them
 void Scene::traceCausticPhotons()
 {
-	printf("Caustic Map Progress: %.3f%%\r", 0.0f);
+    if (CausticPhotonsPerLightSource == 0) 
+    {
+        m_causticMap.balance();
+        return;
+    }
+    
+    printf("Caustic Map Progress: %.3f%%\r", 0.0f);
+    int totalPhotons = 0; //Total photons emitted
+    int photonsAdded = 0; //Photons added to the scene
+    
     for (int l = 0; l < m_lights.size(); l++)
     {
         PointLight *light = m_lights[l];
-        #ifdef OPENMP
-        #pragma omp parallel for
-        #endif
-        for (int i = 0; i < m_specObjects.size(); i++)
-        {	
-			Object *pObj = m_specObjects[i];	
-
-			float objArea = pObj->getArea(light->position());
-			float ratioToLight = light->getLightRatio(pObj);
-            int samples = int(objArea / SURFACE_SAMPLES);
-
-            cout << samples << endl;
-
-			//Vector3 power = light->color() * ((light->wattage()/(float)m_specObjects.size()) * ratioToLight);
-			Vector3 power = light->color() * (light->wattage() * ratioToLight) / (float)samples;
-
-			DirectionalAreaLight *dl = dynamic_cast<DirectionalAreaLight*>(light);
-			/*if (dl != 0)
-			{
-				 power *= PI * dl->getRadius() * dl->getRadius();
-			}*/
-			
-			cout << power << endl;
-			
-			// send samples proportional to the object area
-		    //for (float n = 0.0f; n < objArea; n += SURFACE_SAMPLES)
-			for (int j = 0; j < samples; ++j)
-			{
-				Vector3 dir = light->samplePhotonDirection(pObj);
-				Vector3 pos = light->samplePhotonOrigin();  
-
-				tracePhoton(pos, dir, power, 0, true);
-			}
-
-			//printf( "samples: %d \n", count);
-            if (i % 1000 == 0)
-                printf("Caustic Map Progress: %.3f%%\r", 100.0f*(float)i/(float)PhotonsPerLightSource);
-            
+        
+        //Temporary hack
+        if (dynamic_cast<DirectionalAreaLight*>(light) == 0) continue;
+        
+        while (photonsAdded < CausticPhotonsPerLightSource)
+        {
+            #ifdef OPENMP
+            #pragma omp parallel for
+            #endif
+            for (int i = 0; i < 10000; i++)
+            {
+                if (photonsAdded < CausticPhotonsPerLightSource)
+                {
+                    //Create a new photon
+                    Vector3 power = light->color() * light->wattage(); 
+                    DirectionalAreaLight *dl = dynamic_cast<DirectionalAreaLight*>(light);
+                    if (dl != 0)
+                    {
+                         power *= PI * dl->getRadius() * dl->getRadius() / 10.f;
+                    }
+                    Vector3 dir = light->samplePhotonDirection();
+                    Vector3 pos = light->samplePhotonOrigin();
+                    int photons = tracePhoton(pos, dir, power, 0, true);
+                    
+                    #pragma omp critical
+                    {
+                        photonsAdded += photons;
+                        totalPhotons ++;
+                    }
+                    
+                    if (i % 1000 == 0)
+                        printf("Caustic Map Progress: %.3f%%\r", 100.0f*((float)photonsAdded+CausticPhotonsPerLightSource*l)/(float)(CausticPhotonsPerLightSource*m_lights.size()));
+                }
+            }
         }
     }
+    m_causticMap.scale_photon_power(1.0f/(float)totalPhotons);
     printf("Caustic Map Progress: %.3f%%\n", 100.0f);
     m_causticMap.balance();
-    //m_causticMap.scale_photons(
     #ifdef VISUALIZE_PHOTON_MAP
     debug("Rebuilding BVH for visualization. Number of objects: %d\n", m_objects.size());
     m_bvh.build(&m_objects);
@@ -470,7 +483,6 @@ int Scene::tracePhoton(const Vector3& position, const Vector3& direction, const 
     HitInfo hit;
 
 	++depth;
-    //if (m_bvh.intersect(hit, ray, 0.0f, MIRO_TMAX))
     if (trace(hit, ray, 0.0f, MIRO_TMAX))
     {
         //Do "russian roulette but not really"
@@ -511,9 +523,9 @@ int Scene::tracePhoton(const Vector3& position, const Vector3& direction, const 
                 {
 
                     PHOTON_DEBUG("Storing photon at " << hit.P << ". Surface normal " << hit.N << " Is caustic photon: " << bCausticRay);
-                    /*if (bCausticRay)
+                    if (bCausticRay)
 						m_causticMap.store(pwr, pos, dir);
-					else*/
+					else
 						m_photonMap.store(pwr, pos, dir);
 
 					nPhotons++;
@@ -526,9 +538,12 @@ int Scene::tracePhoton(const Vector3& position, const Vector3& direction, const 
 #                   endif
                 }
             }
-			//Caustic Rays only send rays from specular surfaces
-			/*if (bCausticRay)
-				return 0;*/
+            else
+            {
+			    //Caustic Rays only send rays from specular surfaces
+			    if (bCausticRay)
+				    return 0;
+		    }
 
 #ifdef STATS
 			Stats::Photon_Bounces++;
@@ -542,8 +557,8 @@ int Scene::tracePhoton(const Vector3& position, const Vector3& direction, const 
         else if (rnd < prob[1])
         {
 			//only caustics should count this first bounce
-			/*if (!bCausticRay && depth == 1)
-				return 0;*/
+			if (!bCausticRay && depth == 1)
+				return 0;
 
 #ifdef STATS
 			Stats::Photon_Bounces++;
@@ -556,8 +571,8 @@ int Scene::tracePhoton(const Vector3& position, const Vector3& direction, const 
         else if (rnd < prob[2])
         {
 			//only caustics should count this first bounce
-			/*if (!bCausticRay && depth == 1)
-				return 0;*/
+			if (!bCausticRay && depth == 1)
+				return 0;
 
 #ifdef STATS
 			Stats::Photon_Bounces++;
@@ -578,17 +593,6 @@ int Scene::tracePhoton(const Vector3& position, const Vector3& direction, const 
                 PHOTON_DEBUG("Tracing refracted photon");
                 return tracePhoton(hit.P, refr.d, power, depth, bCausticRay);
             }
-/*	        //Send a reflective ray (Fresnel reflection)
-	        Vector3 reflectResult;
-            Ray reflectRay = ray.reflect(hitInfo);
-            if (traceScene(reflectRay, reflectResult, depth))
-	        {
-		        shadeResult += hitInfo.material->getRefraction() * reflectResult * Rs;
-	        }*/
-	        
-            
-            
-            
         }
     }
 #   ifdef DEBUG_PHOTONS
