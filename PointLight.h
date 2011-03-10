@@ -16,10 +16,11 @@ public:
     const Vector3 & color() const       {return m_color;}
     const Vector3& position() const     {return m_position;}
 
-	virtual float GetLightRatio(float objArea, const Vector3& objCenter) const 
+	//virtual float GetLightRatio(float objArea, const Vector3& objCenter) const
+	virtual float getLightRatio(Object * obj) const  
 	{
-		float dist = (m_position - objCenter).length();
-		return (objArea / (dist * dist) / (4 * PI));
+		float dist2 = (m_position - obj->center()).length2();
+		return (obj->getArea(m_position) / dist2 / (4 * PI));
 	}
 
     //Generate a photon in a direction determined by the light type.
@@ -31,7 +32,7 @@ public:
 
 	virtual Vector3 samplePhotonDirection(Object *pObj) const
     {
-		return (pObj->GetSamplePosition() - m_position).normalize();
+		return (pObj->samplePosition() - m_position).normalize();
     }
     
     //Calculates the light direction from the origin to the directionOf object.

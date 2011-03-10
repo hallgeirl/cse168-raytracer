@@ -79,6 +79,7 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
         {
             Vector3 origin = pLight->samplePhotonOrigin(i, samples);
             Vector3 l = pLight->getLightDirection(origin, hit.P);
+            float intensity = 1.f;
             
             // the inverse-squared falloff
             float falloff = l.length2();
@@ -86,7 +87,6 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
             // normalize the light direction
             l /= sqrt(falloff);
 
-            
             // No light contribution if Ray hits an object 
 #if ! defined (DISABLE_SHADOWS) && ! defined (VISUALIZE_PHOTON_MAP)
             Ray Shadow(hit.P+(l*epsilon), l);
@@ -96,7 +96,13 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 #endif
             if (scene.trace(hitInfo, Shadow, 0.f, sqrt(falloff)))
             {
-                continue;
+                //continue;
+                if (dot(hitInfo.N, l) < 0) continue;
+
+                //intensity = 1;
+                intensity = dot(hitInfo.N, l);
+                                
+                if (intensity < epsilon) continue;
             }
 #endif
         
@@ -129,7 +135,7 @@ Phong::shade(const Ray &ray, const HitInfo &hit, const Scene &scene) const
 
             //removed m_specular from specular highlight 
             //specular highlight should be dependent on shinyness rather than reflective component
-            L += result * (std::max(0.0f, nDotL * falloff * pLight->wattage() / ((float)samples)) * diffuseColor * m_diffuse);
+            L += result * (std::max(0.0f, nDotL * falloff * pLight->wattage() / ((float)samples)) * diffuseColor * m_diffuse) * intensity;
         }
     }
 

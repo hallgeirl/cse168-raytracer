@@ -47,7 +47,7 @@ Vector3 Triangle::center() const
     return verts[0] + BmA/3 + CmA/3;
 }
 
-float Triangle::GetArea(const Vector3& lightPos)
+float Triangle::getArea(const Vector3& lightPos)
 {
 	//need to cache center
 	Vector3 l_dir = (lightPos - center()).normalize();
@@ -80,7 +80,7 @@ float Triangle::GetArea(const Vector3& lightPos)
 	return (0.5f * (maxHeight-minHeight) * (maxBase-minBase));
 }
 
-Vector3 Triangle::GetSamplePosition() const
+Vector3 Triangle::samplePosition() const
 {
 	float u1 = frand();
 	float beta = 1.0f - sqrt(u1);

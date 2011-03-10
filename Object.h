@@ -24,8 +24,11 @@ public:
     virtual Vector3 coordsMax() const = 0;
     virtual Vector3 center() const = 0;
 
-	virtual float GetArea(const Vector3& lightPos) {return 0;}
-	virtual Vector3 GetSamplePosition() const {return center();}
+    //Returns the area and a position sample as seen from some point in space (e.g. a light source)
+	virtual float getArea(const Vector3& lightPos) {return 0;}
+	virtual Vector3 samplePosition(const Vector3& asSeenFrom) const { return samplePosition(); }
+	
+	virtual Vector3 samplePosition() const {return center();}
     
     //Unbounded objects like planes should override this and return false.
     virtual bool isBounded() const { return true; }

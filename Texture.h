@@ -229,12 +229,24 @@ public:
     virtual float bumpHeight3D(const tex_coord3d_t & coords) const { return 0.0f; }
     virtual Vector3 lookup3D(const tex_coord3d_t & coords) const
     {
-        Vector3 texcoords(coords.u, coords.v, coords.w);
+        float u = coords.u*m_scale,
+              v = coords.v*m_scale;
+     
+        long order = 3;
+        float pos[2] = {u, v}, 
+          *f = new float[order], 
+          (*delta)[2] = new float[order][2];
+    
+        unsigned long *id = new unsigned long[order];
+        WorleyNoise::noise2D(pos, order, f, delta, id);
+              
+        float noise = generateNoise(u, v, 0, 10, 1.5, 0.8, 10);
         
-        float cosangle = dot(texcoords-m_pivot, m_direction) / ((texcoords-m_pivot).length());
-        if (cosangle < 0) cosangle = 0;
-        //std::cout << cosangle << std::endl;
-        return Vector3(0, 1-std::pow(cosangle,10000), 0);
+        float cells = f[0]-f[1];
+        
+        delete f; delete delta;
+        
+        return Vector3(0, 0.5+0.5*(noise+1.0f)/2.0f - 0.3*cells, 0);
     }
 };
 
