@@ -409,7 +409,7 @@ void Scene::tracePhotons()
     #endif
 }
 
-//Shoot out all caust photons and trace them
+//Shoot out all caustic photons and trace them -- brute force method
 void Scene::traceCausticPhotons()
 {
     if (CausticPhotonsPerLightSource == 0) 
@@ -470,6 +470,59 @@ void Scene::traceCausticPhotons()
 
     #endif
 }
+
+//Attempt to shoot the caustic photons and scale power by surface area ratio
+//Issues with the directional light so we chose to use the brute force method
+/*void Scene::traceCausticPhotons()
+{
+	printf("Caustic Map Progress: %.3f%%\r", 0.0f);
+    for (int l = 0; l < m_lights.size(); l++)
+    {
+        PointLight *light = m_lights[l];
+        #ifdef OPENMP
+        #pragma omp parallel for
+        #endif
+        for (int i = 0; i < m_specObjects.size(); i++)
+        {	
+			Object *pObj = m_specObjects[i];	
+
+			float objArea = pObj->getArea(light->position());
+			float ratioToLight = light->getLightRatio(pObj);
+
+			Vector3 power = light->color() * (light->wattage() * ratioToLight);
+
+			DirectionalAreaLight *dl = dynamic_cast<DirectionalAreaLight*>(light);
+			if (dl != 0)
+			{
+				 power *= PI * dl->getRadius() * dl->getRadius();
+			}
+			
+			cout << power << endl;
+			
+			// send samples proportional to the object area
+		    for (float n = 0.0f; n < objArea; n += SURFACE_SAMPLES)
+			{
+				Vector3 dir = light->samplePhotonDirection(pObj);
+				Vector3 pos = light->samplePhotonOrigin();  
+
+				tracePhoton(pos, dir, power, 0, true);
+			}
+
+			//printf( "samples: %d \n", count);
+            if (i % 1000 == 0)
+                printf("Caustic Map Progress: %.3f%%\r", 100.0f*(float)i/(float)PhotonsPerLightSource);
+            
+        }
+    }
+    printf("Caustic Map Progress: %.3f%%\n", 100.0f);
+    m_causticMap.balance();
+    #ifdef VISUALIZE_PHOTON_MAP
+    debug("Rebuilding BVH for visualization. Number of objects: %d\n", m_objects.size());
+    m_bvh.build(&m_objects);
+
+    #endif
+}*/
+
 
 
 //Trace a single photon through the scene
