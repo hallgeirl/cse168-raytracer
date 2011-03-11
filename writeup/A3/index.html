@@ -71,12 +71,17 @@
     </p>
 
     <p>
-      In tracePhotons(), we utilize our existing Ray-scene intersection code to find out where the photon hits. We construct a ray with the origin and direction specified in the arguments, and trace it through the scene. If we get a hit, we generate a random number n between 0 and 1, and we calculate the average of the diffuse, reflective and refractive colors (hereby referred to as R_d, R_s and R_t).
+      In tracePhoton(), we trace a ray through the scene to determine the hit point, and then we choose randomly between storing the photon and sending out a diffuse photon, reflecting, refracting and absorbing (i.e. terminating) the photon. The diffuse color, specular reflectance and specular transmissivity determines the probabilities for each. If the photon is chosen to refract, another random number is generated in order to determine if the photon should be reflected due to fresnel reflection, or refracted.
+<!--
+      
+       we utilize our existing Ray-scene intersection code to find out where the photon hits. We construct a ray with the origin and direction specified in the arguments, and trace it through the scene. If we get a hit, we generate a random number n between 0 and 1, and we calculate the average of the diffuse, reflective and refractive colors (hereby referred to as R_d, R_s and R_t).
+      
+      
       <ul>
         <li>If n &lt; R_d, we check the current depth of the trace; if it's 1 (first bounce), we return if it is a caustic photon because caustic photons must hit a specular surface first. If it's not a caustic photon, trace a new diffuse photon in a random direction (biased towards the normal). If the trace depth is larger than 1, store the photon in the appropriate map (global or caustic) and trace a new diffuse photon in a random direction.</li>
         <li>If R_d &lt; n &lt; R_d+R_s, we return if it's not a caustic photon AND it's the first bounce (as we don't want to oversample the caustics). If it's a caustic photon, or the depth is larger than 1, send a photon in the reflective direction.</li>
         <li>If R_d+R_s &lt; n &lt; R_d+R_s+R_t, we again return if it's not a caustic photon AND it's the first bounce. If it's a caustic photon, or the depth is larger than 1, generate a new number between 0 and 1; If it's lower than the Fresnel reflection coefficient , send a photon in the reflective direction. Otherwise, send it in the refractive direction.</li>
-      </ul>
+      </ul>-->
     </p>
     <p>
       Here is a quick visualization of each photon in the scene. First is the global photons, and then the caustics.
@@ -87,15 +92,15 @@
     <a href="img/caustics_photons.png" target="_blank">
       <img src="img/caustics_photons.png" alt="Caustics photons" />
     </a>
-
+Finally, we 
     <h3>Depth of field</h3>
     <p>When a camera lens is quite close to an object, for instance when doing macro photography, you get a rather narrow depth of field. We wanted to have that effect in our image, and we believe we got it pretty right. We have an aperture radius R, focus distance F, eye coordinates  and camera coordinate basis u,v,w where w is the view direction. The depth of field effect is given by randomizing the origin of the eye rays, by generating a random position on a disc of a specified radius (our aperture size), and then translating the eye in the uv-plane by the two coordinates returned by the disc sample. We also had to adjust the ray direction so that it points in the direction of the point E+F*w.</p>
 
     <h3>Glossy reflections and refractions</h3>
     <p>We implemented glossy reflections by randomizing the direction of the outgoing ray. We sampled a hemisphere by choosing phi=acos(u1^(1/1+a)) and theta=u2*2pi, where "a" is the shininess of the material (same number as in the phong highlights). We then aligned the hemisphere with the reflective direction d_r = d - 2 * (N dot d) * N. The same process were done for refraction, just for the refractive direction instead.</p>
 
-    <h3>Raindrop shadows</h3>
-    <p>Due to the nature of the scene, we made a few assumptions to render the raindrops based off reference photos. In order to achieve a gradient shadow we observed in nature, we treat the shadow rays that start within a refractive object differently. We scale the the shadow intensity by the dot product of the hit normal of the shadow ray and the direction to the light. While this method is an approximation, we felt that it contributed an interesting effect. As an additional subtle effect, we added raindrop highlights with a pointlight at the camera position. To avoid over-exposing the scene with light, this pointlight only affects the raindrop specular color. </p>
+    <h3>Raindrop effects</h3>
+    <p>Due to the nature of the scene, we made a few assumptions to render the raindrops based off reference photos. In order to achieve a gradient shadow we observed in nature, we treat the shadow rays that start within a refractive object differently. We scale the the shadow intensity by the dot product of the hit normal of the shadow ray and the direction to the light. While this method is an approximation, we felt that it contributed an interesting effect. As an additional subtle effect, we added phong highlights to the raindrops.</p>
 
     <a href="img/Drops.png" target="_blank">
       <img src="img/Drops.png" alt="Rain Drops" />
@@ -121,7 +126,7 @@
       <ul>
         <li>Global photon map generation and photon tracing</li>
         <li>Directed area light</li>
-        <li>Fresnel reflection</li>
+        <li>Fresnel reflections</li>
         <li>Leaf and stem procedural textures</li>
         <li>Raindrop effects (Both)</li>
         <li>Glossy reflections</li>
