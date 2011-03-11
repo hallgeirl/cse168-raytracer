@@ -4,11 +4,18 @@
 <html>
   <head>
     <link href="style.css" type="text/css" rel="stylesheet" />
-    <title>CSE168 Final project - Alisha Lawson, Hallgeir Lien</title>
+    <title>CSE168 Final project -- Raindrops</title>
   </head>
 
   <body>
-    <h1>CSE168 Final project (some fancy title?)</h1>
+    <h1>CSE168 Final project -- Raindrops</h1>
+    <p>
+        <div class="listheader">Team members</div>
+        <ul>
+            <li>Alisha Lawson</li>
+            <li>Hallgeir Lien</li>
+        </ul>
+    </p>
     <p>
         Our final project goal was to render a realistic image using the advanced rendering algorithms. We had two weeks to work on the project. We implemented global illumination through photon mapping, simulating caustics and indirect diffuse lighting. The objects in the scene show glossy and frensel reflections as well as phong highlights. To render the final image, we utilized antialiasing, depth of field, and tonemapping to achieve a realistic effect. For all images, click on them to show them in full size.
     </p>
@@ -21,7 +28,7 @@
       <img src="http://farm5.static.flickr.com/4140/4882814342_1a8205a391_b_d.jpg" alt="Our final image" />
     </a>
 
-    <h2>Results</h2>
+    <h2>Our Final Image</h2>
     <p>
       Here we present the results from the rendering and a description of the scene.
     </p>
@@ -34,7 +41,7 @@
 
     <h3>Modeling</h3>
     <p>
-      The flower is modelled in 3ds Max, and consists of 248768 triangles in total. Each part (the stem, petals, center, leaf and raindrops) were stored separately for easier texturing. This is Alisha's first modelling project.
+      The flower is modelled in 3ds Max, and consists of 248768 triangles in total. Each part (the stem, petals, center, leaf and raindrops) were stored separately for easier texturing. This is Alisha's first modeling project.
     </p>
     <a href="img/FlowerModel.png" target="_blank">
       <img src="img/FlowerModel.png" alt="3DS Max Model" />
@@ -42,7 +49,7 @@
 
     <h3>Textures</h3>
     <p>
-      All of the textures on the flower is procedurally generated. The leaf and stem have a faint cellular texture, with some added perlin noise on top. However, the environment map is loaded from a HDR texture and tone mapped.
+      All of the textures on the flower is procedurally generated. The petals, stem and leaf utilize perlin noise. Additionally, the stem and leaf have a faint cellular texture.
     </p>
 
     <h3>Tone mapping</h3>
@@ -71,10 +78,10 @@
 
     <h4>Photon map</h4>
     <p>
-      We implemented photon mapping in our ray tracer for indirect lighting, including caustics. We used a caustics and a global photon map. We used the Photon_map class provided by professor Henrik Wann Jensen for storing and looking up the photons. The number of photons we used in the scene is fairly modest; 200 000 photons for caustics, and 200 000 photons for the global photon map, but we found this to be sufficient.
+      We implemented photon mapping in our ray tracer for indirect lighting, storing a separate map for caustics and indirect illumination. We used the Photon_map class provided by professor Henrik Wann Jensen for storing and looking up the photons. The number of photons we used in the scene is fairly modest; 200 000 photons for caustics, and 200 000 photons for the global photon map, but we found this to be sufficient.
     </p>
     <p>
-      When building the photon maps, we loop over each light, and for each light we sample an origin and direction. Finally we select the power to be the light source's wattage. We scale the photon power in the end after the light source has shot out all photons, because we don't know how many photons we have to send out in order to store the specified number of photons that we specify. We then call our tracePhoton() function which will trace the photons through the scene.
+      When building the photon maps, we loop over each light, and for each light we sample an origin and direction. We scale the photon power in the end after the light source has shot out all photons, because we don't know how many photons we have to send out in order to store the specified number of photons. We then call our tracePhoton() function which will trace the photons through the scene.
     </p>
 
     <p>
@@ -131,7 +138,7 @@
         <li>BVH box intersection and traversal</li>
         <li>Path tracing</li>
         <li>Recursive ray tracing (reflection, refraction)</li>
-        <li>Procglancingedural stone texture (Both)</li>
+        <li>Procedural stone texture (Both)</li>
         <li>Statistics</li>
         <li>SSE optimizations (1 ray vs 1 triangle, assignment 1)</li>
       </ul>

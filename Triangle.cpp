@@ -168,6 +168,7 @@ Triangle::intersect(HitInfo& result, const Ray& r,float tMin, float tMax)
     return true;
 }
 
+//We planned to use the triangle texturing for the leaf and stem, but could not find a suitable texture and did not have time to make one.  
 tex_coord2d_t Triangle::toUVCoordinates(const Vector3 & xyz) const
 {
 	if (m_mesh->numTextCoords() == 0)
