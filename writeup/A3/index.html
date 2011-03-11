@@ -7,152 +7,160 @@
     <title>CSE168 Final project - Alisha Lawson, Hallgeir Lien</title>
 </head>
 
-<body>
+  <body>
     <h1>CSE168 Final project (some fancy title?)</h1>
     <p>
-        In our final project we wanted to blablabla. For all images, click on them to show them in full size.
+      In our final project we wanted to blablabla. For all images, click on them to show them in full size.
     </p>
-    
+
     <h2>Project idea and inspiration</h2>
     <p>
-        Our inspiration was this photo that Hallgeir took of a flower after a rain shower. In particular, we wanted to capture some of the complex lighting in the raindrops like the caustics, highlights and shadows, as well as producing a good looking image.
+      Our inspiration was this photo that Hallgeir took of a flower after a rain shower. In particular, we wanted to capture some of the complex lighting in the raindrops like the caustics, highlights and shadows, as well as producing a good looking image.
     </p>
     <a href="http://www.flickr.com/photos/hallgeirl/4882814342/sizes/l/in/photostream/" target="_blank">
-        <img src="http://farm5.static.flickr.com/4140/4882814342_1a8205a391_b_d.jpg" alt="Our final image" />
-    </a>    
-    
+      <img src="http://farm5.static.flickr.com/4140/4882814342_1a8205a391_b_d.jpg" alt="Our final image" />
+    </a>
+
     <h2>Results</h2>
     <p>
-        Here we present the results from the rendering and a description of the scene. 
+      Here we present the results from the rendering and a description of the scene.
     </p>
-        
+
     <a href="img/final_large.png" target="_blank">
-        <img src="img/final_large.png" alt="Our final image" />
+      <img src="img/final_large.png" alt="Our final image" />
     </a>
-    
+
     <p>
-        (Write something sensible here about the image.)
+      (Write something sensible here about the image.)
     </p>
-    
+
     <h2>Features (maybe rename to something else)</h2>
-    
-    <h3>Modelling</h3>
+
+    <h3>Modeling</h3>
     <p>
-        The flower is modelled in 3ds Max, and consists of 248768 triangles in total. Each part (the stem, petals, center, leaf and raindrops) were stored separately for easier texturing.
+      The flower is modelled in 3ds Max, and consists of 248768 triangles in total. Each part (the stem, petals, center, leaf and raindrops) were stored separately for easier texturing.
     </p>
-    <!-- Screenshots here from 3ds max? I see others include that, maybe it's the cool thing to do -->
-    
+    <a href="img/FlowerModel.png" target="_blank">
+      <img src="img/FlowerModel.png" alt="3DS Max Model" />
+    </a>
+
     <h3>Textures</h3>
     <p>
-        All of the textures on the flower is procedurally generated. The leaf and stem have a faint cellular texture, with some added perlin noise on top. However, the environment map is loaded from a HDR texture and tone mapped.
+      All of the textures on the flower is procedurally generated. The leaf and stem have a faint cellular texture, with some added perlin noise on top. However, the environment map is loaded from a HDR texture and tone mapped.
     </p>
-    
+
     <h3>Lighting</h3>
     <p>
-        For lighting of the scene, we implemented a circular directed area light which had the role as the sun. We could have used a point light very, very far away, but then generating the photon maps would take a very long time as most photons would miss the surfaces. A directed area light solves this by shooting all photons in the direction of the light's normal within a specified radius. We also modified the direct lighting code to take the radius of the light as well as the direction into account.
+      For lighting of the scene, we implemented a circular directed area light which had the role as the sun. We could have used a point light very, very far away, but then generating the photon maps would take a very long time as most photons would miss the surfaces. A directed area light solves this by shooting all photons in the direction of the light's normal within a specified radius. We also modified the direct lighting code to take the radius of the light as well as the direction into account.
     </p>
-    
+
     <h4>Photon map</h4>
     <p>
-        We implemented photon mapping in our ray tracer for indirect lighting, including caustics. We used a caustics and a global photon map. We used the Photon_map class provided by professor Henrik Wann Jensen for storing and looking up the photons. The number of photons we used in the scene is fairly modest; 200 000 photons for caustics, and 200 000 photons for the global photon map, but we found this to be sufficient.
+      We implemented photon mapping in our ray tracer for indirect lighting, including caustics. We used a caustics and a global photon map. We used the Photon_map class provided by professor Henrik Wann Jensen for storing and looking up the photons. The number of photons we used in the scene is fairly modest; 200 000 photons for caustics, and 200 000 photons for the global photon map, but we found this to be sufficient.
     </p>
     <p>
-        When building the photon maps, we loop over each light, and for each light we call our light's samplePhotonDirection() function which gives a direction according to the type of light (e.g. a point light would give a random direction, a directed light source would return the normal of the light, and so on). We also sample the light source's origin with samplePhotonOrigin() in the same way. Finally we select the power to be the light source's wattage. We scale the photon power in the end after the light source has shot out all photons, because we don't know how many photons we have to send out in order to store the specified number of photons that we specify. We then call our tracePhoton() function which will trace the photons through the scene.
+      When building the photon maps, we loop over each light, and for each light we call our light's samplePhotonDirection() function which gives a direction according to the type of light (e.g. a point light would give a random direction, a directed light source would return the normal of the light, and so on). We also sample the light source's origin with samplePhotonOrigin() in the same way. Finally we select the power to be the light source's wattage. We scale the photon power in the end after the light source has shot out all photons, because we don't know how many photons we have to send out in order to store the specified number of photons that we specify. We then call our tracePhoton() function which will trace the photons through the scene.
     </p>
-    
+
     <p>
-        In tracePhotons(), we utilize our existing Ray-scene intersection code to find out where the photon hits. We construct a ray with the origin and direction specified in the arguments, and trace it through the scene. If we get a hit, we generate a random number n between 0 and 1, and we calculate the average of the diffuse, reflective and refractive colors (hereby referred to as R_d, R_s and R_t). 
-        <ul>
-            <li>If n &lt; R_d, we check the current depth of the trace; if it's 1 (first bounce), we return if it is a caustic photon because caustic photons must hit a specular surface first. If it's not a caustic photon, trace a new diffuse photon in a random direction (biased towards the normal). If the trace depth is larger than 1, store the photon in the appropriate map (global or caustic) and trace a new diffuse photon in a random direction.</li>
-            <li>If R_d &lt; n &lt; R_d+R_s, we return if it's not a caustic photon AND it's the first bounce (as we don't want to oversample the caustics). If it's a caustic photon, or the depth is larger than 1, send a photon in the reflective direction.</li>
-            <li>If R_d+R_s &lt; n &lt; R_d+R_s+R_t, we again return if it's not a caustic photon AND it's the first bounce. If it's a caustic photon, or the depth is larger than 1, generate a new number between 0 and 1; If it's lower than the Fresnel reflection coefficient , send a photon in the reflective direction. Otherwise, send it in the refractive direction.</li>
-        </ul>
+      In tracePhotons(), we utilize our existing Ray-scene intersection code to find out where the photon hits. We construct a ray with the origin and direction specified in the arguments, and trace it through the scene. If we get a hit, we generate a random number n between 0 and 1, and we calculate the average of the diffuse, reflective and refractive colors (hereby referred to as R_d, R_s and R_t).
+      <ul>
+        <li>If n &lt; R_d, we check the current depth of the trace; if it's 1 (first bounce), we return if it is a caustic photon because caustic photons must hit a specular surface first. If it's not a caustic photon, trace a new diffuse photon in a random direction (biased towards the normal). If the trace depth is larger than 1, store the photon in the appropriate map (global or caustic) and trace a new diffuse photon in a random direction.</li>
+        <li>If R_d &lt; n &lt; R_d+R_s, we return if it's not a caustic photon AND it's the first bounce (as we don't want to oversample the caustics). If it's a caustic photon, or the depth is larger than 1, send a photon in the reflective direction.</li>
+        <li>If R_d+R_s &lt; n &lt; R_d+R_s+R_t, we again return if it's not a caustic photon AND it's the first bounce. If it's a caustic photon, or the depth is larger than 1, generate a new number between 0 and 1; If it's lower than the Fresnel reflection coefficient , send a photon in the reflective direction. Otherwise, send it in the refractive direction.</li>
+      </ul>
     </p>
     <p>
-        Here is a quick visualization of each photon in the scene. First is the global photons, and then the caustics.
+      Here is a quick visualization of each photon in the scene. First is the global photons, and then the caustics.
     </p>
     <a href="img/global_photons.png" target="_blank">
-        <img src="img/global_photons.png" alt="Global photons" />
+      <img src="img/global_photons.png" alt="Global photons" />
     </a>
     <a href="img/caustics_photons.png" target="_blank">
-        <img src="img/caustics_photons.png" alt="Caustics photons" />
+      <img src="img/caustics_photons.png" alt="Caustics photons" />
     </a>
-    
+
     <h3>Depth of field</h3>
     <p>When a camera lens is quite close to an object, for instance when doing macro photography, you get a rather narrow depth of field. We wanted to have that effect in our image, and we believe we got it pretty right. We have an aperture radius R, focus distance F, eye coordinates  and camera coordinate basis u,v,w where w is the view direction. The depth of field effect is given by randomizing the origin of the eye rays, by generating a random position on a disc of a specified radius (our aperture size), and then translating the eye in the uv-plane by the two coordinates returned by the disc sample. We also had to adjust the ray direction so that it points in the direction of the point E+F*w.</p>
 
     <h3>Glossy reflections and refractions</h3>
     <p>We implemented glossy reflections by randomizing the direction of the outgoing ray. We sampled .</p>
 
-<!--    <h3>Raindrop shadows</h3>
-    If a raindrop sits at a surface, and we shoot a ray from the camera and into the raindrop, and that ray eventually hits the surface, a shadow ray is traced back to the light source to test if it's in the shadow. If using shadow rays naively as for solid objects, that ray would not give any contribution, because the rain drop is blocking the path.
-     However, there should be 
-    -->
+    <h3>Raindrop shadows</h3>
+    <p>Due to the nature of the scene, we made a few assumptions to render the raindrops based off reference photos. In order to achieve a gradient shadow we observed in nature, we treat the shadow rays that start within a refractive object differently. We scale the the shadow intensity by the dot product of the hit normal of the shadow ray and the direction to the light. While this method is an approximation, we felt that it contributed an interesting effect. As an additional subtle effect, we added raindrop highlights with a pointlight at the camera position. To avoid over-exposing the scene with light, this pointlight only affects the raindrop specular color. </p>
+
+    <a href="img/Drops.png" target="_blank">
+      <img src="img/Drops.png" alt="Rain Drops" />
+    </a>
+    <a href="img/Shadows.png" target="_blank">
+      <img src="img/Shadows.png" alt="Drop Shadows" />
+    </a>
+
     <h2>Division of work</h2>
     <p>
-        We believe we divided the work amongst us quite evenly. However, the tasks were often interdependent so we both ended up being involved in planning and debugging.
-        <div class="listheader">Alisha</div>
-        <ul>
-            <li>Depth of field</li>
-            <li>Modeling</li>
-            <li>Caustic photon map generation</li>
-            <li>Petal procedural textures</li>
-            <li>Triangle texture mapping</li>
-            <li>Raindrop tweaking (Both)</li>
-        </ul>    
-        
-        <div class="listheader">Hallgeir</div>
-        <ul>
-            <li>Global photon map generation and photon tracing</li>
-            <li>Directed area light</li>
-            <li>Fresnel reflection</li>
-            <li>Leaf and stem procedural textures</li>
-            <li>Raindrop tweaking (Both)</li>
-            <li>Glossy reflections</li>
-        </ul>
+      We believe we divided the work amongst us quite evenly. However, the tasks were often interdependent so we both ended up being involved in planning and debugging.
+      <div class="listheader">Alisha</div>
+      <ul>
+        <li>Depth of field</li>
+        <li>Modeling</li>
+        <li>Caustic photon map generation</li>
+        <li>Petal procedural textures</li>
+        <li>Triangle texture mapping</li>
+        <li>Raindrop effects (Both)</li>
+      </ul>
+
+      <div class="listheader">Hallgeir</div>
+      <ul>
+        <li>Global photon map generation and photon tracing</li>
+        <li>Directed area light</li>
+        <li>Fresnel reflection</li>
+        <li>Leaf and stem procedural textures</li>
+        <li>Raindrop effects (Both)</li>
+        <li>Glossy reflections</li>
+      </ul>
     </p>
     <p>
-        For previous assignments, the division was approximately as follows.
-        
-        <div class="listheader">Alisha</div>
-        <ul>
-            <li>BVH box intersection and traversal</li>
-            <li>Path tracing</li>
-            <li>Recursive ray tracing (reflection, refraction)</li>
-            <li>Procedural stone texture (Both)</li>
-            <li>Statistics</li>
-            <li>SSE optimizations (1 ray vs 1 triangle, assignment 1)
-        </ul> 
-        
-        <div class="listheader">Hallgeir</div>
-        <ul>
-            <li>Triangle intersection</li>
-            <li>Environment map</li>
-            <li>Bump mapping</li>
-            <li>Procedural stone texture (Both)</li>
-            <li>BVH building</li>
-            <li>SSE optimizations (1 ray vs. 4 triangles &amp; 1 ray vs 2 boxes, assignment 2)
+      For previous assignments, the division was approximately as follows.
+
+      <div class="listheader">Alisha</div>
+      <ul>
+        <li>BVH box intersection and traversal</li>
+        <li>Path tracing</li>
+        <li>Recursive ray tracing (reflection, refraction)</li>
+        <li>Procedural stone texture (Both)</li>
+        <li>Statistics</li>
+        <li>SSE optimizations (1 ray vs 1 triangle, assignment 1)
+        </ul>
+
+      <div class="listheader">Hallgeir</div>
+      <ul>
+        <li>Triangle intersection</li>
+        <li>Environment map</li>
+        <li>Bump mapping</li>
+        <li>Procedural stone texture (Both)</li>
+        <li>BVH building</li>
+        <li>SSE optimizations (1 ray vs. 4 triangles &amp; 1 ray vs 2 boxes, assignment 2)
         </ul>
     </p>
 
-    
+
     <h2>A selection of alternative versions of the flower</h2>
     <p>
-        We tried to render this image on a 8bit Nintendo. This is the result:
+      We tried to render this image on a 8bit Nintendo. This is the result:
     </p>
     <a href="img/8bitflower.png" target="_blank">
-        <img src="img/8bitflower.png" alt="8 bit flower" />
+      <img src="img/8bitflower.png" alt="8 bit flower" />
     </a>
-    
+
     <p>
-        A small selection of glass flowers
+      A small selection of glass flowers
     </p>
     <a href="img/glassflower.png" target="_blank">
-        <img src="img/glassflower.png" alt="Glass flower" />
+      <img src="img/glassflower.png" alt="Glass flower" />
     </a>
     <a href="img/glassflower2.png" target="_blank">
-        <img src="img/glassflower2.png" alt="Glass flower 2" />
+      <img src="img/glassflower2.png" alt="Glass flower 2" />
     </a>
-</body>
+  </body>
 </html>
 
