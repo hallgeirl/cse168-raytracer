@@ -45,9 +45,17 @@
       All of the textures on the flower is procedurally generated. The leaf and stem have a faint cellular texture, with some added perlin noise on top. However, the environment map is loaded from a HDR texture and tone mapped.
     </p>
 
+    <h3>Depth of field</h3>
+    <p>When a camera lens is quite close to an object, for instance when doing macro photography, you get a rather narrow depth of field. We wanted to have that effect in our image, and we believe we got it pretty right. We have an aperture radius R, focus distance F, eye coordinates  and camera coordinate basis u,v,w where w is the view direction. The depth of field effect is given by randomizing the origin of the eye rays, by generating a random position on a disc of a specified radius (our aperture size), and then translating the eye in the uv-plane by the two coordinates returned by the disc sample. We also had to adjust the ray direction so that it points in the direction of the point E+F*w.</p>
+
+    <h3>Glossy reflections and refractions</h3>
+    <p>We implemented glossy reflections by randomizing the direction of the outgoing ray. We sampled a hemisphere by choosing phi=acos(u1^(1/1+a)) and theta=u2*2pi, where "a" is the shininess of the material (same number as in the phong highlights). We then aligned the hemisphere with the reflective direction d_r = d - 2 * (N dot d) * N. The same process were done for refraction, just for the refractive direction instead.</p>
+
+
     <h3>Fresnel reflections</h3>
     <p>
-      We implemented fresnel reflections, so that rays that hit a refractive object at a glancing angle reflects parts of the ray.
+        We implemented fresnel reflections, so that rays that hit a refractive object at a glancing angle reflects parts of the ray.
+        It's implemented in two parts - first, we calculate the reflection coefficient in the function Ray::getReflectionCoefficient(), based on the angle between the surface normal of the surface we hit and the ray, and the refractive indices of the mediums. In Scene::traceScene(), we modified the refraction code so that it also sends out a reflecting ray 
     </p>
 
     <h3>Lighting</h3>
@@ -60,7 +68,7 @@
       We implemented photon mapping in our ray tracer for indirect lighting, including caustics. We used a caustics and a global photon map. We used the Photon_map class provided by professor Henrik Wann Jensen for storing and looking up the photons. The number of photons we used in the scene is fairly modest; 200 000 photons for caustics, and 200 000 photons for the global photon map, but we found this to be sufficient.
     </p>
     <p>
-      When building the photon maps, we loop over each light, and for each light we call our light's samplePhotonDirection() function which gives a direction according to the type of light (e.g. a point light would give a random direction, a directed light source would return the normal of the light, and so on). We also sample the light source's origin with samplePhotonOrigin() in the same way. Finally we select the power to be the light source's wattage. We scale the photon power in the end after the light source has shot out all photons, because we don't know how many photons we have to send out in order to store the specified number of photons that we specify. We then call our tracePhoton() function which will trace the photons through the scene.
+      When building the photon maps, we loop over each light, and for each light we sample an origin and direction. Finally we select the power to be the light source's wattage. We scale the photon power in the end after the light source has shot out all photons, because we don't know how many photons we have to send out in order to store the specified number of photons that we specify. We then call our tracePhoton() function which will trace the photons through the scene.
     </p>
 
     <p>
@@ -85,12 +93,6 @@
     <a href="img/caustics_photons.png" target="_blank">
       <img src="img/caustics_photons.png" alt="Caustics photons" />
     </a>
-    Finally, we
-    <h3>Depth of field</h3>
-    <p>When a camera lens is quite close to an object, for instance when doing macro photography, you get a rather narrow depth of field. We wanted to have that effect in our image, and we believe we got it pretty right. We have an aperture radius R, focus distance F, eye coordinates  and camera coordinate basis u,v,w where w is the view direction. The depth of field effect is given by randomizing the origin of the eye rays, by generating a random position on a disc of a specified radius (our aperture size), and then translating the eye in the uv-plane by the two coordinates returned by the disc sample. We also had to adjust the ray direction so that it points in the direction of the point E+F*w.</p>
-
-    <h3>Glossy reflections and refractions</h3>
-    <p>We implemented glossy reflections by randomizing the direction of the outgoing ray. We sampled a hemisphere by choosing phi=acos(u1^(1/1+a)) and theta=u2*2pi, where "a" is the shininess of the material (same number as in the phong highlights). We then aligned the hemisphere with the reflective direction d_r = d - 2 * (N dot d) * N. The same process were done for refraction, just for the refractive direction instead.</p>
 
     <h3>Raindrop effects</h3>
     <p>Due to the nature of the scene, we made a few assumptions to render the raindrops based off reference photos. In order to achieve a gradient shadow we observed in nature, we treat the shadow rays that start within a refractive object differently. We scale the the shadow intensity by the dot product of the hit normal of the shadow ray and the direction to the light. Althought this method is an approximation, we felt that it contributed an interesting effect. While we have soft shadows implemented in the code, the raindrop contact shadows appear sharp due to distance to the directional area light. As an additional subtle effect, we added phong highlights to the raindrops. </p>
@@ -150,23 +152,10 @@
     </p>
 
 
-    <h2>A selection of alternative versions of the flower</h2>
+    <h2>Acknowledgements</h2>
     <p>
-      We tried to render this image on a 8bit Nintendo. This is the result:
+        We used Henrik Wann Jensen's Photon_map class for this project by permission. Also, as the environment map we used "forrest salzburg 02" from openfootage.net, released under the Creative Commons Attribution 3.0 Austria licence (http://www.openfootage.net/?p=355).
     </p>
-    <a href="img/8bitflower.png" target="_blank">
-      <img src="img/8bitflower.png" alt="8 bit flower" />
-    </a>
-
-    <p>
-      A small selection of glass flowers
-    </p>
-    <a href="img/glassflower.png" target="_blank">
-      <img src="img/glassflower.png" alt="Glass flower" />
-    </a>
-    <a href="img/glassflower2.png" target="_blank">
-      <img src="img/glassflower2.png" alt="Glass flower 2" />
-    </a>
   </body>
 </html>
 
