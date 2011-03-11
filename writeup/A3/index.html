@@ -31,10 +31,13 @@
     </a>
     
     <p>
-        (Write something sensible here about the image.)
+        We see caustics from the photon map in the rain drops, as well as indirect illumination on the leaf (a little from the caustics, but mostly from the global photon map). See the photon map section for more details.
+    </p>
+    <p>
+        Something that is not very obvious from the image is that we use slightly glossy reflections in the rain drops; but the shininess is quite high, so it's hard to see. Another effect we added is depth of field. We wanted to have a pretty visible effect; the reason is explained in the "Depth of field" section below.
     </p>
     
-    <h2>Features (maybe rename to something else)</h2>
+    <h2>Technical details</h2>
     
     <h3>Modelling</h3>
     <p>
@@ -46,6 +49,11 @@
     <p>
         All of the textures on the flower is procedurally generated. The leaf and stem have a faint cellular texture, with some added perlin noise on top. However, the environment map is loaded from a HDR texture and tone mapped.
     </p>
+    
+    <h3>Fresnel reflections</h3>
+    <p>
+        We implemented fresnel reflections, so that rays that hit a refractive object at a glancing angle reflects parts of the ray.
+
     
     <h3>Lighting</h3>
     <p>
@@ -82,7 +90,7 @@
     <p>When a camera lens is quite close to an object, for instance when doing macro photography, you get a rather narrow depth of field. We wanted to have that effect in our image, and we believe we got it pretty right. We have an aperture radius R, focus distance F, eye coordinates  and camera coordinate basis u,v,w where w is the view direction. The depth of field effect is given by randomizing the origin of the eye rays, by generating a random position on a disc of a specified radius (our aperture size), and then translating the eye in the uv-plane by the two coordinates returned by the disc sample. We also had to adjust the ray direction so that it points in the direction of the point E+F*w.</p>
 
     <h3>Glossy reflections and refractions</h3>
-    <p>We implemented glossy reflections by randomizing the direction of the outgoing ray. We sampled .</p>
+    <p>We implemented glossy reflections by randomizing the direction of the outgoing ray. We sampled a hemisphere by choosing phi=acos(u1^(1/1+a)) and theta=u2*2pi, where "a" is the shininess of the material (same number as in the phong highlights). We then aligned the hemisphere with the reflective direction d_r = d - 2 * (N dot d) * N. The same process were done for refraction, just for the refractive direction instead.</p>
 
 <!--    <h3>Raindrop shadows</h3>
     If a raindrop sits at a surface, and we shoot a ray from the camera and into the raindrop, and that ray eventually hits the surface, a shadow ray is traced back to the light source to test if it's in the shadow. If using shadow rays naively as for solid objects, that ray would not give any contribution, because the rain drop is blocking the path.
@@ -119,9 +127,9 @@
             <li>BVH box intersection and traversal</li>
             <li>Path tracing</li>
             <li>Recursive ray tracing (reflection, refraction)</li>
-            <li>Procedural stone texture (Both)</li>
+            <li>Procglancingedural stone texture (Both)</li>
             <li>Statistics</li>
-            <li>SSE optimizations (1 ray vs 1 triangle, assignment 1)
+            <li>SSE optimizations (1 ray vs 1 triangle, assignment 1)</li>
         </ul> 
         
         <div class="listheader">Hallgeir</div>
@@ -131,7 +139,7 @@
             <li>Bump mapping</li>
             <li>Procedural stone texture (Both)</li>
             <li>BVH building</li>
-            <li>SSE optimizations (1 ray vs. 4 triangles &amp; 1 ray vs 2 boxes, assignment 2)
+            <li>SSE optimizations (1 ray vs. 4 triangles &amp; 1 ray vs 2 boxes, assignment 2)</li>
         </ul>
     </p>
 
